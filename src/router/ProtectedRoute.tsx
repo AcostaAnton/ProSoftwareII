@@ -1,7 +1,7 @@
 // Protege rutas por autenticacion y por rol
 
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../context/AuthContext'
 import type { UserRole } from '../types/index'
 
 interface ProtectedRouteProps {
@@ -41,7 +41,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     if (!user) return <Navigate to="/login" replace />
 
     // Si hay sesión, verificar rol (si la ruta exige roles)
-    if (allowedRoles && !allowedRoles.includes(role)) {
+    if (allowedRoles && (!role || !allowedRoles.includes(role))) {
         return <Navigate to="/dashboard" replace />
     }
     return <>{children}</>
