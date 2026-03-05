@@ -9,8 +9,13 @@ interface ProtectedRouteProps {
     allowedRoles?: UserRole[]
 }
 
+// En desarrollo: usar ?skipAuth=1 en la URL para ver la pantalla sin login (ej. /dashboard?skipAuth=1)
+const DEV_SKIP_AUTH = import.meta.env.DEV && typeof window !== 'undefined' && window.location.search.includes('skipAuth=1')
+
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
     const { user, role, isLoading } = useAuth()
+
+    if (DEV_SKIP_AUTH) return <>{children}</>
 
     //Mientras carga la session, mostrar spinner
     if (isLoading) {
