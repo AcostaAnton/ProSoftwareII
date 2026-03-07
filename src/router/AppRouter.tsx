@@ -7,8 +7,11 @@ import { useAuth } from '../context/AuthContext'
 
 // - Pages (cada compañero agrega el import de su página aquí)
 import LoginPage from '../pages/auth/Login'
+import MainLayout from '../components/layout/MainLayout'
+import DashboardPage from '../pages/dashboard/Dashboard'
+import NewVisit from '../pages/visits/NewVisit'
+import VisitList from '../pages/visits/VisitList'
 // import RegisterPage from '../pages/auth/Register'
-// import DashboardPage from '../pages/dashboard/Dashboard'
 
 export default function AppRoutes() {
     const { user } = useAuth()
@@ -22,8 +25,12 @@ export default function AppRoutes() {
                 <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <LoginPage />} />
                 {/* <Route path="/register" element={<RegisterPage />} /> */}
 
-                {/* Rutas protegidas: solo con sesión. En desarrollo usar ?skipAuth=1 para ver sin login */}
-                {/* <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} /> */}
+                {/* Rutas protegidas: layout con Sidebar + contenido */}
+                <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+                    <Route path="dashboard" element={<DashboardPage />} />
+                    <Route path="visits/new" element={<NewVisit />} />
+                    <Route path="visits/list" element={<VisitList />} />
+                </Route>
             </Routes>
         </BrowserRouter>
     )
