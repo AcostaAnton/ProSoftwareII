@@ -4,11 +4,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from './ProtectedRoute.tsx'
 import { useAuth } from '../context/AuthContext'
+import MainLayout from '../components/layout/MainLayout'
+import DashboardPage from '../pages/dashboard/Dashboard'
 
 // - Pages (cada compañero agrega el import de su página aquí)
 import LoginPage from '../pages/auth/Login'
-import MainLayout from '../components/layout/MainLayout'
-import DashboardPage from '../pages/dashboard/Dashboard'
+
 // import RegisterPage from '../pages/auth/Register'
 
 export default function AppRoutes() {
@@ -24,7 +25,7 @@ export default function AppRoutes() {
                 {/* <Route path="/register" element={<RegisterPage />} /> */}
 
                 {/* Rutas protegidas: layout con Sidebar + contenido */}
-                <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+                <Route path="/"element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
                     <Route path="dashboard" element={<DashboardPage />} />
                 </Route>
             </Routes>
