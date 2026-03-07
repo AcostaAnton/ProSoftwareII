@@ -61,7 +61,7 @@ export default function LoginPage() {
             </svg>
           </div>
           <h1 style={styles.title}>PasaYa</h1>
-          <p style={styles.subtitle}>Control de accesos inteligente</p>
+          <p style={styles.subtitle}>Control de acceso inteligente</p>
         </div>
 
         {/* Card del formulario */}

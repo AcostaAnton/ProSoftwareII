@@ -2,18 +2,8 @@
 
 export default function Dashboard() {
   return (
-    <div style={{ paddingTop: 8 }}>
-      <h1
-        style={{
-          fontFamily: "'Syne', sans-serif",
-          fontSize: 22,
-          fontWeight: 700,
-          color: '#fff',
-          margin: 0,
-        }}
-      >
-        En construcción
-      </h1>
+    <div>
+      <h1>Dashboard</h1>
     </div>
   )
 }
