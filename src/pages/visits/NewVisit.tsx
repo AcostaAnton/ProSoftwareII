@@ -13,7 +13,6 @@ const NewVisit: React.FC = () => {
         visit_hour: '12',
         visit_minute: '00',
         visit_period: 'AM',
-        visit_time: '',
         reason: ''
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -51,7 +50,6 @@ const NewVisit: React.FC = () => {
                 visitor_phone: formData.visitor_phone,
                 visit_date: formData.visit_date,
                 visit_time: visit_time,
-                visit_time: formData.visit_time,
                 status: 'pending' as VisitStatus
             })
             // Generar QR con la URL de VisitDetail
@@ -66,7 +64,6 @@ const NewVisit: React.FC = () => {
                 visit_hour: '12',
                 visit_minute: '00',
                 visit_period: 'AM',
-                visit_time: '',
                 reason: ''
             })
         } catch (err) {
@@ -295,33 +292,6 @@ const NewVisit: React.FC = () => {
                                     <option value="PM">PM</option>
                                 </select>
                             </div>
-                        <div style={{ position: 'relative' }}>
-                            <input
-                                type="time"
-                                name="visit_time"
-                                value={formData.visit_time}
-                                onChange={handleChange}
-                                placeholder="--:-- ----"
-                                required
-                                style={{
-                                    width: '100%',
-                                    padding: '12px',
-                                    backgroundColor: '#1a2024',
-                                    border: '1px solid #2a3034',
-                                    borderRadius: '20px',
-                                    color: '#ffffff',
-                                    fontSize: '16px'
-                                }}
-                            />
-                            <span style={{
-                                position: 'absolute',
-                                right: '12px',
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                color: '#a0a0a0'
-                            }}>
-                                
-                            </span>
                         </div>
                     </div>
 
