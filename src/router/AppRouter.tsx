@@ -10,6 +10,7 @@ import LoginPage from '../pages/auth/Login'
 import MainLayout from '../components/layout/MainLayout'
 import DashboardPage from '../pages/dashboard/Dashboard'
 import NewVisit from '../pages/visits/NewVisit'
+import VisitList from '../pages/visits/VisitList'
 // import RegisterPage from '../pages/auth/Register'
 
 export default function AppRoutes() {
@@ -28,6 +29,7 @@ export default function AppRoutes() {
                 <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
                     <Route path="dashboard" element={<DashboardPage />} />
                     <Route path="visits/new" element={<NewVisit />} />
+                    <Route path="visits/list" element={<VisitList />} />
                 </Route>
             </Routes>
         </BrowserRouter>

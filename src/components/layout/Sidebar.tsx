@@ -133,6 +133,26 @@ export default function Sidebar() {
               Nueva Visita
             </button>
           </li>
+          <li>
+            <button
+              onClick={() => navigate('/visits/list')}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                background: 'none',
+                border: 'none',
+                color: '#fff',
+                textAlign: 'left',
+                cursor: 'pointer',
+                borderRadius: 4,
+                fontSize: 14,
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
+              onMouseOut={(e) => (e.currentTarget.style.background = 'none')}
+            >
+              Lista de Visitas
+            </button>
+          </li>
         </ul>
       </nav>
 
