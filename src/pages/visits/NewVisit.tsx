@@ -10,6 +10,9 @@ const NewVisit: React.FC = () => {
         visitor_name: '',
         visitor_phone: '',
         visit_date: '',
+        visit_hour: '12',
+        visit_minute: '00',
+        visit_period: 'AM',
         visit_time: '',
         reason: ''
     })
@@ -36,11 +39,18 @@ const NewVisit: React.FC = () => {
         setError(null)
 
         try {
+            // Convertir hora de 12h a 24h
+            const hour24 = formData.visit_period === 'PM' 
+                ? (parseInt(formData.visit_hour) === 12 ? 12 : parseInt(formData.visit_hour) + 12)
+                : (parseInt(formData.visit_hour) === 12 ? 0 : parseInt(formData.visit_hour))
+            const visit_time = `${hour24.toString().padStart(2, '0')}:${formData.visit_minute}`
+
             const visit: Visit = await createVisit({
                 resident_id: user.id,
                 visitor_name: formData.visitor_name,
                 visitor_phone: formData.visitor_phone,
                 visit_date: formData.visit_date,
+                visit_time: visit_time,
                 visit_time: formData.visit_time,
                 status: 'pending' as VisitStatus
             })
@@ -53,6 +63,9 @@ const NewVisit: React.FC = () => {
                 visitor_name: '',
                 visitor_phone: '',
                 visit_date: '',
+                visit_hour: '12',
+                visit_minute: '00',
+                visit_period: 'AM',
                 visit_time: '',
                 reason: ''
             })
@@ -191,6 +204,7 @@ const NewVisit: React.FC = () => {
                             value={formData.visit_date}
                             onChange={handleChange}
                             placeholder="dd/mm/aaaa"
+                            min={new Date().toISOString().split('T')[0]}
                             required
                             style={{
                                 width: '100%',
@@ -206,6 +220,81 @@ const NewVisit: React.FC = () => {
 
                     <div>
                         <label style={{ display: 'block', color: '#b0b0b0', marginBottom: '5px' }}>Hora *</label>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                            <div>
+                                <select
+                                    name="visit_hour"
+                                    value={formData.visit_hour}
+                                    onChange={handleChange}
+                                    required
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        backgroundColor: '#1a2024',
+                                        border: '1px solid #2a3034',
+                                        borderRadius: '20px',
+                                        color: '#ffffff',
+                                        fontSize: '16px'
+                                    }}
+                                >
+                                    <option value="">Hora</option>
+                                    <option value="01">1</option>
+                                    <option value="02">2</option>
+                                    <option value="03">3</option>
+                                    <option value="04">4</option>
+                                    <option value="05">5</option>
+                                    <option value="06">6</option>
+                                    <option value="07">7</option>
+                                    <option value="08">8</option>
+                                    <option value="09">9</option>
+                                    <option value="10">10</option>
+                                    <option value="11">11</option>
+                                    <option value="12">12</option>
+                                </select>
+                            </div>
+                            <div>
+                                <select
+                                    name="visit_minute"
+                                    value={formData.visit_minute}
+                                    onChange={handleChange}
+                                    required
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        backgroundColor: '#1a2024',
+                                        border: '1px solid #2a3034',
+                                        borderRadius: '20px',
+                                        color: '#ffffff',
+                                        fontSize: '16px'
+                                    }}
+                                >
+                                    <option value="">Min</option>
+                                    <option value="00">00</option>
+                                    <option value="15">15</option>
+                                    <option value="30">30</option>
+                                    <option value="45">45</option>
+                                </select>
+                            </div>
+                            <div>
+                                <select
+                                    name="visit_period"
+                                    value={formData.visit_period}
+                                    onChange={handleChange}
+                                    required
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        backgroundColor: '#1a2024',
+                                        border: '1px solid #2a3034',
+                                        borderRadius: '20px',
+                                        color: '#ffffff',
+                                        fontSize: '16px'
+                                    }}
+                                >
+                                    <option value="AM">AM</option>
+                                    <option value="PM">PM</option>
+                                </select>
+                            </div>
                         <div style={{ position: 'relative' }}>
                             <input
                                 type="time"
