@@ -36,15 +36,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // - Carga el perfil completo desde supabase
     
+    const PROFILE_TIMEOUT_MS = 8000
+
     async function loadProfile(userId: string, email: string) {
         try {
-            const profileData = await GetCurrentProfile(userId)
+            const profilePromise = GetCurrentProfile(userId)
+            const timeoutPromise = new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error('Profile timeout')), PROFILE_TIMEOUT_MS)
+            )
+            const profileData = await Promise.race([profilePromise, timeoutPromise])
             setProfile(profileData)
             setUser({ id: userId, email, profile: profileData })
         } catch (error) {
             console.error('Error al cargar el perfil:', error)
             setProfile(null)
-            setUser(null)
+            setUser({ id: userId, email, profile: null })
         }
     }
 
@@ -54,20 +60,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         supabase.auth.getSession().then(({ data }: { data: { session: unknown } }) => {
             const session = data.session as { user: { id: string; email?: string } } | null
             if (session) {
-                loadProfile(session.user.id, session.user.email ?? '')
+                void loadProfile(session.user.id, session.user.email ?? '').finally(() => setLoading(false))
+            } else {
+                setLoading(false)
             }
         })
-        // 2 - Escuchar cambios futuros
+        // 2 - Escuchar cambios futuros (login/logout). Siempre poner loading false al terminar.
         const { data: listener } = supabase.auth.onAuthStateChange(
             async (event, session) => {
-                if (event === 'SIGNED_IN' && session?.user) {
-                    await loadProfile(session.user.id, session.user.email ?? '')
+                try {
+                    if (event === 'SIGNED_IN' && session?.user) {
+                        await loadProfile(session.user.id, session.user.email ?? '')
+                    }
+                    if (event === 'SIGNED_OUT') {
+                        setUser(null)
+                        setProfile(null)
+                    }
+                } finally {
+                    setLoading(false)
                 }
-                if (event === 'SIGNED_OUT') {
-                    setUser(null)
-                    setProfile(null)
-                }
-                setLoading(false)
             }
         )
         // 3 - Limpiar listener al desmontar el componente

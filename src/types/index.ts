@@ -100,5 +100,5 @@ export interface NewVisitForm {
 export interface AuthUser {
     id: string
     email: string
-    profile: Profile
+    profile: Profile | null
 }
