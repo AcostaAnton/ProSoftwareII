@@ -48,11 +48,6 @@ export default function Sidebar() {
         <span style={styles.logoText}>PasaYa</span>
       </div>
 
-      <div style={styles.spacer} />
-
-      {/* Usuario + Cerrar sesión */}
-      <div style={styles.userPanel}>
-        <div style={styles.userInfo}>
       {/* Navegación */}
       <nav style={{ padding: '16px' }}>
         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
@@ -123,22 +118,8 @@ export default function Sidebar() {
       <div style={{ flex: 1, minHeight: 0 }} />
 
       {/* Abajo: usuario + Cerrar sesión */}
-      <div
-        style={{
-          marginTop: 'auto',
-          padding: 16,
-          borderTop: '1px solid rgba(255,255,255,0.08)',
-          background: '#1A2130',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            marginBottom: 14,
-          }}
-        >
+      <div style={styles.userPanel}>
+        <div style={styles.userInfo}>
           <Avatar name={displayName} size={40} />
           <div style={styles.userText}>
             <p style={styles.userName}>{displayName}</p>
