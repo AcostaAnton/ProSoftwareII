@@ -1,6 +1,17 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import type { UserRole } from '../../types'
 
+// ─── Nav config (solo ítems con rutas existentes; añadir scan/admin cuando existan rutas) ───
+
+type NavItem = { id: string; label: string; icon: string; roles: UserRole[]; path: string }
+
+const NAV_ITEMS: NavItem[] = [
+  { id: 'dashboard', label: 'Dashboard', icon: '🏠', roles: ['resident', 'admin', 'security'], path: '/dashboard' },
+  { id: 'new-visit', label: 'Nueva Visita', icon: '➕', roles: ['resident', 'admin'], path: '/visits/new' },
+  { id: 'logs', label: 'Accesos', icon: '📋', roles: ['resident', 'admin', 'security'], path: '/visits/list' },
+  { id: 'admin-users', label: 'Usuarios', icon: '👥', roles: ['admin'], path: '/admin/users' },
+]
 
 function avatarStyle(size: number): React.CSSProperties {
   return {
@@ -18,21 +29,25 @@ function avatarStyle(size: number): React.CSSProperties {
   }
 }
 
-// ─── Components ───────────────────────────────────────────────────────────────
-
 function Avatar({ name, size = 32 }: { name: string; size?: number }) {
   const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-  return (
-    <div style={avatarStyle(size)}>
-      {initials}
-    </div>
-  )
+  return <div style={avatarStyle(size)}>{initials}</div>
 }
 
 export default function Sidebar() {
   const { user, profile, role, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const displayName = profile?.name ?? user?.email ?? 'Usuario'
+
+  const all = role ? NAV_ITEMS.filter((n) => n.roles.includes(role)) : []
+  const sections =
+    role === 'admin'
+      ? [
+          { title: 'General', ids: ['dashboard', 'new-visit', 'logs'] as const },
+          { title: 'Administración', ids: ['admin-users'] as const },
+        ]
+      : [{ title: '', ids: all.map((n) => n.id) }]
 
   async function handleLogout() {
     await logout()
@@ -41,86 +56,48 @@ export default function Sidebar() {
 
   return (
     <aside style={styles.sidebar}>
-
-      {/* Logo PasaYa */}
       <div style={styles.logoWrapper}>
         <div style={styles.logoIcon}>P</div>
         <span style={styles.logoText}>PasaYa</span>
       </div>
 
-      {/* Navegación */}
-      <nav style={{ padding: '16px' }}>
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-          <li style={{ marginBottom: 8 }}>
-            <button
-              onClick={() => navigate('/dashboard')}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                background: 'none',
-                border: 'none',
-                color: '#fff',
-                textAlign: 'left',
-                cursor: 'pointer',
-                borderRadius: 4,
-                fontSize: 14,
-              }}
-              onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
-              onMouseOut={(e) => (e.currentTarget.style.background = 'none')}
-            >
-              Dashboard
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={() => navigate('/visits/new')}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                background: 'none',
-                border: 'none',
-                color: '#fff',
-                textAlign: 'left',
-                cursor: 'pointer',
-                borderRadius: 4,
-                fontSize: 14,
-              }}
-              onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
-              onMouseOut={(e) => (e.currentTarget.style.background = 'none')}
-            >
-              Nueva Visita
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={() => navigate('/visits/list')}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                background: 'none',
-                border: 'none',
-                color: '#fff',
-                textAlign: 'left',
-                cursor: 'pointer',
-                borderRadius: 4,
-                fontSize: 14,
-              }}
-              onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
-              onMouseOut={(e) => (e.currentTarget.style.background = 'none')}
-            >
-              Lista de Visitas
-            </button>
-          </li>
-        </ul>
+      <nav style={styles.nav}>
+        {sections.map((sec) => (
+          <div key={sec.title || 'main'} style={styles.section}>
+            {sec.title ? <p style={styles.sectionTitle}>{sec.title}</p> : null}
+            {all
+              .filter((n) => (sec.ids as string[]).includes(n.id))
+              .map((n) => {
+                const isActive = location.pathname === n.path || (n.path !== '/dashboard' && location.pathname.startsWith(n.path))
+                return (
+                  <button
+                    key={n.id}
+                    type="button"
+                    onClick={() => navigate(n.path)}
+                    style={{
+                      ...styles.navButton,
+                      ...(isActive ? styles.navButtonActive : {}),
+                    }}
+                    onMouseOver={(e) => {
+                      if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.08)'
+                    }}
+                    onMouseOut={(e) => {
+                      if (!isActive) e.currentTarget.style.background = 'none'
+                    }}
+                  >
+                    {n.icon} {n.label}
+                  </button>
+                )
+              })}
+          </div>
+        ))}
       </nav>
 
-      {/* Espacio flexible para que el bloque de abajo quede al fondo */}
       <div style={{ flex: 1, minHeight: 0 }} />
 
-      {/* Abajo: usuario + Cerrar sesión */}
       <div style={styles.userPanel}>
         <div style={styles.userInfo}>
-          <Avatar name={displayName} size={40} />
+          <Avatar name={displayName} size={32} />
           <div style={styles.userText}>
             <p style={styles.userName}>{displayName}</p>
             <p style={styles.userRole}>
@@ -128,7 +105,13 @@ export default function Sidebar() {
             </p>
           </div>
         </div>
-        <button type="button" onClick={handleLogout} style={styles.logoutButton}>
+        <button
+          type="button"
+          onClick={handleLogout}
+          style={styles.logoutButton}
+          onMouseOver={(e) => (e.currentTarget.style.color = '#f87171')}
+          onMouseOut={(e) => (e.currentTarget.style.color = '#64748b')}
+        >
           Cerrar sesión
         </button>
       </div>
@@ -147,8 +130,10 @@ const styles = {
     display: 'flex',
     flexDirection: 'column' as const,
     flexShrink: 0,
-    background: '#1A2130',
-    borderRight: '1px solid rgba(255,255,255,0.06)',
+    background: '#0f172a',
+    borderRight: '1px solid #1e293b',
+    position: 'sticky' as const,
+    top: 0,
   },
 
   logoWrapper: {
@@ -156,7 +141,7 @@ const styles = {
     alignItems: 'center',
     gap: 10,
     padding: '20px 16px',
-    borderBottom: '1px solid rgba(255,255,255,0.06)',
+    borderBottom: '1px solid #1e293b',
   },
 
   logoIcon: {
@@ -167,7 +152,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: '#fff',
+    color: '#0f172a',
     fontFamily: 'Syne, sans-serif',
     fontSize: 14,
     fontWeight: 900,
@@ -181,29 +166,61 @@ const styles = {
     letterSpacing: '-0.02em',
   },
 
-  spacer: {
+  nav: {
     flex: 1,
-    minHeight: 0,
+    padding: 12,
+    overflowY: 'auto' as const,
+  },
+
+  section: {
+    marginBottom: 16,
+  },
+
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: 600,
+    color: '#475569',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.1em',
+    padding: '0 12px',
+    margin: '0 0 4px',
+  },
+
+  navButton: {
+    width: '100%',
+    padding: '10px 12px',
+    background: 'none',
+    border: 'none',
+    color: '#94a3b8',
+    textAlign: 'left' as const,
+    cursor: 'pointer',
+    borderRadius: 8,
+    fontSize: 14,
+    transition: 'color 0.15s, background 0.15s',
+  },
+
+  navButtonActive: {
+    color: '#fff',
+    background: 'rgba(34, 211, 238, 0.15)',
   },
 
   userPanel: {
-    marginTop: 'auto',
-    padding: 16,
-    borderTop: '1px solid rgba(255,255,255,0.08)',
-    background: '#1A2130',
+    padding: 12,
+    borderTop: '1px solid #1e293b',
   },
 
   userInfo: {
     display: 'flex',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 14,
+    gap: 10,
+    padding: '8px 12px',
+    marginBottom: 4,
   },
 
   userName: {
     margin: 0,
-    fontSize: 14,
-    fontWeight: 700,
+    fontSize: 12,
+    fontWeight: 600,
     color: '#fff',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
@@ -212,8 +229,9 @@ const styles = {
 
   userRole: {
     margin: '2px 0 0',
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.55)',
+    fontSize: 11,
+    color: '#64748b',
+    textTransform: 'capitalize' as const,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap' as const,
@@ -225,14 +243,15 @@ const styles = {
   },
 
   logoutButton: {
-    display: 'block',
     width: '100%',
-    padding: '8px 0',
+    padding: '8px 12px',
     fontSize: 12,
-    color: 'rgba(255,255,255,0.55)',
+    color: '#64748b',
     background: 'none',
     border: 'none',
     cursor: 'pointer',
     textAlign: 'left' as const,
+    borderRadius: 8,
+    transition: 'color 0.15s',
   },
 }
