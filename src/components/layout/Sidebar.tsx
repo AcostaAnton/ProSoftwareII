@@ -9,7 +9,7 @@ type NavItem = { id: string; label: string; icon: string; roles: UserRole[]; pat
 const NAV_ITEMS: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: '🏠', roles: ['resident', 'admin', 'security'], path: '/dashboard' },
   { id: 'new-visit', label: 'Nueva Visita', icon: '➕', roles: ['resident', 'admin'], path: '/visits/new' },
-  { id: 'logs', label: 'Accesos', icon: '📋', roles: ['resident', 'admin', 'security'], path: '/visits/list' },
+  { id: 'visit-list', label: 'Lista de Visitas', icon: '📋', roles: ['admin', 'security'], path: '/visits/list' },
   { id: 'admin-users', label: 'Usuarios', icon: '👥', roles: ['admin'], path: '/admin/users' },
 ]
 
@@ -44,7 +44,7 @@ export default function Sidebar() {
   const sections =
     role === 'admin'
       ? [
-          { title: 'General', ids: ['dashboard', 'new-visit', 'logs'] as const },
+          { title: 'General', ids: ['dashboard', 'new-visit', 'visit-list'] as const },
           { title: 'Administración', ids: ['admin-users'] as const },
         ]
       : [{ title: '', ids: all.map((n) => n.id) }]
