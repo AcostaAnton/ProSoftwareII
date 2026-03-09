@@ -33,6 +33,7 @@ type PropiedadesTablaVisitasRecientes = {
   visitas: VisitaReciente[]
   mostrarBotonNuevaVisita?: boolean
   textoBotonNuevaVisita?: string
+  onVerQR?: (visitaId: string) => void
 }
 
 function obtenerEstiloEstado(estado: EstadoVisualVisita) {
@@ -119,6 +120,7 @@ export default function TablaVisitasRecientes({
   visitas,
   mostrarBotonNuevaVisita = false,
   textoBotonNuevaVisita = '+ Nueva visita',
+  onVerQR,
 }: PropiedadesTablaVisitasRecientes) {
   return (
     <section>
@@ -291,6 +293,7 @@ export default function TablaVisitasRecientes({
                     {visita.mostrarAccionQr ? (
                       <button
                         type="button"
+                        onClick={() => onVerQR?.(visita.id)}
                         style={{
                           background: 'none',
                           border: 'none',
