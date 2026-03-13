@@ -168,7 +168,6 @@ const VisitDetail: React.FC = () => {
                     borderRadius: '8px',
                     marginBottom: '20px'
                 }}>
-                    {/* Estatus */}
                     <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #2a3034' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <span style={{ color: '#a0a0a0' }}>Estado:</span>

@@ -7,11 +7,6 @@ import { useVisits } from '../../hooks/useVisits'
 import { createAccessLog } from '../../services/logs.service'
 import type { Visit } from '../../types/index'
 
-// Esta pantalla está pensada para que un guardia o administrador
-// lea / escriba el token QR y registre la entrada del visitante.
-// A diferencia de otras páginas, la información principal viene
-// del hook useVisits y se actualiza en memoria tras cada cambio.
-
 const ScanPage: React.FC = () => {
   const { user, role } = useAuth()
   const { visits, changeStatus, refresh } = useVisits()
@@ -25,24 +20,22 @@ const ScanPage: React.FC = () => {
   const [newStatus, setNewStatus] = useState<Visit['status']>('pending')
   const [cameraActive, setCameraActive] = useState(false)
   const [cameraError, setCameraError] = useState<string | null>(null)
+  const [photoMode, setPhotoMode] = useState(false)
+  const [capturedImage, setCapturedImage] = useState<string | null>(null)
+  const [analyzingPhoto, setAnalyzingPhoto] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const qrScannerRef = useRef<QrScanner | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  // tokens rápidos (hasta 3 primeros pendientes)
   const pendingTokens = visits.filter((v) => v.status === 'pending').slice(0, 3)
 
-
-
-  // funciones de cámara
   const startCameraScan = async () => {
-    // video element is rendered always (but may be hidden), so ref should exist now
     if (!videoRef.current) {
       setCameraError('Elemento de video no disponible, recarga la página.')
       return
     }
 
-    // algunos navegadores en Windows requieren https/secure context
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       setCameraError('Navegador no soporta acceso a cámara.')
       return
@@ -50,18 +43,13 @@ const ScanPage: React.FC = () => {
 
     try {
       setCameraError(null)
-      // no usamos "scanning" aquí para no bloquear el botón de detener
-
-      // solicitar permiso explícito antes de inicializar QrScanner
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
       videoRef.current.srcObject = stream
-      // algunos navegadores requieren play explícito
       await videoRef.current.play()
 
       const qrScanner = new QrScanner(
         videoRef.current,
         (result) => {
-          // Solo llenar el token en el input, no procesar aún
           setToken(result.data.trim())
           stopCameraScan()
         },
@@ -97,6 +85,9 @@ const ScanPage: React.FC = () => {
     }
     setCameraActive(false)
     setScanning(false)
+    setPhotoMode(false)
+    setCapturedImage(null)
+    setAnalyzingPhoto(false)
   }
 
   const doScan = () => {
@@ -114,7 +105,6 @@ const ScanPage: React.FC = () => {
       if (!found) {
         setScanError('Token no encontrado.')
       } else if (found.status !== 'pending' && role !== 'admin') {
-        // security only handles pending visits, admin can proceed anyway
         setScanError(
           found.status === 'approved'
             ? 'Visita aún no completada.'
@@ -131,170 +121,417 @@ const ScanPage: React.FC = () => {
     if (!scannedVisit || !user) return
     setIsWorking(true)
     try {
-      // admin may pick a different status stored in newStatus
       const statusToSet = role === 'admin' ? newStatus : 'completed'
-      const updated = await changeStatus(scannedVisit.id, statusToSet)
+      await changeStatus(scannedVisit.id, statusToSet)
       if (statusToSet === 'completed') {
         await createAccessLog(scannedVisit.id, user.id)
       }
-      setActionMessage('Estado actualizado correctamente.')
-      // recargar tokens rápidos
+      setActionMessage('✓ Estado actualizado correctamente.')
       await refresh()
-      // if admin changed it, update local object so dropdown stays in sync
-      setScannedVisit(updated)
+      
+      setTimeout(() => {
+        setScannedVisit(null)
+        setToken('')
+        setActionMessage(null)
+      }, 2000)
     } catch (err) {
       console.error(err)
-      setActionMessage('Error al registrar la entrada.')
+      setActionMessage('⚠ Error al registrar la entrada.')
     } finally {
       setIsWorking(false)
     }
   }
 
   useEffect(() => {
-    // cuando se detecta una visita, inicializar el dropdown de estatus
     if (scannedVisit) {
       setNewStatus(scannedVisit.status)
     }
   }, [scannedVisit])
 
   useEffect(() => {
-    // Cleanup al desmontar
     return () => {
       stopCameraScan()
     }
   }, [])
 
-  useEffect(() => {
-    // si el usuario no tiene permiso redirigirlo en un futuro
-    // por ahora simplemente no hacemos nada
-  }, [role])
+  const capturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return
+    const ctx = canvasRef.current.getContext('2d')
+    if (!ctx) return
+    
+    canvasRef.current.width = videoRef.current.videoWidth
+    canvasRef.current.height = videoRef.current.videoHeight
+    ctx.drawImage(videoRef.current, 0, 0)
+    
+    const imageData = canvasRef.current.toDataURL('image/png')
+    setCapturedImage(imageData)
+  }
+
+  const retakePhoto = () => {
+    setCapturedImage(null)
+    setPhotoMode(true)
+  }
+
+  const analyzePhoto = async (imageData: string) => {
+    setAnalyzingPhoto(true)
+    try {
+      const img = new Image()
+      img.onload = async () => {
+        if (!canvasRef.current) return
+        const canvas = canvasRef.current
+        canvas.width = img.width
+        canvas.height = img.height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return
+        ctx.drawImage(img, 0, 0)
+        
+        const result = await QrScanner.scanImage(canvas)
+        if (result && typeof result === 'object' && 'data' in result) {
+          setToken((result as any).data.trim())
+          setCapturedImage(null)
+          setPhotoMode(false)
+          setScanError(null)
+          setActionMessage(null)
+        }
+        setAnalyzingPhoto(false)
+      }
+      img.onerror = () => {
+        setScanError('Error al procesar la imagen.')
+        setAnalyzingPhoto(false)
+      }
+      img.src = imageData
+    } catch (err) {
+      console.error('Error analizando foto:', err)
+      setScanError('No se detectó código QR en la imagen.')
+      setAnalyzingPhoto(false)
+    }
+  }
 
   return (
-    <div style={{ backgroundColor: '#080c0f', minHeight: '100vh', padding: 20, color: '#ffffff' }}>
-      <div style={{ maxWidth: 500, margin: '0 auto' }}>
-        <h1 style={{ fontSize: 32, fontWeight: 'bold', marginBottom: 10 }}>Escanear QR</h1>
-        <p style={{ color: '#a0a0a0', marginBottom: 30 }}>Verifica el acceso del visitante.</p>
+    <div style={{ backgroundColor: '#080c0f', minHeight: '100vh', padding: '20px', color: '#ffffff' }}>
+      <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+        <div style={{ marginBottom: '30px' }}>
+          <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: '8px' }}>Escanear QR</h1>
+          <p style={{ color: '#a0a0a0', marginBottom: 0, fontSize: '14px' }}>Verifica el acceso del visitante escaneando su código QR</p>
+        </div>
 
-        {/* área de cámara */}
         <div style={{
-          background: '#0f172a',
+          background: '#1a2024',
           border: '1px solid #334155',
-          borderRadius: 20,
-          overflow: 'hidden',
-          position: 'relative',
-          aspectRatio: '1',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: 16
+          borderRadius: '16px',
+          padding: '24px',
+          marginBottom: '24px'
         }}>
-          <video
-          ref={videoRef}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            display: cameraActive ? 'block' : 'none'
-          }}
-          playsInline
-          muted
-        />
-        </div>
-
-        {/* Controles de cámara */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-          <button
-            onClick={cameraActive ? stopCameraScan : startCameraScan}
-            className="btn-primary"
-            style={{ flex: 1, padding: '8px 16px', fontSize: 12 }}
-          >
-            {cameraActive ? 'Detener cámara' : 'Iniciar cámara'}
-          </button>
-        </div>
-
-        {cameraError && (
-          <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#431212', borderRadius: 8 }}>
-            <p style={{ margin: 0, color: '#f87171', fontSize: 13 }}>{cameraError}</p>
-          </div>
-        )}
-
-        {/* entrada manual y tokens rapidos */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-          <input
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="TKN-XXXXXXXX"
-            className="input"
-            style={{ flex: 1, fontFamily: 'monospace', fontSize: 12 }}
-            onKeyDown={(e) => { if (e.key === 'Enter') doScan() }}
-          />
-          <button
-            onClick={doScan}
-            disabled={scanning}
-            className="btn-primary"
-            style={{ padding: '8px 16px', fontSize: 12 }}
-          >
-            {scanning ? '...' : 'Scan'}
-          </button>
-        </div>
-
-        <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-          {pendingTokens.map((v) => (
-            <button
-              key={v.id}
-              onClick={() => setToken(v.qr_token)}
-              className="btn-secondary"
-              style={{ fontFamily: 'monospace', fontSize: 11, padding: '4px 8px' }}
-            >
-              {v.qr_token}
-            </button>
-          ))}
-        </div>
-
-        {/* mensaje de error o de acción */}
-        {scanError && (
-          <div style={{ marginTop: 16, padding: 12, backgroundColor: '#431212', borderRadius: 8 }}>
-            <p style={{ margin: 0, color: '#f87171', fontSize: 13 }}>{scanError}</p>
-          </div>
-        )}
-        {actionMessage && (
-          <div style={{ marginTop: 16, padding: 12, backgroundColor: '#0f371c', borderRadius: 8 }}>
-            <p style={{ margin: 0, color: '#6ee7b7', fontSize: 13 }}>{actionMessage}</p>
-          </div>
-        )}
-
-        {/* detalle de visita encontrada */}
-        {scannedVisit && (
+          <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px', color: '#22d3ee' }}>Cámara</h3>
+          
           <div style={{
             background: '#0f172a',
-            border: '1px solid #166534',
-            borderRadius: 20,
-            padding: 20,
-            marginTop: 20
+            border: '2px solid #334155',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            position: 'relative',
+            aspectRatio: '1',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '16px'
           }}>
-            <h4 style={{ color: '#22d3ee', marginBottom: 12 }}>Datos del visitante</h4>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ color: '#94a3b8', fontSize: 13 }}>Nombre</span>
-              <span style={{ color: '#fff', fontWeight: 500, fontSize: 13 }}>{scannedVisit.visitor_name}</span>
+            <video
+              ref={videoRef}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                display: cameraActive ? 'block' : 'none'
+              }}
+              playsInline
+              muted
+            />
+            {!cameraActive && (
+              <div style={{ textAlign: 'center', color: '#64748b' }}>
+                <p style={{ margin: 0, fontSize: '14px' }}>Inicia la cámara para escanear</p>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={cameraActive ? stopCameraScan : startCameraScan}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              fontSize: '14px',
+              fontWeight: '600',
+              backgroundColor: cameraActive ? '#ef4444' : '#22c55e',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              marginBottom: '16px'
+            }}
+            onMouseEnter={(e) => {
+              if (cameraActive) {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#dc2626'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (cameraActive) {
+                (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#ef4444'
+              }
+            }}
+          >
+            {cameraActive ? '⊘ Detener cámara' : '▶ Iniciar cámara'}
+          </button>
+
+          {cameraActive && !photoMode && (
+            <button
+              onClick={() => setPhotoMode(true)}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                fontSize: '14px',
+                fontWeight: '600',
+                backgroundColor: '#3b82f6',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                marginBottom: '16px'
+              }}
+            >
+              📸 Tomar foto
+            </button>
+          )}
+
+          {photoMode && (
+            <button
+              onClick={capturePhoto}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                fontSize: '14px',
+                fontWeight: '600',
+                backgroundColor: '#10b981',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                marginBottom: '16px'
+              }}
+            >
+              📷 Capturar
+            </button>
+          )}
+
+          {analyzingPhoto && (
+            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+              <p style={{ color: '#3b82f6', fontSize: '14px' }}>🔍 Analizando imagen...</p>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ color: '#94a3b8', fontSize: 13 }}>Teléfono</span>
-              <span style={{ color: '#fff', fontWeight: 500, fontSize: 13 }}>{scannedVisit.visitor_phone || '—'}</span>
+          )}
+
+          {capturedImage && (
+            <div style={{ marginBottom: '16px' }}>
+              <img
+                src={capturedImage}
+                alt="Foto capturada"
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                  borderRadius: '8px',
+                  border: '2px solid #10b981'
+                }}
+              />
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                <button
+                  onClick={retakePhoto}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    fontSize: '12px',
+                    backgroundColor: '#6b7280',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  ↻ Retomar
+                </button>
+                <button
+                  onClick={() => analyzePhoto(capturedImage)}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    fontSize: '12px',
+                    backgroundColor: '#3b82f6',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  🔍 Analizar
+                </button>
+              </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ color: '#94a3b8', fontSize: 13 }}>Fecha</span>
-              <span style={{ color: '#fff', fontWeight: 500, fontSize: 13 }}>{scannedVisit.visit_date} · {scannedVisit.visit_time}</span>
+          )}
+
+          {cameraError && (
+            <div style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#7f1d1d', borderRadius: '8px', border: '1px solid #991b1b' }}>
+              <p style={{ margin: 0, color: '#fca5a5', fontSize: '13px' }}>⚠ {cameraError}</p>
+            </div>
+          )}
+        </div>
+
+        <div style={{
+          background: '#1a2024',
+          border: '1px solid #334155',
+          borderRadius: '16px',
+          padding: '24px',
+          marginBottom: '24px'
+        }}>
+          <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '16px', color: '#22d3ee' }}>Ingreso Manual</h3>
+          
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+            <input
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder="Ingresa el token QR..."
+              className="input"
+              style={{ 
+                flex: 1, 
+                fontFamily: 'monospace', 
+                fontSize: '13px',
+                padding: '10px 12px',
+                backgroundColor: '#0f172a',
+                border: '1px solid #334155',
+                borderRadius: '8px',
+                color: '#ffffff'
+              }}
+              onKeyDown={(e) => { if (e.key === 'Enter') doScan() }}
+            />
+            <button
+              onClick={doScan}
+              disabled={scanning}
+              style={{
+                padding: '10px 20px',
+                fontSize: '14px',
+                fontWeight: '600',
+                backgroundColor: '#3b82f6',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: scanning ? 'not-allowed' : 'pointer',
+                opacity: scanning ? 0.6 : 1
+              }}
+            >
+              {scanning ? '...' : 'Buscar'}
+            </button>
+          </div>
+
+          {pendingTokens.length > 0 && (
+            <div>
+              <label style={{ display: 'block', color: '#a0a0a0', fontSize: '12px', marginBottom: '8px' }}>Pendientes rápidos</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {pendingTokens.map((v) => (
+                  <button
+                    key={v.id}
+                    onClick={() => {
+                      setToken(v.qr_token)
+                      setScannedVisit(v)
+                      setScanError(null)
+                      setActionMessage(null)
+                    }}
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '11px',
+                      backgroundColor: '#065f46',
+                      color: '#10b981',
+                      border: '1px solid #10b981',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontFamily: 'monospace',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#10b981'
+                      ;(e.currentTarget as HTMLButtonElement).style.color = '#065f46'
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#065f46'
+                      ;(e.currentTarget as HTMLButtonElement).style.color = '#10b981'
+                    }}
+                  >
+                    {v.qr_token.substring(0, 8)}...
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {scanError && (
+          <div style={{ marginBottom: '24px', padding: '14px', backgroundColor: '#7f1d1d', borderRadius: '8px', border: '1px solid #991b1b' }}>
+            <p style={{ margin: 0, color: '#fca5a5', fontSize: '13px' }}>⚠ {scanError}</p>
+          </div>
+        )}
+
+        {actionMessage && !scannedVisit && (
+          <div style={{ 
+            marginBottom: '24px', 
+            padding: '20px', 
+            backgroundColor: actionMessage.includes('correctamente') ? '#064e3b' : '#7f1d1d',
+            borderRadius: '12px', 
+            border: actionMessage.includes('correctamente') ? '2px solid #10b981' : '2px solid #991b1b',
+            textAlign: 'center'
+          }}>
+            <p style={{ margin: 0, color: actionMessage.includes('correctamente') ? '#86efac' : '#fca5a5', fontSize: '14px', fontWeight: 'bold' }}>{actionMessage}</p>
+          </div>
+        )}
+
+        {scannedVisit && (
+          <div style={{
+            background: '#1a2024',
+            border: '1px solid #10b981',
+            borderRadius: '16px',
+            padding: '24px',
+            marginBottom: '24px'
+          }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '20px', color: '#10b981' }}>✓ Visitante Encontrado</h3>
+            
+            <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #334155' }}>
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', color: '#94a3b8', fontSize: '12px', marginBottom: '4px' }}>Nombre</label>
+                <p style={{ margin: 0, fontSize: '15px', fontWeight: '500' }}>{scannedVisit.visitor_name}</p>
+              </div>
+              <div>
+                <label style={{ display: 'block', color: '#94a3b8', fontSize: '12px', marginBottom: '4px' }}>Contacto</label>
+                <p style={{ margin: 0, fontSize: '14px' }}>{scannedVisit.visitor_phone || '—'}</p>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #334155' }}>
+              <label style={{ display: 'block', color: '#94a3b8', fontSize: '12px', marginBottom: '4px' }}>Fecha y Hora</label>
+              <p style={{ margin: 0, fontSize: '14px' }}>{scannedVisit.visit_date} a las {scannedVisit.visit_time}</p>
             </div>
 
             {role === 'admin' && (
-              <div style={{ marginTop: 12 }}>
-                <label style={{ display: 'block', color: '#94a3b8', marginBottom: 6 }}>Nuevo estado</label>
+              <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #334155' }}>
+                <label style={{ display: 'block', color: '#94a3b8', fontSize: '12px', marginBottom: '8px' }}>Estado</label>
                 <select
                   aria-label="Nuevo estado"
                   value={newStatus}
                   onChange={(e) => setNewStatus(e.target.value as Visit['status'])}
-                  className="input"
-                  style={{ width: '100%', fontFamily: 'monospace', fontSize: 13 }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    backgroundColor: '#0f172a',
+                    border: '1px solid #334155',
+                    borderRadius: '6px',
+                    color: '#ffffff',
+                    fontSize: '13px',
+                    cursor: 'pointer'
+                  }}
                 >
                   {['pending','approved','rejected','completed','cancelled'].map(s => (
                     <option key={s} value={s}>{s}</option>
@@ -304,13 +541,23 @@ const ScanPage: React.FC = () => {
             )}
 
             <button
-              id="approve-btn"
               onClick={handleRegister}
               disabled={isWorking}
-              className="btn-primary"
-              style={{ width: '100%', marginTop: 12 }}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                fontSize: '14px',
+                fontWeight: '600',
+                backgroundColor: isWorking ? '#4b5563' : '#10b981',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: isWorking ? 'not-allowed' : 'pointer',
+                opacity: isWorking ? 0.6 : 1,
+                transition: 'all 0.2s'
+              }}
             >
-              {isWorking ? '...' : role === 'admin' ? 'Actualizar estado' : '✓ Registrar entrada'}
+              {isWorking ? '...' : role === 'admin' ? 'Actualizar Estado' : '✓ Registrar Entrada'}
             </button>
           </div>
         )}
