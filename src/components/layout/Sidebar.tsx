@@ -12,6 +12,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'visit-list', label: 'Lista de Visitas', icon: '📋', roles: ['admin', 'security'], path: '/visits/list' },
   { id: 'scan', label: 'Escanear QR', icon: '📷', roles: ['admin', 'security'], path: '/scan' },
   { id: 'admin-users', label: 'Usuarios', icon: '👥', roles: ['admin'], path: '/admin/users' },
+  { id: 'admin-stats', label: 'Estadísticas', icon: '📊', roles: ['admin'], path: '/admin/stats'},
 ]
 
 function avatarStyle(size: number): React.CSSProperties {
@@ -46,7 +47,7 @@ export default function Sidebar() {
     role === 'admin'
       ? [
           { title: 'General', ids: ['dashboard', 'new-visit', 'scan', 'visit-list'] as const },
-          { title: 'Administración', ids: ['admin-users'] as const },
+          { title: 'Administración', ids: ['admin-users', 'admin-stats'] as const },
         ]
       : [{ title: '', ids: all.map((n) => n.id) }]
 
@@ -94,7 +95,7 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <div style={{ flex: 1, minHeight: 0 }} />
+      <div style={{ flex: 0, minHeight: 0 }} />
 
       <div style={styles.userPanel}>
         <div style={styles.userInfo}>
