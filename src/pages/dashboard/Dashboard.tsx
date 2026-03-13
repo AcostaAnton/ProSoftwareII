@@ -27,18 +27,14 @@ export default function Dashboard() {
 
   const [selectedVisit, setSelectedVisit] = useState<Visit | null>(null)
   const [showQRModal, setShowQRModal] = useState(false)
-  const [loadingQR, setLoadingQR] = useState(false)
 
   const handleVerQR = async (visitaId: string) => {
     try {
-      setLoadingQR(true)
       const visit = await getVisitById(visitaId)
       setSelectedVisit(visit)
       setShowQRModal(true)
     } catch (err) {
       console.error('Error al cargar la visita:', err)
-    } finally {
-      setLoadingQR(false)
     }
   }
 

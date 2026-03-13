@@ -21,7 +21,7 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
     useEffect(() => {
         const generateQR = async () => {
             try {
-                const qrData = `${window.location.origin}/visits/${visit.id}`
+                const qrData = visit.qr_token
                 const qrCodeDataURL = await QRCode.toDataURL(qrData)
                 setQrCode(qrCodeDataURL)
             } catch (err) {
@@ -32,7 +32,7 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
         }
 
         generateQR()
-    }, [visit.id])
+    }, [visit.qr_token])
 
     const downloadQR = () => {
         const link = document.createElement('a')

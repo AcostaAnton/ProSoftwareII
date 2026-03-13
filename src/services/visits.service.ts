@@ -58,6 +58,22 @@ export async function getVisitById(visitId: string): Promise<Visit> {
   return data as Visit
 }
 
+// - Actualizar el estado de una visita (por ejemplo: pending → completed)
+export async function updateVisitStatus(
+  visitId: string,
+  status: Visit['status']
+): Promise<Visit> {
+  const { data, error } = await supabase
+    .from('visits')
+    .update({ status })
+    .eq('id', visitId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as Visit
+}
+
 // - Función auxiliar para generar token QR
 function generateQRToken(): string {
   return (

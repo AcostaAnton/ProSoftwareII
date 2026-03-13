@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { getVisitsByResident } from '../../services/visits.service'
+import { getVisitsByResident, getAllVisits } from '../../services/visits.service'
 import type { Visit } from '../../types/index'
 
 type FilterType = 'today' | 'tomorrow' | 'thisWeek' | 'nextWeek' | 'thisMonth'
 
 const VisitList: React.FC = () => {
-    const { user } = useAuth()
+    const { user, role } = useAuth()
     const navigate = useNavigate()
     const [visits, setVisits] = useState<Visit[]>([])
     const [filteredVisits, setFilteredVisits] = useState<Visit[]>([])
@@ -27,7 +27,12 @@ const VisitList: React.FC = () => {
 
     const loadVisits = async () => {
         try {
-            const visitsData = await getVisitsByResident(user!.id)
+            let visitsData: Visit[] = []
+            if (role === 'resident') {
+                visitsData = await getVisitsByResident(user!.id)
+            } else {
+                visitsData = await getAllVisits()
+            }
             setVisits(visitsData)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error al cargar las visitas')

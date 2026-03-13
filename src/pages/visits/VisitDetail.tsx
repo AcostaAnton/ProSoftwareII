@@ -3,12 +3,18 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { getVisitById } from '../../services/visits.service'
 import { formatDate } from '../../utils/formatDate'
 import QRGenerator from '../../components/shared/QRGenerator'
+import { useAuth } from '../../hooks/useAuth'
+import { useVisits } from '../../hooks/useVisits'
 import type { Visit } from '../../types/index'
 
 const VisitDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const [visit, setVisit] = useState<Visit | null>(null)
+    const [newStatus, setNewStatus] = useState<Visit['status']>('pending')
+    const { role } = useAuth()
+    const { changeStatus, refresh } = useVisits()
+    const [isUpdating, setIsUpdating] = useState(false)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [showQRModal, setShowQRModal] = useState(false)
@@ -25,6 +31,7 @@ const VisitDetail: React.FC = () => {
             }
             const visitData = await getVisitById(id)
             setVisit(visitData)
+            setNewStatus(visitData.status)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error al cargar la visita')
         } finally {
@@ -108,6 +115,20 @@ const VisitDetail: React.FC = () => {
         )
     }
 
+    const handleStatusUpdate = async () => {
+        if (!visit) return
+        setIsUpdating(true)
+        try {
+            const updated = await changeStatus(visit.id, newStatus)
+            setVisit(updated)
+            await refresh()
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setIsUpdating(false)
+        }
+    }
+
     if (!visit) {
         return (
             <div style={{ backgroundColor: '#080c0f', minHeight: '100vh', padding: '20px', color: '#ffffff' }}>
@@ -147,22 +168,57 @@ const VisitDetail: React.FC = () => {
                     borderRadius: '8px',
                     marginBottom: '20px'
                 }}>
-                    {/* Estatus */}
                     <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #2a3034' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <span style={{ color: '#a0a0a0' }}>Estado:</span>
-                            <span
-                                style={{
-                                    padding: '6px 12px',
-                                    backgroundColor: getStatusColor(visit.status),
-                                    color: '#ffffff',
-                                    borderRadius: '20px',
-                                    fontSize: '14px',
-                                    fontWeight: 'bold'
-                                }}
-                            >
-                                {getStatusLabel(visit.status)}
-                            </span>
+                            {role === 'admin' ? (
+                                <select
+                                    value={newStatus}
+                                    onChange={(e) => setNewStatus(e.target.value as Visit['status'])}
+                                    style={{
+                                        padding: '4px 8px',
+                                        borderRadius: '4px',
+                                        background: '#1a2024',
+                                        color: '#ffffff',
+                                        border: '1px solid #334155'
+                                    }}
+                                >
+                                    {['pending','approved','rejected','completed','cancelled'].map(s => (
+                                        <option key={s} value={s}>{s}</option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <span
+                                    style={{
+                                        padding: '6px 12px',
+                                        backgroundColor: getStatusColor(visit.status),
+                                        color: '#ffffff',
+                                        borderRadius: '20px',
+                                        fontSize: '14px',
+                                        fontWeight: 'bold'
+                                    }}
+                                >
+                                    {getStatusLabel(visit.status)}
+                                </span>
+                            )}
+                            {role === 'admin' && (
+                                <button
+                                    onClick={handleStatusUpdate}
+                                    disabled={isUpdating}
+                                    style={{
+                                        marginLeft: '10px',
+                                        padding: '6px 12px',
+                                        backgroundColor: '#22c55e',
+                                        color: '#080c0f',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontSize: '14px'
+                                    }}
+                                >
+                                    {isUpdating ? '...' : 'Guardar'}
+                                </button>
+                            )}
                         </div>
                     </div>
 
