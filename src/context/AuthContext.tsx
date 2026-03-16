@@ -49,39 +49,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser({ id: userId, email, profile: profileData })
         } catch (error) {
             console.error('Error al cargar el perfil:', error)
-            setProfile(null)
-            setUser({ id: userId, email, profile: null })
+            // No borrar perfil aquí; el listener decide si conservar el anterior (p. ej. en TOKEN_REFRESHED)
+            throw error
         }
     }
 
-    // - Efecto para escuchar cambios de sesion
+    // - Efecto: una sola fuente de verdad vía onAuthStateChange (evita carreras con getSession)
     useEffect(() => {
-        // 1 - Verificar sesion existente al cargar la app
-        supabase.auth.getSession().then(({ data }: { data: { session: unknown } }) => {
-            const session = data.session as { user: { id: string; email?: string } } | null
-            if (session) {
-                void loadProfile(session.user.id, session.user.email ?? '').finally(() => setLoading(false))
-            } else {
-                setLoading(false)
-            }
-        })
-        // 2 - Escuchar cambios futuros (login/logout). Siempre poner loading false al terminar.
         const { data: listener } = supabase.auth.onAuthStateChange(
             async (event, session) => {
                 try {
-                    if (event === 'SIGNED_IN' && session?.user) {
-                        await loadProfile(session.user.id, session.user.email ?? '')
-                    }
-                    if (event === 'SIGNED_OUT') {
+                    const sessionUser = session?.user as { id: string; email?: string } | undefined
+
+                    // Cierre de sesión explícito o sesión que ya no existe
+                    if (event === 'SIGNED_OUT' || (event === 'INITIAL_SESSION' && !sessionUser)) {
                         setUser(null)
                         setProfile(null)
+                    }
+                    // Sesión presente: carga inicial (INITIAL_SESSION) o login (SIGNED_IN) o refresh de token
+                    else if (sessionUser && (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+                        try {
+                            await loadProfile(sessionUser.id, sessionUser.email ?? '')
+                        } catch {
+                            // En TOKEN_REFRESHED, si ya teníamos perfil del mismo usuario, no borrarlo
+                            // (evita que un timeout/error de red haga “perder” el rol y se muestre como resident)
+                            setUser((prev) => {
+                                if (prev?.id === sessionUser.id && prev.profile) return prev
+                                return { id: sessionUser.id, email: sessionUser.email ?? '', profile: null }
+                            })
+                            setProfile((prev) => {
+                                if (prev?.id === sessionUser.id) return prev
+                                return null
+                            })
+                        }
                     }
                 } finally {
                     setLoading(false)
                 }
             }
         )
-        // 3 - Limpiar listener al desmontar el componente
         return () => {
             listener?.subscription?.unsubscribe()
         }

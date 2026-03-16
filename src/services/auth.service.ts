@@ -31,9 +31,9 @@ export async function RegisterUser({name,email, password, phone, role, community
     if (data.user) {
         const { error: profileError } = await supabase
         .from('profiles')
-        .update({name,phone,role,community_id})
+        .update({ name, phone, role, community_id, email })
         .eq('id', data.user.id)
-    
+
         if (profileError) throw profileError
     }
 
