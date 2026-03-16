@@ -3,7 +3,10 @@
 
 // - Enums
 
-export type UserRole = 'admin' |'resident' | 'security' | 'visitor'
+export type UserRole = 'admin' |'resident' | 'security'
+
+/** Estado del perfil de usuario (columna status en profiles) */
+export type ProfileStatus = 'active' | 'inactive' | 'suspended'
 
 export type VisitStatus = 'pending' | 'approved' | 'rejected' | 'completed' | 'cancelled'
 
@@ -52,6 +55,9 @@ export interface Profile {
     role: UserRole
     community_id: string
     created_at: string
+    email?: string | null
+    unit_number?: string | null    /** Estado del perfil: active, inactive, suspended */
+    status?: ProfileStatus
 }
 
 // ── Vistas enriquecidas (JOINs de Supabase) ──────────────────

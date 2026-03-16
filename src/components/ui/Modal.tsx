@@ -4,9 +4,11 @@ interface ModalProps {
     isOpen: boolean
     onClose: () => void
     children: React.ReactNode
+    /** Si false, no se muestra el botón "Cerrar" por defecto (útil cuando el contenido tiene sus propios botones). */
+    showCloseButton?: boolean
 }
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
+export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, showCloseButton = true }) => {
     if (!isOpen) return null
 
     return (
@@ -31,20 +33,22 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
                 color: '#ffffff'
             }}>
                 {children}
-                <button
-                    onClick={onClose}
-                    style={{
-                        marginTop: '20px',
-                        padding: '8px 16px',
-                        backgroundColor: '#2a3034',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                    }}
-                >
-                    Cerrar
-                </button>
+                {showCloseButton && (
+                    <button
+                        onClick={onClose}
+                        style={{
+                            marginTop: '20px',
+                            padding: '8px 16px',
+                            backgroundColor: '#2a3034',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Cerrar
+                    </button>
+                )}
             </div>
         </div>
     )
