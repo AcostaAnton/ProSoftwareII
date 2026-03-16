@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { Avatar } from '../ui/Avatar'
 import type { UserRole } from '../../types'
 
 // ─── Nav config (solo ítems con rutas existentes; añadir scan/admin cuando existan rutas) ───
@@ -14,27 +15,6 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'admin-users', label: 'Usuarios', icon: '👥', roles: ['admin'], path: '/admin/users' },
   { id: 'admin-stats', label: 'Estadísticas', icon: '📊', roles: ['admin'], path: '/admin/stats'},
 ]
-
-function avatarStyle(size: number): React.CSSProperties {
-  return {
-    width: size,
-    height: size,
-    borderRadius: '50%',
-    background: 'linear-gradient(135deg, #22d3ee 0%, #8b5cf6 100%)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: 'white',
-    fontWeight: 700,
-    fontSize: Math.round(size * 0.35),
-    flexShrink: 0,
-  }
-}
-
-function Avatar({ name, size = 32 }: { name: string; size?: number }) {
-  const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-  return <div style={avatarStyle(size)}>{initials}</div>
-}
 
 export default function Sidebar() {
   const { user, profile, role, logout } = useAuth()
@@ -103,7 +83,7 @@ export default function Sidebar() {
           <div style={styles.userText}>
             <p style={styles.userName}>{displayName}</p>
             <p style={styles.userRole}>
-              {role === 'admin' ? 'Admin' : role === 'security' ? 'Guardia' : 'Resident'}
+              {role === 'admin' ? 'Admin' : role === 'security' ? 'Guardia' : role === 'resident' ? 'Resident' : 'Usuario'}
             </p>
           </div>
         </div>
