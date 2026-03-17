@@ -55,7 +55,7 @@ const ScanPage: React.FC = () => {
         videoRef.current,
         (result) => handleScanResult(result.data),
         {
-          onDecodeError: (err) => { /* Silencioso mientras busca */ },
+          onDecodeError: () => { /* Silencioso mientras busca */ },
           highlightScanRegion: true,
           highlightCodeOutline: true,
           preferredCamera: 'environment'
