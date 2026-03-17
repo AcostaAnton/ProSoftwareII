@@ -13,7 +13,8 @@ const NewVisit: React.FC = () => {
         visit_hour: '12',
         visit_minute: '00',
         visit_period: 'AM',
-        reason: ''
+        visit_purpose: '',
+        visit_destination: ''
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -49,6 +50,8 @@ const NewVisit: React.FC = () => {
                 visitor_phone: formData.visitor_phone,
                 visit_date: formData.visit_date,
                 visit_time: visit_time,
+                visit_purpose: formData.visit_purpose,
+                visit_destination: formData.visit_destination,
                 status: 'pending' as VisitStatus
             })
             
@@ -60,7 +63,8 @@ const NewVisit: React.FC = () => {
                 visit_hour: '12',
                 visit_minute: '00',
                 visit_period: 'AM',
-                reason: ''
+                visit_purpose: '',
+                visit_destination: ''
             })
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error al crear la visita')
@@ -242,39 +246,43 @@ const NewVisit: React.FC = () => {
                     </div>
 
                     <div>
-                        <label style={{ display: 'block', color: '#b0b0b0', marginBottom: '5px' }}>Motivo</label>
-                        <div style={{ position: 'relative' }}>
-                            <select
-                                name="reason"
-                                value={formData.reason}
-                                onChange={handleChange}
-                                style={{
-                                    width: '100%',
-                                    padding: '12px',
-                                    backgroundColor: '#1a2024',
-                                    border: '1px solid #2a3034',
-                                    borderRadius: '20px',
-                                    color: '#ffffff',
-                                    fontSize: '16px',
-                                    appearance: 'none'
-                                }}
-                            >
-                                <option value="">Seleccionar</option>
-                                <option value="familiar">Familiar</option>
-                                <option value="amigo">Amigo</option>
-                                <option value="servicio">Servicio</option>
-                                <option value="otro">Otro</option>
-                            </select>
-                            <span style={{
-                                position: 'absolute',
-                                right: '12px',
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                color: '#a0a0a0'
-                            }}>
-                                
-                            </span>
-                        </div>
+                        <label style={{ display: 'block', color: '#b0b0b0', marginBottom: '5px' }}>Asunto</label>
+                        <input
+                            type="text"
+                            name="visit_purpose"
+                            value={formData.visit_purpose}
+                            onChange={handleChange}
+                            placeholder="Motivo de la visita"
+                            style={{
+                                width: '100%',
+                                padding: '12px',
+                                backgroundColor: '#1a2024',
+                                border: '1px solid #2a3034',
+                                borderRadius: '20px',
+                                color: '#ffffff',
+                                fontSize: '16px'
+                            }}
+                        />
+                    </div>
+
+                    <div>
+                        <label style={{ display: 'block', color: '#b0b0b0', marginBottom: '5px' }}>A donde va</label>
+                        <input
+                            type="text"
+                            name="visit_destination"
+                            value={formData.visit_destination}
+                            onChange={handleChange}
+                            placeholder="Unidad o lugar de destino"
+                            style={{
+                                width: '100%',
+                                padding: '12px',
+                                backgroundColor: '#1a2024',
+                                border: '1px solid #2a3034',
+                                borderRadius: '20px',
+                                color: '#ffffff',
+                                fontSize: '16px'
+                            }}
+                        />
                     </div>
 
                     <button

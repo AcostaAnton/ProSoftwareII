@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react'
 import QrScanner from 'qr-scanner'
 //recurso: https://cdnjs.cloudflare.com/ajax/libs/qr-scanner/1.4.2/qr-scanner-worker.min.js
-QrScanner.WORKER_PATH = '/qr-scanner-worker.min.js'
 
 import { useAuth } from '../../hooks/useAuth'
 import { useVisits } from '../../hooks/useVisits'
 import { createAccessLog } from '../../services/logs.service'
+import useResponsive from '../../hooks/useResponsive'
 import type { Visit } from '../../types/index'
 
 const ScanPage: React.FC = () => {
   const { user, role } = useAuth()
   const { visits, changeStatus, refresh } = useVisits()
+  const isMobile = useResponsive()
 
   const [token, setToken] = useState('')
   const [cameraActive, setCameraActive] = useState(false)
@@ -47,6 +48,10 @@ const ScanPage: React.FC = () => {
   const startCameraScan = async () => {
     if (!videoRef.current) return
     
+    // Configurar el worker path antes de instanciar
+    // @ts-ignore
+    QrScanner.WORKER_PATH = '/qr-scanner-worker.min.js'
+
     try {
       setCameraError(null)
       setScanError(null)
@@ -55,7 +60,7 @@ const ScanPage: React.FC = () => {
         videoRef.current,
         (result) => handleScanResult(result.data),
         {
-          onDecodeError: (err) => { /* Silencioso mientras busca */ },
+          onDecodeError: () => { /* Silencioso mientras busca */ },
           highlightScanRegion: true,
           highlightCodeOutline: true,
           preferredCamera: 'environment'
@@ -118,7 +123,7 @@ const ScanPage: React.FC = () => {
   }, [])
 
   return (
-    <div style={{ backgroundColor: '#080c0f', minHeight: '100vh', padding: '20px', color: '#ffffff', fontFamily: 'sans-serif' }}>
+    <div style={{ backgroundColor: '#080c0f', minHeight: '100vh', padding: isMobile ? '10px' : '20px', color: '#ffffff', fontFamily: 'sans-serif' }}>
       <div style={{ maxWidth: '600px', margin: '0 auto' }}>
         
         <header style={{ marginBottom: '30px' }}>
@@ -196,7 +201,7 @@ const ScanPage: React.FC = () => {
           }}>
             <div style={{
               backgroundColor: '#1e293b', width: '100%', maxWidth: '450px', borderRadius: '20px',
-              padding: '30px', border: '1px solid #334155', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
+              padding: isMobile ? '20px' : '30px', border: '1px solid #334155', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
             }}>
               <h2 style={{ color: '#10b981', marginTop: 0 }}>Visitante Encontrado</h2>
               <hr style={{ borderColor: '#334155', margin: '20px 0' }} />
@@ -207,8 +212,16 @@ const ScanPage: React.FC = () => {
                   <p style={{ margin: '4px 0', fontSize: '18px', fontWeight: 'bold' }}>{scannedVisit.visitor_name}</p>
                 </div>
                 <div>
-                  <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Asunto / Fecha</label>
+                  <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Asunto</label>
+                  <p style={{ margin: '4px 0' }}>{scannedVisit.visit_purpose || 'No especificado'}</p>
+                </div>
+                <div>
+                  <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Fecha</label>
                   <p style={{ margin: '4px 0' }}>{scannedVisit.visit_date} - {scannedVisit.visit_time}</p>
+                </div>
+                <div>
+                  <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>A donde va</label>
+                  <p style={{ margin: '4px 0' }}>{scannedVisit.visit_destination || 'No especificado'}</p>
                 </div>
                 
                 {role === 'admin' && (
@@ -220,6 +233,8 @@ const ScanPage: React.FC = () => {
                       style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '6px', backgroundColor: '#0f172a', color: 'white', border: '1px solid #334155' }}
                     >
                       <option value="pending">Pendiente</option>
+                      <option value="approved">Aceptado</option>
+                      <option value="rejected">Rechazado</option>
                       <option value="completed">Completado</option>
                       <option value="cancelled">Cancelado</option>
                     </select>
