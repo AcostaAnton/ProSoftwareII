@@ -34,6 +34,8 @@ export interface Visit {
     visitor_phone: string
     visit_date: string
     visit_time: string
+    visit_purpose?: string
+    visit_destination?: string
     qr_token: string
     status: VisitStatus
     created_at: string
