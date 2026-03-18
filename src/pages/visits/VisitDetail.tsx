@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getVisitById } from '../../services/visits.service'
-import { formatDate } from '../../utils/formatDate'
+import { formatDate, formatTime, formatPhone } from '../../utils/formatDate'
 import QRGenerator from '../../components/shared/QRGenerator'
 import { useAuth } from '../../hooks/useAuth'
 import { useVisits } from '../../hooks/useVisits'
@@ -17,6 +17,7 @@ const VisitDetail: React.FC = () => {
     const [isUpdating, setIsUpdating] = useState(false)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [showSuccessModal, setShowSuccessModal] = useState(false)
     const [showQRModal, setShowQRModal] = useState(false)
 
     useEffect(() => {
@@ -122,6 +123,7 @@ const VisitDetail: React.FC = () => {
             const updated = await changeStatus(visit.id, newStatus)
             setVisit(updated)
             await refresh()
+            setShowSuccessModal(true)
         } catch (err) {
             console.error(err)
         } finally {
@@ -183,9 +185,11 @@ const VisitDetail: React.FC = () => {
                                         border: '1px solid #334155'
                                     }}
                                 >
-                                    {['pending','approved','rejected','completed','cancelled'].map(s => (
-                                        <option key={s} value={s}>{s}</option>
-                                    ))}
+                                    <option value="pending">Pendiente</option>
+                                    <option value="approved">Aprobado</option>
+                                    <option value="rejected">Rechazado</option>
+                                    <option value="completed">Completado</option>
+                                    <option value="cancelled">Cancelado</option>
                                 </select>
                             ) : (
                                 <span
@@ -237,7 +241,7 @@ const VisitDetail: React.FC = () => {
                                     Teléfono
                                 </label>
                                 <p style={{ margin: 0, fontSize: '16px' }}>
-                                    {visit.visitor_phone || 'No proporcionado'}
+                                    {formatPhone(visit.visitor_phone) || 'No proporcionado'}
                                 </p>
                             </div>
                         </div>
@@ -259,7 +263,7 @@ const VisitDetail: React.FC = () => {
                                 <label style={{ display: 'block', color: '#a0a0a0', fontSize: '14px', marginBottom: '5px' }}>
                                     Hora
                                 </label>
-                                <p style={{ margin: 0, fontSize: '16px' }}>{visit.visit_time}</p>
+                                <p style={{ margin: 0, fontSize: '16px' }}>{formatTime(visit.visit_time)}</p>
                             </div>
                         </div>
                     </div>
@@ -332,6 +336,54 @@ const VisitDetail: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Modal de Éxito */}
+            {showSuccessModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 2000
+                }}>
+                    <div style={{
+                        backgroundColor: '#1a2024',
+                        padding: '30px',
+                        borderRadius: '12px',
+                        textAlign: 'center',
+                        maxWidth: '400px',
+                        width: '90%'
+                    }}>
+                        <h3 style={{ color: '#22d3ee', marginBottom: '20px' }}>¡Cambios realizados!</h3>
+                        <p style={{ color: '#ffffff', marginBottom: '25px' }}>
+                            El estado de la visita ha sido actualizado correctamente.
+                        </p>
+                        <button
+                            onClick={() => {
+                                setShowSuccessModal(false)
+                                navigate('/visits/list')
+                            }}
+                            style={{
+                                padding: '12px 24px',
+                                backgroundColor: '#22d3ee',
+                                color: '#000000',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontSize: '16px',
+                                fontWeight: 'bold'
+                            }}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Modal QR */}
             {showQRModal && visit && (

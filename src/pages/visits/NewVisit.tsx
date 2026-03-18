@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useAuth } from '../../hooks/useAuth'
-import { createVisit } from '../../services/visits.service'
+import { createVisit, checkOptionalFields } from '../../services/visits.service'
 import QRGenerator from '../../components/shared/QRGenerator'
 import type { VisitStatus, Visit } from '../../types/index'
 
@@ -38,22 +38,62 @@ const NewVisit: React.FC = () => {
         setError(null)
 
         try {
+            // Validar y convertir fecha
+            let formattedDate = formData.visit_date
+            if (formattedDate.includes('/')) {
+                // Convertir de DD/MM/YYYY a YYYY-MM-DD
+                const [day, month, year] = formattedDate.split('/')
+                formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+            }
+
+            // Validar campos requeridos
+            if (!formData.visitor_name.trim()) {
+                setError('El nombre del visitante es requerido')
+                return
+            }
+            if (!formattedDate) {
+                setError('La fecha de la visita es requerida')
+                return
+            }
+            const cleanPhone = formData.visitor_phone.replace(/[\s\-]/g, '')
+
             // Convertir hora de 12h a 24h
             const hour24 = formData.visit_period === 'PM' 
                 ? (parseInt(formData.visit_hour) === 12 ? 12 : parseInt(formData.visit_hour) + 12)
                 : (parseInt(formData.visit_hour) === 12 ? 0 : parseInt(formData.visit_hour))
             const visit_time = `${hour24.toString().padStart(2, '0')}:${formData.visit_minute}`
 
-            const visit: Visit = await createVisit({
+            const visitData = {
                 resident_id: user.id,
-                visitor_name: formData.visitor_name,
-                visitor_phone: formData.visitor_phone,
-                visit_date: formData.visit_date,
-                visit_time: visit_time,
-                visit_purpose: formData.visit_purpose,
-                visit_destination: formData.visit_destination,
+                visitor_name: formData.visitor_name.trim(),
+                visitor_phone: cleanPhone || undefined,
+                visit_date: formattedDate,
+                visit_time: visit_time || undefined,
+                // visit_purpose: formData.visit_purpose.trim() || undefined,
+                // visit_destination: formData.visit_destination.trim() || undefined,
                 status: 'pending' as VisitStatus
-            })
+            }
+            
+            console.log('Creating visit with data:', visitData)
+            console.log('Raw form data:', formData)
+            console.log('visit_time format:', visit_time, 'type:', typeof visit_time)
+            console.log('visit_date format:', formData.visit_date, 'type:', typeof formData.visit_date)
+
+            // Verificar si los campos opcionales existen
+            const fieldCheck = await checkOptionalFields()
+            console.log('Optional fields check:', fieldCheck)
+
+            let finalVisitData = { ...visitData } as any
+            
+            if (fieldCheck.exist) {
+                finalVisitData.visit_purpose = formData.visit_purpose.trim() || undefined
+                finalVisitData.visit_destination = formData.visit_destination.trim() || undefined
+                console.log('Including optional fields in final data')
+            } else {
+                console.log('Optional fields not available, using basic data only')
+            }
+
+            const visit: Visit = await createVisit(finalVisitData)
             
             setCreatedVisit(visit)
             setFormData({
@@ -67,7 +107,17 @@ const NewVisit: React.FC = () => {
                 visit_destination: ''
             })
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Error al crear la visita')
+            console.error('Error creating visit:', err)
+            console.error('Error details:', JSON.stringify(err, null, 2))
+            
+            // Mostrar mensaje más específico del error
+            if (err && typeof err === 'object' && 'message' in err) {
+                setError(`Error al crear la visita: ${err.message}`)
+            } else if (err && typeof err === 'object' && 'code' in err) {
+                setError(`Error al crear la visita (código: ${err.code})`)
+            } else {
+                setError('Error al crear la visita')
+            }
         } finally {
             setIsSubmitting(false)
         }
@@ -130,7 +180,7 @@ const NewVisit: React.FC = () => {
                             name="visitor_phone"
                             value={formData.visitor_phone}
                             onChange={handleChange}
-                            placeholder="+504 0000-0000"
+                            placeholder="9999-9999"
                             style={{
                                 width: '100%',
                                 padding: '12px',

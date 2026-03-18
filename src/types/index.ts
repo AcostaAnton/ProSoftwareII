@@ -31,9 +31,9 @@ export interface Visit {
     id: string
     resident_id: string
     visitor_name: string
-    visitor_phone: string
+    visitor_phone?: string
     visit_date: string
-    visit_time: string
+    visit_time?: string
     visit_purpose?: string
     visit_destination?: string
     qr_token: string
