@@ -18,10 +18,17 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    persistSession: true,
-    detectSessionInUrl: true,
+  db: {
+    schema: 'public'
   },
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  },
+  global: {
+    headers: {
+      'x-my-custom-header': 'prosoftware'
+    }
+  }
 })
-
-export default supabase
