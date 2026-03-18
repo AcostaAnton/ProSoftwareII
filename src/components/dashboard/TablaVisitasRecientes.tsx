@@ -33,6 +33,7 @@ type PropiedadesTablaVisitasRecientes = {
   visitas: VisitaReciente[]
   mostrarBotonNuevaVisita?: boolean
   textoBotonNuevaVisita?: string
+  onNuevaVisita?: () => void
   onVerQR?: (visitaId: string) => void
 }
 
@@ -120,6 +121,7 @@ export default function TablaVisitasRecientes({
   visitas,
   mostrarBotonNuevaVisita = false,
   textoBotonNuevaVisita = '+ Nueva visita',
+  onNuevaVisita,
   onVerQR,
 }: PropiedadesTablaVisitasRecientes) {
   return (
@@ -149,6 +151,7 @@ export default function TablaVisitasRecientes({
         {mostrarBotonNuevaVisita && (
           <button
             type="button"
+            onClick={onNuevaVisita}
             style={{
               background: '#22d3ee',
               border: 'none',

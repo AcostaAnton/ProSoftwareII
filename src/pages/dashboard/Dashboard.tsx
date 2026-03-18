@@ -6,6 +6,7 @@
 // ============================================================
 
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import EncabezadoDashboard from '../../components/dashboard/EncabezadoDashboard'
 import PanelEstadisticasDashboard from '../../components/dashboard/PanelEstadisticasDashboard'
 import TablaVisitasRecientes from '../../components/dashboard/TablaVisitasRecientes'
@@ -15,6 +16,8 @@ import { getVisitById } from '../../services/visits.service'
 import type { Visit } from '../../types/index'
 
 export default function Dashboard() {
+  const navigate = useNavigate()
+
   const {
     cargando,
     error,
@@ -36,6 +39,10 @@ export default function Dashboard() {
     } catch (err) {
       console.error('Error al cargar la visita:', err)
     }
+  }
+
+  const handleNuevaVisita = () => {
+    navigate('/visits/new')
   }
 
   if (cargando) {
@@ -69,6 +76,7 @@ export default function Dashboard() {
         titulo="Visitas recientes"
         visitas={visitasRecientes}
         mostrarBotonNuevaVisita={mostrarBotonNuevaVisita}
+        onNuevaVisita={handleNuevaVisita}
         onVerQR={handleVerQR}
       />
 
