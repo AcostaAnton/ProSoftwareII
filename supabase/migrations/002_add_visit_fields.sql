@@ -3,5 +3,5 @@
 -- ============================================================
 
 ALTER TABLE public.visits
-ADD COLUMN visit_purpose TEXT,
-ADD COLUMN visit_destination TEXT;
+ADD COLUMN IF NOT EXISTS visit_purpose TEXT,
+ADD COLUMN IF NOT EXISTS visit_destination TEXT;

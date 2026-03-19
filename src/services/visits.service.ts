@@ -2,7 +2,7 @@
 // Servicios para gestionar visitas
 // ============================================================
 
-import type { Visit } from '../types/index'
+import type { CreateVisitInput, Visit } from '../types/index'
 import { supabase } from './supabase'
 
 // - Función auxiliar para generar token QR
@@ -10,19 +10,46 @@ function generateQRToken(): string {
   return Math.random().toString(36).substring(2, 10)
 }
 
+function normalizeNullableText(value?: string | null): string | null {
+  const normalized = value?.trim()
+  return normalized ? normalized : null
+}
+
+function isVisitFieldSchemaError(error: { code?: string; message?: string }): boolean {
+  return (
+    error.code === 'PGRST204' ||
+    error.message?.includes('visit_purpose') === true ||
+    error.message?.includes('visit_destination') === true
+  )
+}
+
 // - Crear una nueva visita
 export async function createVisit(
-  visitData: Omit<Visit, 'id' | 'created_at' | 'qr_token'>
+  visitData: CreateVisitInput
 ) {
   const qr_token = generateQRToken()
+  const payload = {
+    ...visitData,
+    visitor_name: visitData.visitor_name.trim(),
+    visitor_phone: normalizeNullableText(visitData.visitor_phone),
+    visit_time: normalizeNullableText(visitData.visit_time),
+    visit_purpose: normalizeNullableText(visitData.visit_purpose),
+    visit_destination: normalizeNullableText(visitData.visit_destination),
+    qr_token
+  }
 
   const { data, error } = await supabase
     .from('visits')
-    .insert([{ ...visitData, qr_token }])
+    .insert([payload])
     .select()
     .single()
 
-  if (error) throw error
+  if (error) {
+    if (isVisitFieldSchemaError(error)) {
+      throw new Error('La base de datos todavia no tiene los campos de asunto y destino. Hay que aplicar la migracion de visits antes de crear la visita.')
+    }
+    throw error
+  }
   return data as Visit
 }
 
@@ -79,17 +106,3 @@ export async function updateVisitStatus(
   return data as Visit
 }
 
-// - Verificar si los campos opcionales existen
-export async function checkOptionalFields() {
-  try {
-    const { data, error } = await supabase
-      .from('visits')
-      .select('visit_purpose, visit_destination')
-      .limit(1)
-
-    if (error) throw error
-    return { exist: true, data }
-  } catch (error) {
-    return { exist: false, error }
-  }
-}
