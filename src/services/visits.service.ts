@@ -7,10 +7,7 @@ import { supabase } from './supabase'
 
 // - Función auxiliar para generar token QR
 function generateQRToken(): string {
-  return (
-    Math.random().toString(36).substring(2, 15) +
-    Math.random().toString(36).substring(2, 15)
-  )
+  return Math.random().toString(36).substring(2, 10)
 }
 
 // - Crear una nueva visita
