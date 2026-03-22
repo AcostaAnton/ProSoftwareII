@@ -1,32 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react'
-import QrScanner from 'qr-scanner'
-//recurso: https://cdnjs.cloudflare.com/ajax/libs/qr-scanner/1.4.2/qr-scanner-worker.min.js
+import React, { useState, useEffect } from 'react'
+import QRScanner from '../../components/shared/QRScanner'
+import VisitActionModal from '../../components/shared/VisitActionModal'
 
 import { useAuth } from '../../hooks/useAuth'
 import { useVisits } from '../../hooks/useVisits'
-import { createAccessLog } from '../../services/logs.service'
 import useResponsive from '../../hooks/useResponsive'
 import type { Visit } from '../../types/index'
 
 const ScanPage: React.FC = () => {
-  const { user, role } = useAuth()
-  const { visits, changeStatus, refresh } = useVisits()
+  const { user } = useAuth()
+  const { visits, refresh } = useVisits()
   const isMobile = useResponsive()
 
   const [token, setToken] = useState('')
-  const [cameraActive, setCameraActive] = useState(false)
-  const [cameraError, setCameraError] = useState<string | null>(null)
   const [scanError, setScanError] = useState<string | null>(null)
   
   
   const [scannedVisit, setScannedVisit] = useState<Visit | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isWorking, setIsWorking] = useState(false)
-  const [newStatus, setNewStatus] = useState<Visit['status']>('pending')
-  const [actionMessage, setActionMessage] = useState<string | null>(null)
-
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const qrScannerRef = useRef<QrScanner | null>(null)
 
   
 
@@ -36,53 +27,11 @@ const ScanPage: React.FC = () => {
 
     if (found) {
       setScannedVisit(found)
-      setNewStatus(found.status)
       setIsModalOpen(true)
       setScanError(null)
-      stopCameraScan() 
     } else {
       setScanError('Código QR no reconocido en el sistema.')
     }
-  }
-
-  const startCameraScan = async () => {
-    if (!videoRef.current) return
-    
-    // Configurar el worker path antes de instanciar
-    // @ts-ignore
-    QrScanner.WORKER_PATH = '/qr-scanner-worker.min.js'
-
-    try {
-      setCameraError(null)
-      setScanError(null)
-
-      const qrScanner = new QrScanner(
-        videoRef.current,
-        (result) => handleScanResult(result.data),
-        {
-          onDecodeError: () => { /* Silencioso mientras busca */ },
-          highlightScanRegion: true,
-          highlightCodeOutline: true,
-          preferredCamera: 'environment'
-        }
-      )
-
-      qrScannerRef.current = qrScanner
-      await qrScanner.start()
-      setCameraActive(true)
-    } catch (err) {
-      console.error(err)
-      setCameraError('No se pudo acceder a la cámara. Verifica los permisos.')
-    }
-  }
-
-  const stopCameraScan = () => {
-    if (qrScannerRef.current) {
-      qrScannerRef.current.stop()
-      qrScannerRef.current.destroy()
-      qrScannerRef.current = null
-    }
-    setCameraActive(false)
   }
 
   const handleManualSearch = () => {
@@ -90,36 +39,8 @@ const ScanPage: React.FC = () => {
     handleScanResult(token)
   }
 
-  const handleRegister = async () => {
-    if (!scannedVisit || !user) return
-    setIsWorking(true)
-    try {
-      const statusToSet = role === 'admin' ? newStatus : 'completed'
-      await changeStatus(scannedVisit.id, statusToSet)
-      
-      if (statusToSet === 'completed') {
-        await createAccessLog(scannedVisit.id, user.id)
-      }
-
-      setActionMessage('✓ Registro actualizado con éxito.')
-      await refresh()
-      
-      setTimeout(() => {
-        setIsModalOpen(false)
-        setScannedVisit(null)
-        setToken('')
-        setActionMessage(null)
-      }, 1500)
-    } catch (err) {
-      setActionMessage('⚠ Error al procesar el registro.')
-    } finally {
-      setIsWorking(false)
-    }
-  }
-
-  
   useEffect(() => {
-    return () => stopCameraScan()
+   
   }, [])
 
   return (
@@ -132,40 +53,7 @@ const ScanPage: React.FC = () => {
         </header>
 
         {/* Sección de Cámara */}
-        <section style={{ background: '#1a2024', borderRadius: '16px', padding: '20px', border: '1px solid #334155', marginBottom: '20px' }}>
-          <div style={{ 
-            position: 'relative', 
-            width: '100%', 
-            aspectRatio: '1', 
-            backgroundColor: '#000', 
-            borderRadius: '12px', 
-            overflow: 'hidden',
-            marginBottom: '20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: cameraActive ? '2px solid #22d3ee' : '2px solid #334155'
-          }}>
-            <video ref={videoRef} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            {!cameraActive && <p style={{ color: '#64748b', position: 'absolute' }}>Cámara inactiva</p>}
-          </div>
-
-          <button
-            onClick={cameraActive ? stopCameraScan : startCameraScan}
-            style={{
-              width: '100%',
-              padding: '14px',
-              borderRadius: '10px',
-              border: 'none',
-              backgroundColor: cameraActive ? '#ef4444' : '#22c55e',
-              color: 'white',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}
-          >
-            {cameraActive ? '✕ Detener Escáner' : '📷 Iniciar Cámara'}
-          </button>
-        </section>
+        <QRScanner onScanResult={handleScanResult} />
 
         {/* Búsqueda Manual */}
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
@@ -187,84 +75,25 @@ const ScanPage: React.FC = () => {
         </div>
 
         {/* Mensajes de Error */}
-        {(cameraError || scanError) && (
+        {scanError && (
           <div style={{ padding: '12px', backgroundColor: '#450a0a', border: '1px solid #dc2626', borderRadius: '8px', color: '#fca5a5', fontSize: '14px' }}>
-            {cameraError || scanError}
+            {scanError}
           </div>
         )}
 
-        {/* MODAL DE RESULTADO */}
+        {/* MODAL DE ACCIÓN */}
         {isModalOpen && scannedVisit && (
-          <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px'
-          }}>
-            <div style={{
-              backgroundColor: '#1e293b', width: '100%', maxWidth: '450px', borderRadius: '20px',
-              padding: isMobile ? '20px' : '30px', border: '1px solid #334155', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
-            }}>
-              <h2 style={{ color: '#10b981', marginTop: 0 }}>Visitante Encontrado</h2>
-              <hr style={{ borderColor: '#334155', margin: '20px 0' }} />
-              
-              <div style={{ display: 'grid', gap: '15px', marginBottom: '25px' }}>
-                <div>
-                  <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Nombre</label>
-                  <p style={{ margin: '4px 0', fontSize: '18px', fontWeight: 'bold' }}>{scannedVisit.visitor_name}</p>
-                </div>
-                <div>
-                  <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Asunto</label>
-                  <p style={{ margin: '4px 0' }}>{scannedVisit.visit_purpose || 'No especificado'}</p>
-                </div>
-                <div>
-                  <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Fecha</label>
-                  <p style={{ margin: '4px 0' }}>{scannedVisit.visit_date} - {scannedVisit.visit_time}</p>
-                </div>
-                <div>
-                  <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>A donde va</label>
-                  <p style={{ margin: '4px 0' }}>{scannedVisit.visit_destination || 'No especificado'}</p>
-                </div>
-                
-                {role === 'admin' && (
-                  <div>
-                    <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Cambiar Estado</label>
-                    <select 
-                      value={newStatus}
-                      onChange={(e) => setNewStatus(e.target.value as any)}
-                      style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '6px', backgroundColor: '#0f172a', color: 'white', border: '1px solid #334155' }}
-                    >
-                      <option value="pending">Pendiente</option>
-                      <option value="approved">Aceptado</option>
-                      <option value="rejected">Rechazado</option>
-                      <option value="completed">Completado</option>
-                      <option value="cancelled">Cancelado</option>
-                    </select>
-                  </div>
-                )}
-              </div>
-
-              {actionMessage && (
-                <div style={{ marginBottom: '15px', color: '#10b981', fontWeight: 'bold', textAlign: 'center' }}>
-                  {actionMessage}
-                </div>
-              )}
-
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button 
-                  onClick={() => setIsModalOpen(false)}
-                  style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #334155', backgroundColor: 'transparent', color: 'white', cursor: 'pointer' }}
-                >
-                  Cancelar
-                </button>
-                <button 
-                  onClick={handleRegister}
-                  disabled={isWorking}
-                  style={{ flex: 2, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#10b981', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}
-                >
-                  {isWorking ? 'Procesando...' : 'Confirmar Ingreso'}
-                </button>
-              </div>
-            </div>
-          </div>
+          <VisitActionModal
+            visit={scannedVisit}
+            onClose={() => setIsModalOpen(false)}
+            onSuccess={() => {
+              setIsModalOpen(false)
+              setScannedVisit(null)
+              setToken('')
+              refresh()
+            }}
+            userId={user?.id || ''}
+          />
         )}
 
       </div>
