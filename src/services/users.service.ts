@@ -35,6 +35,20 @@ export async function getProfilesByCommunity(communityId: string): Promise<Profi
   }))
 }
 
+// - Obtener todos los perfiles por estado
+export async function getProfilesByStatus(
+  status: Profile['status'], role: Profile['role']
+): Promise<Profile[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('status', status)
+    .eq('role', role)
+
+  if (error) throw error
+  return data as Profile[]
+}
+
 /** Actualiza el rol de un perfil */
 export async function updateProfileRole(profileId: string, role: UserRole): Promise<Profile> {
   const { data, error } = await supabase
