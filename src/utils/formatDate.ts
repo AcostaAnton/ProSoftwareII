@@ -11,10 +11,23 @@ export const formatDate = (dateString: string): string => {
     }
 }
 
-export const formatTime = (timeString: string): string => {
-    return timeString
+export const formatTime = (timeString?: string): string => {
+    if (!timeString) return ''
+    try {
+        const [hours, minutes] = timeString.split(':').map(Number)
+        const period = hours >= 12 ? 'PM' : 'AM'
+        const displayHours = hours % 12 || 12
+        return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`
+    } catch (error) {
+        return timeString
+    }
 }
 
 export const formatDateTime = (dateString: string, timeString: string): string => {
     return `${formatDate(dateString)} a las ${formatTime(timeString)}`
+}
+
+export const formatPhone = (phone?: string): string => {
+    if (!phone || phone.length !== 8) return phone || ''
+    return `${phone.slice(0, 4)}-${phone.slice(4)}`
 }

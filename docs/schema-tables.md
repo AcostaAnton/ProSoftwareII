@@ -56,6 +56,8 @@ Representa visitas registradas por un residente.
 | visitor_phone  | TEXT          | Teléfono del visitante. Opcional. |
 | visit_date     | DATE          | Fecha de la visita. NOT NULL. |
 | visit_time     | TIME          | Hora. Opcional. |
+| visit_purpose  | TEXT          | Asunto o motivo de la visita. Opcional. |
+| visit_destination | TEXT        | Lugar o unidad de destino. Opcional. |
 | qr_token       | TEXT          | Token único para QR. UNIQUE NOT NULL. |
 | status         | visit_status  | Estado: pending, approved, rejected, completed, cancelled. NOT NULL. |
 | created_at     | TIMESTAMPTZ   | Fecha de creación. |

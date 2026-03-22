@@ -17,11 +17,22 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
 }) => {
     const [qrCode, setQrCode] = useState<string>('')
     const [isLoading, setIsLoading] = useState(true)
+    const [copyStatus, setCopyStatus] = useState<'copy' | 'copied'>('copy')
+
+    const copyTokenToClipboard = async () => {
+        try {
+            await navigator.clipboard.writeText(visit.qr_token)
+            setCopyStatus('copied')
+            setTimeout(() => setCopyStatus('copy'), 2000)
+        } catch (err) {
+            console.error('Error copying token:', err)
+        }
+    }
 
     useEffect(() => {
         const generateQR = async () => {
             try {
-                const qrData = `${window.location.origin}/visits/${visit.id}`
+                const qrData = visit.qr_token
                 const qrCodeDataURL = await QRCode.toDataURL(qrData)
                 setQrCode(qrCodeDataURL)
             } catch (err) {
@@ -32,7 +43,7 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
         }
 
         generateQR()
-    }, [visit.id])
+    }, [visit.qr_token])
 
     const downloadQR = () => {
         const link = document.createElement('a')
@@ -88,6 +99,47 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
                         <img src={qrCode} alt="Código QR" style={{ width: '200px', height: '200px' }} />
                     </div>
 
+                    <div style={{ marginBottom: '20px', textAlign: 'left' }}>
+                        <p style={{ margin: '0 0 6px 0', fontSize: 12, color: '#a0a0a0' }}>
+                            Token (para copiar / validar):
+                        </p>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 8,
+                            flexWrap: 'wrap'
+                        }}>
+                            <code style={{
+                                padding: '8px 10px',
+                                borderRadius: 10,
+                                backgroundColor: '#0f172a',
+                                color: '#e2e8f0',
+                                fontSize: 13,
+                                wordBreak: 'break-all',
+                                maxWidth: '240px'
+                            }}>
+                                {visit.qr_token}
+                            </code>
+                            <button
+                                onClick={copyTokenToClipboard}
+                                style={{
+                                    padding: '8px 14px',
+                                    backgroundColor: '#22d3ee',
+                                    color: '#000000',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    fontSize: 12,
+                                    fontWeight: 700,
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                {copyStatus === 'copied' ? 'Copiado' : 'Copiar'}
+                            </button>
+                        </div>
+                    </div>
+
                     <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
                         <button
                             onClick={downloadQR}
@@ -138,7 +190,48 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
                     <img src={qrCode} alt="Código QR" style={{ width: '200px', height: '200px' }} />
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+                    <p style={{ margin: '0 0 6px 0', fontSize: 12, color: '#a0a0a0' }}>
+                        Token (para copiar / validar):
+                    </p>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        flexWrap: 'wrap'
+                    }}>
+                        <code style={{
+                            padding: '8px 10px',
+                            borderRadius: 10,
+                            backgroundColor: '#0f172a',
+                            color: '#e2e8f0',
+                            fontSize: 13,
+                            wordBreak: 'break-all',
+                            maxWidth: '240px'
+                        }}>
+                            {visit.qr_token}
+                        </code>
+                        <button
+                            onClick={copyTokenToClipboard}
+                            style={{
+                                padding: '8px 14px',
+                                backgroundColor: '#22d3ee',
+                                color: '#000000',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontSize: 12,
+                                fontWeight: 700,
+                                whiteSpace: 'nowrap'
+                            }}
+                        >
+                            {copyStatus === 'copied' ? 'Copiado' : 'Copiar'}
+                        </button>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
                     <button
                         onClick={downloadQR}
                         style={{
@@ -165,7 +258,7 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
                             fontSize: '14px'
                         }}
                     >
-                        Crear otra visita
+                        Volver
                     </button>
                 </div>
             </div>

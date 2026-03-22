@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getVisitById } from '../../services/visits.service'
-import { formatDate } from '../../utils/formatDate'
+import { formatDate, formatTime, formatPhone } from '../../utils/formatDate'
 import QRGenerator from '../../components/shared/QRGenerator'
+import { useAuth } from '../../hooks/useAuth'
+import { useVisits } from '../../hooks/useVisits'
 import type { Visit } from '../../types/index'
 
 const VisitDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const [visit, setVisit] = useState<Visit | null>(null)
+    const [newStatus, setNewStatus] = useState<Visit['status']>('pending')
+    const { role } = useAuth()
+    const { changeStatus, refresh } = useVisits()
+    const [isUpdating, setIsUpdating] = useState(false)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [showSuccessModal, setShowSuccessModal] = useState(false)
     const [showQRModal, setShowQRModal] = useState(false)
 
     useEffect(() => {
@@ -25,6 +32,7 @@ const VisitDetail: React.FC = () => {
             }
             const visitData = await getVisitById(id)
             setVisit(visitData)
+            setNewStatus(visitData.status)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error al cargar la visita')
         } finally {
@@ -108,6 +116,21 @@ const VisitDetail: React.FC = () => {
         )
     }
 
+    const handleStatusUpdate = async () => {
+        if (!visit) return
+        setIsUpdating(true)
+        try {
+            const updated = await changeStatus(visit.id, newStatus)
+            setVisit(updated)
+            await refresh()
+            setShowSuccessModal(true)
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setIsUpdating(false)
+        }
+    }
+
     if (!visit) {
         return (
             <div style={{ backgroundColor: '#080c0f', minHeight: '100vh', padding: '20px', color: '#ffffff' }}>
@@ -147,22 +170,59 @@ const VisitDetail: React.FC = () => {
                     borderRadius: '8px',
                     marginBottom: '20px'
                 }}>
-                    {/* Estatus */}
                     <div style={{ marginBottom: '20px', paddingBottom: '20px', borderBottom: '1px solid #2a3034' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <span style={{ color: '#a0a0a0' }}>Estado:</span>
-                            <span
-                                style={{
-                                    padding: '6px 12px',
-                                    backgroundColor: getStatusColor(visit.status),
-                                    color: '#ffffff',
-                                    borderRadius: '20px',
-                                    fontSize: '14px',
-                                    fontWeight: 'bold'
-                                }}
-                            >
-                                {getStatusLabel(visit.status)}
-                            </span>
+                            {role === 'admin' ? (
+                                <select
+                                    value={newStatus}
+                                    onChange={(e) => setNewStatus(e.target.value as Visit['status'])}
+                                    style={{
+                                        padding: '4px 8px',
+                                        borderRadius: '4px',
+                                        background: '#1a2024',
+                                        color: '#ffffff',
+                                        border: '1px solid #334155'
+                                    }}
+                                >
+                                    <option value="pending">Pendiente</option>
+                                    <option value="approved">Aprobado</option>
+                                    <option value="rejected">Rechazado</option>
+                                    <option value="completed">Completado</option>
+                                    <option value="cancelled">Cancelado</option>
+                                </select>
+                            ) : (
+                                <span
+                                    style={{
+                                        padding: '6px 12px',
+                                        backgroundColor: getStatusColor(visit.status),
+                                        color: '#ffffff',
+                                        borderRadius: '20px',
+                                        fontSize: '14px',
+                                        fontWeight: 'bold'
+                                    }}
+                                >
+                                    {getStatusLabel(visit.status)}
+                                </span>
+                            )}
+                            {role === 'admin' && (
+                                <button
+                                    onClick={handleStatusUpdate}
+                                    disabled={isUpdating}
+                                    style={{
+                                        marginLeft: '10px',
+                                        padding: '6px 12px',
+                                        backgroundColor: '#22c55e',
+                                        color: '#080c0f',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontSize: '14px'
+                                    }}
+                                >
+                                    {isUpdating ? '...' : 'Guardar'}
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -181,7 +241,7 @@ const VisitDetail: React.FC = () => {
                                     Teléfono
                                 </label>
                                 <p style={{ margin: 0, fontSize: '16px' }}>
-                                    {visit.visitor_phone || 'No proporcionado'}
+                                    {formatPhone(visit.visitor_phone) || 'No proporcionado'}
                                 </p>
                             </div>
                         </div>
@@ -203,7 +263,7 @@ const VisitDetail: React.FC = () => {
                                 <label style={{ display: 'block', color: '#a0a0a0', fontSize: '14px', marginBottom: '5px' }}>
                                     Hora
                                 </label>
-                                <p style={{ margin: 0, fontSize: '16px' }}>{visit.visit_time}</p>
+                                <p style={{ margin: 0, fontSize: '16px' }}>{formatTime(visit.visit_time)}</p>
                             </div>
                         </div>
                     </div>
@@ -276,6 +336,54 @@ const VisitDetail: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Modal de Éxito */}
+            {showSuccessModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 2000
+                }}>
+                    <div style={{
+                        backgroundColor: '#1a2024',
+                        padding: '30px',
+                        borderRadius: '12px',
+                        textAlign: 'center',
+                        maxWidth: '400px',
+                        width: '90%'
+                    }}>
+                        <h3 style={{ color: '#22d3ee', marginBottom: '20px' }}>¡Cambios realizados!</h3>
+                        <p style={{ color: '#ffffff', marginBottom: '25px' }}>
+                            El estado de la visita ha sido actualizado correctamente.
+                        </p>
+                        <button
+                            onClick={() => {
+                                setShowSuccessModal(false)
+                                navigate('/visits/list')
+                            }}
+                            style={{
+                                padding: '12px 24px',
+                                backgroundColor: '#22d3ee',
+                                color: '#000000',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontSize: '16px',
+                                fontWeight: 'bold'
+                            }}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Modal QR */}
             {showQRModal && visit && (

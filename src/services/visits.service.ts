@@ -5,6 +5,11 @@
 import type { Visit } from '../types/index'
 import { supabase } from './supabase'
 
+// - Función auxiliar para generar token QR
+function generateQRToken(): string {
+  return Math.random().toString(36).substring(2, 10)
+}
+
 // - Crear una nueva visita
 export async function createVisit(
   visitData: Omit<Visit, 'id' | 'created_at' | 'qr_token'>
@@ -58,10 +63,33 @@ export async function getVisitById(visitId: string): Promise<Visit> {
   return data as Visit
 }
 
-// - Función auxiliar para generar token QR
-function generateQRToken(): string {
-  return (
-    Math.random().toString(36).substring(2, 15) +
-    Math.random().toString(36).substring(2, 15)
-  )
+// - Actualizar el estado de una visita (por ejemplo: pending → completed)
+export async function updateVisitStatus(
+  visitId: string,
+  status: Visit['status']
+): Promise<Visit> {
+  const { data, error } = await supabase
+    .from('visits')
+    .update({ status })
+    .eq('id', visitId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data as Visit
+}
+
+// - Verificar si los campos opcionales existen
+export async function checkOptionalFields() {
+  try {
+    const { data, error } = await supabase
+      .from('visits')
+      .select('visit_purpose, visit_destination')
+      .limit(1)
+
+    if (error) throw error
+    return { exist: true, data }
+  } catch (error) {
+    return { exist: false, error }
+  }
 }

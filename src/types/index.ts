@@ -3,7 +3,10 @@
 
 // - Enums
 
-export type UserRole = 'admin' |'resident' | 'security' | 'visitor'
+export type UserRole = 'admin' |'resident' | 'security'
+
+/** Estado del perfil de usuario (columna status en profiles) */
+export type ProfileStatus = 'active' | 'inactive' | 'suspended'
 
 export type VisitStatus = 'pending' | 'approved' | 'rejected' | 'completed' | 'cancelled'
 
@@ -28,9 +31,11 @@ export interface Visit {
     id: string
     resident_id: string
     visitor_name: string
-    visitor_phone: string
+    visitor_phone?: string
     visit_date: string
-    visit_time: string
+    visit_time?: string
+    visit_purpose?: string
+    visit_destination?: string
     qr_token: string
     status: VisitStatus
     created_at: string
@@ -52,6 +57,9 @@ export interface Profile {
     role: UserRole
     community_id: string
     created_at: string
+    email?: string | null
+    unit_number?: string | null    /** Estado del perfil: active, inactive, suspended */
+    status?: ProfileStatus
 }
 
 // ── Vistas enriquecidas (JOINs de Supabase) ──────────────────
