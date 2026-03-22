@@ -5,6 +5,33 @@
 import type { Visit } from '../types/index'
 import { supabase } from './supabase'
 
+type ResidentVisits = {
+  residentId: string
+  name: string
+  count: number
+}
+
+export function groupVisitsByResident(visits: any[]): ResidentVisits[] {
+  const map: Record<string, ResidentVisits> = {}
+
+  visits.forEach((visit) => {
+    const id = visit.resident_id
+    const name = visit.profiles?.name || "Sin nombre"
+
+    if (!map[id]) {
+      map[id] = {
+        residentId: id,
+        name,
+        count: 0
+      }
+    }
+
+    map[id].count++
+  })
+
+  return Object.values(map)
+}
+
 // - Crear una nueva visita
 export async function createVisit(
   visitData: Omit<Visit, 'id' | 'created_at' | 'qr_token'>
@@ -35,10 +62,31 @@ export async function getVisitsByResident(residentId: string): Promise<Visit[]> 
 }
 
 // - Obtener todas las visitas (admin / guardia)
-export async function getAllVisits(): Promise<Visit[]> {
+export async function getAllVisits(): Promise<any[]> {
+  const { data, error } = await supabase
+    .from('visits')
+    .select(`
+      *,
+      profiles:resident_id (
+        id,
+        name
+      )
+    `)
+    .order('visit_date', { ascending: false })
+    .order('visit_time', { ascending: false })
+
+  if (error) throw error
+  return data
+}
+
+// - Obtener todas las visitas por estado
+export async function getVisitsByStatus(
+  status: Visit['status']
+): Promise<Visit[]> {
   const { data, error } = await supabase
     .from('visits')
     .select('*')
+    .eq('status', status)
     .order('visit_date', { ascending: false })
     .order('visit_time', { ascending: false })
 
