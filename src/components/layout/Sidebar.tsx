@@ -14,8 +14,24 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'visit-list', label: 'Lista de Visitas', icon: '📋', roles: ['admin', 'security'], path: '/visits/list' },
   { id: 'scan', label: 'Escanear QR', icon: '📷', roles: ['admin', 'security'], path: '/scan' },
   { id: 'admin-users', label: 'Usuarios', icon: '👥', roles: ['admin'], path: '/admin/users' },
-  { id: 'admin-stats', label: 'Estadísticas', icon: '📊', roles: ['admin'], path: '/admin/stats'},
-];
+  { id: 'admin-guards', label: 'Actividad Guardias', icon: '🔒', roles: ['admin'], path: '/admin/guards' },
+]
+
+function avatarStyle(size: number): React.CSSProperties {
+  return {
+    width: size,
+    height: size,
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg, #22d3ee 0%, #8b5cf6 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'white',
+    fontWeight: 700,
+    fontSize: Math.round(size * 0.35),
+    flexShrink: 0,
+  }
+}
 
 interface SidebarProps {
   isOpen: boolean;
@@ -29,12 +45,12 @@ export default function Sidebar({ isOpen, toggle }: SidebarProps) {
   const displayName = profile?.name ?? user?.email ?? 'Usuario';
   const isMobile = useResponsive();
 
-  const all = role ? NAV_ITEMS.filter((n) => n.roles.includes(role)) : [];
-  const sections =
+  const all = role ? NAV_ITEMS.filter((n) => n.roles.includes(role)) : []
+const sections =
     role === 'admin'
       ? [
-          { title: 'General', ids: ['dashboard', 'new-visit', 'scan', 'visit-list'] as const },
-          { title: 'Administración', ids: ['admin-users', 'admin-stats'] as const },
+          { title: 'General', ids: ['dashboard', 'new-visit', 'visit-list'] as const },
+          { title: 'Administración', ids: ['admin-users', 'admin-guards'] as const },  // ← AGREGADO
         ]
       : [{ title: '', ids: all.map((n) => n.id) }];
 

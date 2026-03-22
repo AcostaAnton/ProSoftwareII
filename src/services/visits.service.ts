@@ -30,6 +30,9 @@ export function groupVisitsByResident(visits: any[]): ResidentVisits[] {
   })
 
   return Object.values(map)
+// - Función auxiliar para generar token QR
+function generateQRToken(): string {
+  return Math.random().toString(36).substring(2, 10)
 }
 
 // - Crear una nueva visita
@@ -122,10 +125,17 @@ export async function updateVisitStatus(
   return data as Visit
 }
 
-// - Función auxiliar para generar token QR
-function generateQRToken(): string {
-  return (
-    Math.random().toString(36).substring(2, 15) +
-    Math.random().toString(36).substring(2, 15)
-  )
+// - Verificar si los campos opcionales existen
+export async function checkOptionalFields() {
+  try {
+    const { data, error } = await supabase
+      .from('visits')
+      .select('visit_purpose, visit_destination')
+      .limit(1)
+
+    if (error) throw error
+    return { exist: true, data }
+  } catch (error) {
+    return { exist: false, error }
+  }
 }
