@@ -14,7 +14,7 @@ import VisitList from '../pages/visits/VisitList'
 import VisitDetail from '../pages/visits/VisitDetail'
 import ScanPage from '../pages/scan/ScanPage'
 import AdminUsers from '../pages/admin/AdminUsers'
-import AdminStats from '../pages/admin/AdminStats'
+import AdminGuards from '../pages/admin/AdminGuards'
 // import RegisterPage from '../pages/auth/Register'
 
 export default function AppRoutes() {
@@ -37,7 +37,7 @@ export default function AppRoutes() {
                     <Route path="visits/:id" element={<VisitDetail />} />
                     <Route path="scan" element={<ProtectedRoute allowedRoles={["admin","security"]}><ScanPage /></ProtectedRoute>} />
                     <Route path="admin/users" element={<AdminUsers />} />
-                    <Route path="admin/stats" element={<AdminStats />} />
+                     <Route path="admin/guards" element={<AdminGuards />} />
                 </Route>
             </Routes>
         </BrowserRouter>
