@@ -11,6 +11,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'new-visit', label: 'Nueva Visita', icon: '➕', roles: ['resident', 'admin'], path: '/visits/new' },
   { id: 'visit-list', label: 'Lista de Visitas', icon: '📋', roles: ['admin', 'security'], path: '/visits/list' },
   { id: 'admin-users', label: 'Usuarios', icon: '👥', roles: ['admin'], path: '/admin/users' },
+  { id: 'admin-guards', label: 'Actividad Guardias', icon: '🔒', roles: ['admin'], path: '/admin/guards' },
 ]
 
 function avatarStyle(size: number): React.CSSProperties {
@@ -41,11 +42,11 @@ export default function Sidebar() {
   const displayName = profile?.name ?? user?.email ?? 'Usuario'
 
   const all = role ? NAV_ITEMS.filter((n) => n.roles.includes(role)) : []
-  const sections =
+const sections =
     role === 'admin'
       ? [
           { title: 'General', ids: ['dashboard', 'new-visit', 'visit-list'] as const },
-          { title: 'Administración', ids: ['admin-users'] as const },
+          { title: 'Administración', ids: ['admin-users', 'admin-guards'] as const },  // ← AGREGADO
         ]
       : [{ title: '', ids: all.map((n) => n.id) }]
 

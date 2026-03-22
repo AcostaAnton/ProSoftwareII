@@ -13,6 +13,7 @@ import NewVisit from '../pages/visits/NewVisit'
 import VisitList from '../pages/visits/VisitList'
 import VisitDetail from '../pages/visits/VisitDetail'
 import AdminUsers from '../pages/admin/AdminUsers'
+import AdminGuards from '../pages/admin/AdminGuards'
 // import RegisterPage from '../pages/auth/Register'
 
 export default function AppRoutes() {
@@ -34,6 +35,7 @@ export default function AppRoutes() {
                     <Route path="visits/list" element={<VisitList />} />
                     <Route path="visits/:id" element={<VisitDetail />} />
                     <Route path="admin/users" element={<AdminUsers />} />
+                     <Route path="admin/guards" element={<AdminGuards />} />
                 </Route>
             </Routes>
         </BrowserRouter>
