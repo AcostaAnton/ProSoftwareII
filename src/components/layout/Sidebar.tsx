@@ -16,6 +16,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'scan', label: 'Escanear QR', icon: '📷', roles: ['admin', 'security'], path: '/scan' },
   { id: 'admin-users', label: 'Usuarios', icon: '👥', roles: ['admin'], path: '/admin/users' },
   { id: 'admin-guards', label: 'Actividad Guardias', icon: '🔒', roles: ['admin'], path: '/admin/guards' },
+  { id: 'admin-stats', label: 'Estadísticas', icon: '📊', roles: ['admin'], path: '/admin/stats' },
 ]
 
 interface SidebarProps {
@@ -34,8 +35,8 @@ export default function Sidebar({ isOpen, toggle }: SidebarProps) {
   const sections =
     role === 'admin'
       ? [
-        { title: 'General', ids: ['dashboard', 'new-visit', 'visit-list'] as const },
-        { title: 'Administración', ids: ['admin-users', 'admin-guards'] as const },  // ← AGREGADO
+        { title: 'General', ids: ['dashboard', 'new-visit', 'visit-list', 'scan'] as const },
+        { title: 'Administración', ids: ['admin-users', 'admin-guards', 'admin-stats'] as const },
       ]
       : [{ title: '', ids: all.map((n) => n.id) }];
 
