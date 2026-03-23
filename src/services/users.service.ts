@@ -150,16 +150,38 @@ export async function getCommunitiesForSelect(): Promise<CommunityOption[]> {
   return (data ?? []) as CommunityOption[]
 }
 
-/** Nombre de la comunidad para tarjetas QR (sin lanzar si falla RLS). */
-export async function getCommunityNameById(communityId: string): Promise<string | null> {
-  const { data, error } = await supabase
-    .from('communities')
-    .select('name')
-    .eq('id', communityId)
-    .maybeSingle()
+export type CommunityUnitRow = {
+  id: string
+  number: string
+  owner_id: string | null
+  co_owner_id?: string | null
+}
 
-  if (error || !data?.name) return null
-  return data.name
+export async function getUnitsByCommunityForSelect(communityId: string): Promise<CommunityUnitRow[]> {
+  const { data, error } = await supabase
+    .from('units')
+    .select('id, number, owner_id, co_owner_id')
+    .eq('community_id', communityId)
+    .order('number', { ascending: true })
+
+  if (error && isUnitsCoOwnerColumnError(error)) {
+    const legacy = await supabase
+      .from('units')
+      .select('id, number, owner_id')
+      .eq('community_id', communityId)
+      .order('number', { ascending: true })
+
+    if (legacy.error) throw legacy.error
+
+    return (legacy.data ?? []).map((u) => ({
+      ...u,
+      co_owner_id: null,
+    })) as CommunityUnitRow[]
+  } else if (error) {
+    throw error
+  }
+
+  return (data ?? []) as CommunityUnitRow[]
 }
 
 /** Quita al perfil de owner_id / co_owner_id en todas las unidades donde aparezca. */
