@@ -3,6 +3,7 @@ import { supabase } from '../../services/supabase'
 import type { Visit } from '../../types/index'
 import CameraCapture from './CameraCapture'
 import { Button } from '../ui/Button'
+import { uploadVisitPhoto } from '../../services/visits.service'
 
 interface VisitActionModalProps {
   visit: Visit
@@ -15,6 +16,8 @@ const VisitActionModal: React.FC<VisitActionModalProps> = ({ visit, onClose, onS
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isCameraOpen, setIsCameraOpen] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false)
+  const [isRejected, setIsRejected] = useState(false)
 
   const [attachedPhoto, setAttachedPhoto] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
@@ -54,28 +57,18 @@ const VisitActionModal: React.FC<VisitActionModalProps> = ({ visit, onClose, onS
     setIsCameraOpen(false)
   }
 
-  const uploadPhoto = async (): Promise<string | null> => {
-    if (!attachedPhoto) return null
-    const fileName = `${visit.id}_${Date.now()}.jpg`
-    const { data, error } = await supabase.storage
-      .from('visit-photos')
-      .upload(fileName, attachedPhoto)
-    if (error) throw error
-    return data.path
-  }
-
   const handleEntry = async () => {
     setLoading(true)
     setError(null)
     try {
-      const photoUrl = await uploadPhoto()
+      const photoUrl = attachedPhoto ? await uploadVisitPhoto(attachedPhoto) : null
 
       // Actualizar access_logs
       const { error: logError } = await supabase
         .from('access_logs')
         .insert({
           visit_id: visit.id,
-          user_id: userId,
+          guard_id: userId,
           vehicle_photo_url: photoUrl,
           vehicle_notes: photoNotes,
           entry_notes: entryNotes,
@@ -101,9 +94,66 @@ const VisitActionModal: React.FC<VisitActionModalProps> = ({ visit, onClose, onS
           notes: `Entrada registrada: ${entryNotes}`
         })
 
-      onSuccess()
+      // Mostrar mensaje de éxito en el modal antes de cerrar
+      setIsSuccess(true)
+      setTimeout(() => {
+        onSuccess()
+      }, 2000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al registrar entrada')
+      console.error('Error al registrar entrada:', err)
+      setError((err as any).message || 'Error al registrar entrada')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDeny = async () => {
+    if (!entryNotes.trim()) {
+      setError('Para denegar el acceso, es obligatorio escribir el motivo en las notas.')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+    try {
+      const photoUrl = attachedPhoto ? await uploadVisitPhoto(attachedPhoto) : null
+
+      // Guardar evidencia en access_logs aunque sea rechazado
+      const { error: logError } = await supabase
+        .from('access_logs')
+        .insert({
+          visit_id: visit.id,
+          guard_id: userId,
+          vehicle_photo_url: photoUrl,
+          vehicle_notes: photoNotes,
+          entry_notes: `ACCESO DENEGADO: ${entryNotes}`,
+          entry_time: new Date().toISOString()
+        })
+      if (logError) throw logError
+
+      // Actualizar estado a 'rejected'
+      const { error: visitError } = await supabase
+        .from('visits')
+        .update({ status: 'rejected' })
+        .eq('id', visit.id)
+      if (visitError) throw visitError
+
+      await supabase
+        .from('visit_status_history')
+        .insert({
+          visit_id: visit.id,
+          old_status: 'pending',
+          new_status: 'rejected',
+          changed_by_id: userId,
+          notes: `Acceso denegado en garita: ${entryNotes}`
+        })
+
+      setIsRejected(true)
+      setIsSuccess(true)
+      setTimeout(() => onSuccess(), 2500)
+    } catch (err) {
+      console.error('Error al denegar:', err)
+      setError((err as any).message || 'Error al denegar la entrada')
     } finally {
       setLoading(false)
     }
@@ -141,7 +191,11 @@ const VisitActionModal: React.FC<VisitActionModalProps> = ({ visit, onClose, onS
           notes: `Salida registrada: ${exitNotes}`
         })
 
-      onSuccess()
+      // Mostrar mensaje de éxito en el modal antes de cerrar
+      setIsSuccess(true)
+      setTimeout(() => {
+        onSuccess()
+      }, 2000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al registrar salida')
     } finally {
@@ -165,6 +219,21 @@ const VisitActionModal: React.FC<VisitActionModalProps> = ({ visit, onClose, onS
           backgroundColor: '#1e293b', width: '100%', maxWidth: '450px', borderRadius: '20px',
           padding: '30px', border: '1px solid #334155', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
         }}>
+          
+          {/* Vista de Éxito */}
+          {isSuccess ? (
+            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>
+                {isRejected ? '⛔' : '✅'}
+              </div>
+              <h2 style={{ color: isRejected ? '#ef4444' : '#10b981', margin: 0, fontSize: '24px' }}>
+                {isRejected ? 'Acceso Denegado' : '¡Registrado!'}
+              </h2>
+              <p style={{ color: '#94a3b8', marginTop: '8px' }}>La operación se guardó correctamente.</p>
+            </div>
+          ) : (
+            /* Formulario normal */
+            <>
           <h2 style={{ color: '#10b981', marginTop: 0 }}>
             {isEntry ? 'Registro de Entrada' : isExit ? 'Registro de Salida' : 'Acción no permitida'}
           </h2>
@@ -224,8 +293,8 @@ const VisitActionModal: React.FC<VisitActionModalProps> = ({ visit, onClose, onS
                   <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Notas de Entrada</label>
                   <textarea
                     value={entryNotes}
-                    onChange={(e) => setEntryNotes(e.target.value)}
-                    placeholder="Comentarios de entrada..."
+                    onChange={(e) => { setEntryNotes(e.target.value); setError(null); }}
+                    placeholder="Comentarios de entrada o motivo de rechazo..."
                     style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '6px', backgroundColor: '#0f172a', color: 'white', border: '1px solid #334155', minHeight: '60px' }}
                   />
                 </div>
@@ -255,17 +324,31 @@ const VisitActionModal: React.FC<VisitActionModalProps> = ({ visit, onClose, onS
             <Button type="button" variant="outline" size="lg" onClick={onClose} style={{ flex: 1, borderRadius: 8, borderColor: '#334155', color: 'white' }}>
               Cancelar
             </Button>
-            <Button
-              type="button"
-              variant="success"
-              size="lg"
-              onClick={isEntry ? handleEntry : isExit ? handleExit : () => {}}
-              disabled={loading}
-              style={{ flex: 2, borderRadius: 8, background: '#10b981' }}
-            >
-              {loading ? 'Procesando...' : isEntry ? 'Registrar Entrada' : isExit ? 'Registrar Salida' : 'Acción'}
-            </Button>
+
+            {isEntry ? (
+              <>
+                <Button type="button" variant="danger" size="lg" onClick={handleDeny} disabled={loading} style={{ flex: 1, borderRadius: 8, background: '#7f1d1d', border: '1px solid #991b1b' }}>
+                  {loading ? '...' : 'Denegar'}
+                </Button>
+                <Button type="button" variant="success" size="lg" onClick={handleEntry} disabled={loading} style={{ flex: 2, borderRadius: 8, background: '#10b981' }}>
+                  {loading ? 'Procesando...' : 'Permitir Acceso'}
+                </Button>
+              </>
+            ) : (
+              <Button
+                type="button"
+                variant="success"
+                size="lg"
+                onClick={isExit ? handleExit : () => {}}
+                disabled={loading}
+                style={{ flex: 2, borderRadius: 8, background: '#10b981' }}
+              >
+                {loading ? 'Procesando...' : isExit ? 'Registrar Salida' : 'Acción'}
+              </Button>
+            )}
           </div>
+            </>
+          )}
         </div>
       </div>
     </>

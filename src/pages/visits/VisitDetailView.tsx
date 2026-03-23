@@ -1,7 +1,8 @@
-import type {
-    ChangeEvent,
-    CSSProperties,
-    ReactNode
+import {
+    useState,
+    type ChangeEvent,
+    type CSSProperties,
+    type ReactNode
 } from 'react'
 import QRGenerator from '../../components/shared/QRGenerator'
 import type { Visit } from '../../types/index'
@@ -12,6 +13,7 @@ import {
     VISIT_STATUS_OPTIONS
 } from './visitStatus.helpers'
 import { Button } from '../../components/ui/Button'
+import { supabase } from '../../services/supabase'
 
 interface VisitDetailViewProps {
     error: string | null
@@ -21,7 +23,12 @@ interface VisitDetailViewProps {
     newStatus: Visit['status']
     showQRModal: boolean
     showSuccessModal: boolean
+<<<<<<< Updated upstream
     visit: Visit | null
+=======
+    visit: any | null
+    qrDisplay: VisitQrDisplayData | null
+>>>>>>> Stashed changes
     onBack: () => void
     onCloseQR: () => void
     onCloseSuccess: () => void
@@ -38,6 +45,37 @@ interface DetailFieldProps {
 interface SectionProps {
     children: ReactNode
     title: string
+}
+
+function getPhotoUrl(path: string) {
+    if (!path) return ''
+    if (path.startsWith('http')) return path
+    const { data } = supabase.storage.from('visit-photos').getPublicUrl(path)
+    return data.publicUrl
+}
+
+// Componente para manejar errores de carga de imagen
+function ImageWithFallback({ src, alt }: { src: string; alt: string }) {
+    const [error, setError] = useState(false)
+
+    if (error || !src) {
+        return (
+            <div style={{ 
+                width: '100%', height: 200, background: '#0f172a', 
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                color: '#64748b', borderRadius: 8, border: '1px dashed #334155'
+            }}>
+                <span style={{ fontSize: 24, marginBottom: 8 }}>🖼️</span>
+                <span style={{ fontSize: 13 }}>No se pudo cargar la imagen</span>
+            </div>
+        )
+    }
+
+    return (
+        <img src={src} alt={alt} onError={() => setError(true)}
+            style={{ width: '100%', maxHeight: 400, objectFit: 'contain', background: '#000', display: 'block' }} 
+        />
+    )
 }
 
 const styles = {
@@ -157,6 +195,13 @@ const styles = {
     modalText: {
         color: '#ffffff',
         marginBottom: '25px'
+    },
+    photoContainer: {
+        marginTop: 10,
+        marginBottom: 10,
+        borderRadius: 8,
+        overflow: 'hidden',
+        border: '1px solid #334155'
     }
 } satisfies Record<string, CSSProperties>
 
@@ -332,6 +377,57 @@ function VisitDetailView({
                             </DetailField>
                         </Section>
                     </div>
+
+                    {/* Sección de Logs de Acceso (Fotos y Notas) */}
+                    {visit.access_logs && visit.access_logs.length > 0 && (
+                        <div style={styles.sectionDivider}>
+                            <Section title="Registro de Acceso (Guardia)">
+                                {visit.access_logs.map((log: any, index: number) => (
+                                    <div key={log.id || index} style={{ marginBottom: 15, paddingBottom: 10, borderBottom: '1px solid #2a3034' }}>
+                                        <p style={{ color: '#22d3ee', fontSize: 13, margin: '0 0 5px 0' }}>
+                                            Entrada: {formatDate(log.entry_time)} {formatTime(log.entry_time)}
+                                        </p>
+                                        
+                                        {log.vehicle_photo_url && (
+                                            <div style={styles.photoContainer}>
+                                                <ImageWithFallback
+                                                    src={getPhotoUrl(log.vehicle_photo_url)} 
+                                                    alt="Foto de ingreso" 
+                                                />
+                                            </div>
+                                        )}
+                                        
+                                        {log.vehicle_notes && <DetailField label="Notas Foto"><p style={styles.fieldValue}>{log.vehicle_notes}</p></DetailField>}
+                                        {log.entry_notes && <DetailField label="Notas Entrada"><p style={styles.fieldValue}>{log.entry_notes}</p></DetailField>}
+                                        {log.exit_time && (
+                                            <>
+                                                <p style={{ color: '#f87171', fontSize: 13, margin: '10px 0 5px 0' }}>
+                                                    Salida: {formatDate(log.exit_time)} {formatTime(log.exit_time)}
+                                                </p>
+                                                {log.exit_notes && <DetailField label="Notas Salida"><p style={styles.fieldValue}>{log.exit_notes}</p></DetailField>}
+                                            </>
+                                        )}
+                                    </div>
+                                ))}
+                            </Section>
+                        </div>
+                    )}
+
+                    {/* Sección de Historial */}
+                    {visit.visit_status_history && visit.visit_status_history.length > 0 && (
+                        <div style={styles.sectionDivider}>
+                            <Section title="Historial de Cambios">
+                                {visit.visit_status_history.map((hist: any, i: number) => (
+                                    <div key={hist.id || i} style={{ marginBottom: 8, fontSize: 13, color: '#a0a0a0' }}>
+                                        <span style={{ color: '#fff' }}>{formatDate(hist.changed_at)} {formatTime(hist.changed_at)}</span>: 
+                                        Cambio de <b>{hist.old_status}</b> a <b style={{ color: getVisitStatusColor(hist.new_status) }}>{hist.new_status}</b>
+                                        {hist.profiles && <span> por {hist.profiles.name} ({hist.profiles.role})</span>}
+                                        {hist.notes && <div style={{ fontStyle: 'italic', marginTop: 2, color: '#64748b' }}>"{hist.notes}"</div>}
+                                    </div>
+                                ))}
+                            </Section>
+                        </div>
+                    )}
 
                     <Section title="Informacion del Sistema">
                         <DetailField label="ID de Visita">

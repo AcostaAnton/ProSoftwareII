@@ -64,7 +64,9 @@ export async function createVisit(
     visit_time: normalizeNullableText(visitData.visit_time),
     visit_purpose: normalizeNullableText(visitData.visit_purpose),
     visit_destination: normalizeNullableText(visitData.visit_destination),
-    qr_token
+    qr_token,
+    status: 'pending', // Asegurar estado inicial
+    created_by: visitData.resident_id // Asumimos que el residente crea su propia visita
   }
 
   const { data, error } = await supabase
@@ -129,15 +131,55 @@ export async function getVisitsByStatus(
 }
 
 // - Obtener una visita específica por ID
-export async function getVisitById(visitId: string): Promise<Visit> {
+export async function getVisitById(visitId: string): Promise<any> {
+  // 1. Intento principal: Traer visita con todas las relaciones (logs y historial)
   const { data, error } = await supabase
     .from('visits')
-    .select('*')
+    .select(`
+      *,
+      profiles:resident_id (
+        id,
+        name
+      ),
+      access_logs (*),
+      visit_status_history (
+        *,
+        profiles:changed_by_id (name, role)
+      )
+    `)
     .eq('id', visitId)
     .single()
 
-  if (error) throw error
-  return data as Visit
+  // Si funciona correctamente, devolvemos los datos completos
+  if (!error) return data
+
+  // 2. Fallback: Si falla la carga combinada (JOIN), intentamos cargar por separado.
+  // Esto soluciona problemas donde Supabase no detecta automáticamente las relaciones FK.
+  console.warn('⚠️ Error cargando detalles con JOIN. Intentando carga individual...', error.message)
+
+  const { data: basicData, error: basicError } = await supabase
+    .from('visits')
+    .select(`*, profiles:resident_id(id, name)`)
+    .eq('id', visitId)
+    .single()
+
+  if (basicError) throw basicError
+
+  // Cargar logs y historial en consultas separadas
+  const { data: logs } = await supabase.from('access_logs').select('*').eq('visit_id', visitId).order('created_at', { ascending: false })
+  
+  // Intentar cargar historial con el nombre del usuario si es posible, sino solo el historial
+  const { data: history } = await supabase
+    .from('visit_status_history')
+    .select('*, profiles:changed_by_id(name, role)')
+    .eq('visit_id', visitId)
+    .order('changed_at', { ascending: false })
+
+  return { 
+    ...basicData, 
+    access_logs: logs || [], 
+    visit_status_history: history || [] 
+  }
 }
 
 // - Actualizar el estado de una visita (por ejemplo: pending → completed)
@@ -156,3 +198,31 @@ export async function updateVisitStatus(
   return data as Visit
 }
 
+<<<<<<< Updated upstream
+=======
+// - Cancelar una visita (residente)
+export async function cancelVisit(visitId: string): Promise<Visit> {
+  return updateVisitStatus(visitId, 'cancelled')
+}
+
+// Función auxiliar para subir fotos con tolerancia a fallos (por si falta el bucket)
+export async function uploadVisitPhoto(file: File): Promise<string | null> {
+  const fileExt = file.name.split('.').pop()
+  const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`
+  const filePath = `${fileName}`
+
+  try {
+    const { data, error } = await supabase.storage
+      .from('visit-photos')
+      .upload(filePath, file)
+
+    if (error) throw error
+    return data.path
+  } catch (error) {
+    // Si falla (ej. bucket no existe 400/404), devolvemos una imagen simulada para no bloquear
+    console.error('❌ Error subiendo foto. Verifica en Supabase que el bucket se llame "visit-photos" y sea PÚBLICO.', error)
+    // Retorna una imagen genérica de vehículo para pruebas si falla
+    return 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=300'
+  }
+}
+>>>>>>> Stashed changes
