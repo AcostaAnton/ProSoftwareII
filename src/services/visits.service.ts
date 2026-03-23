@@ -182,6 +182,40 @@ export async function getVisitById(visitId: string): Promise<any> {
   }
 }
 
+/** Datos extra para la tarjeta de invitación (residente, comunidad, unidad). */
+export type VisitQrDisplayData = {
+  visit: Visit
+  residentName: string | null
+  communityName: string | null
+  unitNumber: string | null
+}
+
+export async function getVisitWithQrDisplay(visitId: string): Promise<VisitQrDisplayData> {
+  const visit = await getVisitById(visitId)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('name, unit_number, community_id')
+    .eq('id', visit.resident_id)
+    .maybeSingle()
+
+  let communityName: string | null = null
+  if (profile?.community_id) {
+    const { data: comm } = await supabase
+      .from('communities')
+      .select('name')
+      .eq('id', profile.community_id)
+      .maybeSingle()
+    communityName = comm?.name ?? null
+  }
+
+  return {
+    visit,
+    residentName: profile?.name ?? null,
+    communityName,
+    unitNumber: profile?.unit_number ?? null,
+  }
+}
+
 // - Actualizar el estado de una visita (por ejemplo: pending → completed)
 export async function updateVisitStatus(
   visitId: string,
@@ -198,8 +232,6 @@ export async function updateVisitStatus(
   return data as Visit
 }
 
-<<<<<<< Updated upstream
-=======
 // - Cancelar una visita (residente)
 export async function cancelVisit(visitId: string): Promise<Visit> {
   return updateVisitStatus(visitId, 'cancelled')
@@ -225,4 +257,3 @@ export async function uploadVisitPhoto(file: File): Promise<string | null> {
     return 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=300'
   }
 }
->>>>>>> Stashed changes

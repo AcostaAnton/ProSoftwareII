@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { useVisits } from '../../hooks/useVisits'
-import { getVisitById } from '../../services/visits.service'
+import {
+    getVisitWithQrDisplay,
+    type VisitQrDisplayData,
+} from '../../services/visits.service'
 import type { Visit } from '../../types/index'
 import VisitDetailView from './VisitDetailView'
 
@@ -13,6 +16,7 @@ function VisitDetail() {
     const { changeStatus, refresh } = useVisits()
 
     const [visit, setVisit] = useState<Visit | null>(null)
+    const [qrDisplay, setQrDisplay] = useState<VisitQrDisplayData | null>(null)
     const [newStatus, setNewStatus] = useState<Visit['status']>('pending')
     const [isUpdating, setIsUpdating] = useState(false)
     const [loading, setLoading] = useState(true)
@@ -34,9 +38,10 @@ function VisitDetail() {
                 return
             }
 
-            const visitData = await getVisitById(id)
-            setVisit(visitData)
-            setNewStatus(visitData.status)
+            const data = await getVisitWithQrDisplay(id)
+            setVisit(data.visit)
+            setQrDisplay(data)
+            setNewStatus(data.visit.status)
         } catch (loadError) {
             setError(loadError instanceof Error ? loadError.message : 'Error al cargar la visita')
         } finally {
@@ -94,6 +99,7 @@ function VisitDetail() {
             showQRModal={showQRModal}
             showSuccessModal={showSuccessModal}
             visit={visit}
+            qrDisplay={qrDisplay}
             onBack={handleBack}
             onCloseQR={handleCloseQR}
             onCloseSuccess={handleCloseSuccess}

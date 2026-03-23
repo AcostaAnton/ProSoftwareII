@@ -37,6 +37,7 @@ export default function PanelEstadisticasDashboard({
 }: PropiedadesPanelEstadisticasDashboard) {
   return (
     <div
+      className="dashboard-stats-grid"
       style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',

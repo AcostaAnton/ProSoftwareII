@@ -11,6 +11,7 @@ type NavItem = { id: string; label: string; icon: string; roles: UserRole[]; pat
 export const NAV_ITEMS: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: '🏠', roles: ['resident', 'admin', 'security'], path: '/dashboard' },
   { id: 'new-visit', label: 'Nueva Visita', icon: '➕', roles: ['resident', 'admin'], path: '/visits/new' },
+  { id: 'my-visits', label: 'Mis Visitas', icon: '🏘️', roles: ['resident'], path: '/visits/my-visits' },
   { id: 'visit-list', label: 'Lista de Visitas', icon: '📋', roles: ['admin', 'security'], path: '/visits/list' },
   { id: 'scan', label: 'Escanear QR', icon: '📷', roles: ['admin', 'security'], path: '/scan' },
   { id: 'admin-users', label: 'Usuarios', icon: '👥', roles: ['admin'], path: '/admin/users' },
@@ -84,7 +85,10 @@ export default function Sidebar({ isOpen, toggle }: SidebarProps) {
                     <button
                       key={n.id}
                       type="button"
-                      onClick={() => navigate(n.path)}
+                      onClick={() => {
+                        navigate(n.path);
+                        if (isMobile) toggle();
+                      }}
                       className={`nav-button ${isActive ? 'nav-button-active' : ''}`}
                     >
                       {n.icon} {n.label}

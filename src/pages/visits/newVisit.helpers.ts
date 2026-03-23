@@ -26,6 +26,19 @@ export const PERIOD_OPTIONS = [
     { value: 'PM', label: 'PM' }
 ]
 
+export const VISIT_LOCATION_OPTIONS = [
+    { value: '', label: 'Selecciona el destino...' },
+    { value: 'Mi residencia', label: '🏠 Mi residencia' },
+    { value: 'Parque', label: '🌳 Parque' },
+    { value: 'Cancha deportiva', label: '⚽ Cancha deportiva' },
+    { value: 'Piscina', label: '🏊 Piscina' },
+    { value: 'Salón de eventos', label: '🎉 Salón de eventos' },
+    { value: 'Área de juegos', label: '🎠 Área de juegos' },
+    { value: 'Gimnasio', label: '💪 Gimnasio' },
+    { value: 'Oficina administrativa', label: '🏢 Oficina administrativa' },
+    { value: 'Otro', label: '✏️ Otro...' },
+]
+
 export function getTodayInputDate(): string {
     const today = new Date()
     const year = today.getFullYear()

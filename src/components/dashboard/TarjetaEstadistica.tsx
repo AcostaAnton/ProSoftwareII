@@ -41,7 +41,8 @@ export default function TarjetaEstadistica({
         background: '#1f2937',
         borderRadius: 14,
         padding: 20,
-        width: 180,
+        width: '100%',
+        minWidth: 0,
         border: '1px solid rgba(255,255,255,0.05)',
       }}
     >

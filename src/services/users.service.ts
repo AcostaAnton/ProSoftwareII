@@ -63,6 +63,37 @@ export async function getProfilesByCommunity(communityId: string): Promise<Profi
   }))
 }
 
+/** Fila mínima de `units` para listas desplegables (p. ej. alta/edición de usuario). */
+export type CommunityUnitRow = {
+  id: string
+  number: string
+  owner_id: string | null
+  co_owner_id: string | null
+}
+
+/** Todas las unidades de la comunidad, ordenadas por número. */
+export async function getUnitsByCommunityForSelect(communityId: string): Promise<CommunityUnitRow[]> {
+  const full = await supabase
+    .from('units')
+    .select('id, number, owner_id, co_owner_id')
+    .eq('community_id', communityId)
+    .order('number', { ascending: true })
+
+  if (full.error && isUnitsCoOwnerColumnError(full.error)) {
+    const legacy = await supabase
+      .from('units')
+      .select('id, number, owner_id')
+      .eq('community_id', communityId)
+      .order('number', { ascending: true })
+    if (legacy.error) throw legacy.error
+    return ((legacy.data ?? []) as { id: string; number: string; owner_id: string | null }[]).map(
+      (r) => ({ ...r, co_owner_id: null }),
+    )
+  }
+  if (full.error) throw full.error
+  return (full.data ?? []) as CommunityUnitRow[]
+}
+
 // - Obtener todos los perfiles por estado
 export async function getProfilesByStatus(
   status: Profile['status'], role: Profile['role']
@@ -119,39 +150,22 @@ export async function getCommunitiesForSelect(): Promise<CommunityOption[]> {
   return (data ?? []) as CommunityOption[]
 }
 
-export type CommunityUnitRow = {
-  id: string
-  number: string
-  owner_id: string | null
-  co_owner_id?: string | null
-}
-
-export async function getUnitsByCommunityForSelect(communityId: string): Promise<CommunityUnitRow[]> {
+/** Obtiene el nombre de una comunidad por su ID. */
+export async function getCommunityNameById(communityId: string): Promise<string | null> {
   const { data, error } = await supabase
-    .from('units')
-    .select('id, number, owner_id, co_owner_id')
-    .eq('community_id', communityId)
-    .order('number', { ascending: true })
+    .from('communities')
+    .select('name')
+    .eq('id', communityId)
+    .maybeSingle()
 
-  if (error && isUnitsCoOwnerColumnError(error)) {
-    const legacy = await supabase
-      .from('units')
-      .select('id, number, owner_id')
-      .eq('community_id', communityId)
-      .order('number', { ascending: true })
-
-    if (legacy.error) throw legacy.error
-
-    return (legacy.data ?? []).map((u) => ({
-      ...u,
-      co_owner_id: null,
-    })) as CommunityUnitRow[]
-  } else if (error) {
-    throw error
+  if (error) {
+    console.error('Error obteniendo nombre de comunidad:', error)
+    return null
   }
-
-  return (data ?? []) as CommunityUnitRow[]
+  return data?.name ?? null
 }
+
+
 
 /** Quita al perfil de owner_id / co_owner_id en todas las unidades donde aparezca. */
 export async function clearProfileFromAllUnits(profileId: string): Promise<void> {
@@ -315,7 +329,7 @@ export async function createCommunityUser(input: CreateCommunityUserInput): Prom
     email,
     password,
     options: {
-      data: { name, role: input.role },
+      data: { name, role: input.role, must_change_password: true },
       emailRedirectTo: origin ? `${origin}/login` : undefined,
     },
   })

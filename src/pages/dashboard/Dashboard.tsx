@@ -12,7 +12,10 @@ import PanelEstadisticasDashboard from '../../components/dashboard/PanelEstadist
 import TablaVisitasRecientes from '../../components/dashboard/TablaVisitasRecientes'
 import QRGenerator from '../../components/shared/QRGenerator'
 import { useDashboard } from '../../hooks/useDashboard'
-import { getVisitById } from '../../services/visits.service'
+import {
+  getVisitWithQrDisplay,
+  type VisitQrDisplayData,
+} from '../../services/visits.service'
 import type { Visit } from '../../types/index'
 
 export default function Dashboard() {
@@ -29,12 +32,14 @@ export default function Dashboard() {
   } = useDashboard()
 
   const [selectedVisit, setSelectedVisit] = useState<Visit | null>(null)
+  const [qrDisplay, setQrDisplay] = useState<VisitQrDisplayData | null>(null)
   const [showQRModal, setShowQRModal] = useState(false)
 
   const handleVerQR = async (visitaId: string) => {
     try {
-      const visit = await getVisitById(visitaId)
-      setSelectedVisit(visit)
+      const data = await getVisitWithQrDisplay(visitaId)
+      setSelectedVisit(data.visit)
+      setQrDisplay(data)
       setShowQRModal(true)
     } catch (err) {
       console.error('Error al cargar la visita:', err)
@@ -85,9 +90,19 @@ export default function Dashboard() {
         <QRGenerator
           visit={selectedVisit}
           mode="modal"
+          qrDisplay={
+            qrDisplay
+              ? {
+                  residentName: qrDisplay.residentName,
+                  communityName: qrDisplay.communityName,
+                  unitNumber: qrDisplay.unitNumber,
+                }
+              : undefined
+          }
           onClose={() => {
             setShowQRModal(false)
             setSelectedVisit(null)
+            setQrDisplay(null)
           }}
         />
       )}
