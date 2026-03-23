@@ -165,7 +165,7 @@ return (
       <p style={{ color: "#94a3b8", fontSize: "13px", marginBottom: "24px" }}>
         Resumen de actividad de la comunidad.
       </p>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "12px", marginBottom: "24px" }}>
+      <div className="admin-stats-kpi-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "12px", marginBottom: "24px" }}>
         {EstadisticasPrincipales.map((item, i) => (
           <div key={i} style={{ background: "#1E293B", border: `2px solid ${item.border}`, borderRadius: "16px", padding: "16px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -190,7 +190,7 @@ return (
           </div>
         ))}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+      <div className="admin-stats-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
         <div style={{ background: "#1E293B", borderRadius: "16px", padding: "16px" }}>
           <div className="card">
             <h3 style={{ fontFamily: "Syne, sans-serif", color: "white", marginTop: "1px", marginBottom: "20px", fontSize: "17px" }}>

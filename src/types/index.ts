@@ -125,4 +125,6 @@ export interface AuthUser {
     id: string
     email: string
     profile: Profile | null
+    /** true si user_metadata.must_change_password (p. ej. usuario creado por admin con contraseña temporal). */
+    mustChangePassword?: boolean
 }

@@ -357,3 +357,117 @@ button:focus-visible {
   text-align: center;
   color: #64748b;
 }
+
+/* ===== Layout principal (contenido bajo TopBar) ===== */
+.main-content-wrap {
+  padding: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Dashboard: tarjetas KPI */
+.dashboard-stats-grid {
+  min-width: 0;
+}
+
+/* Tabla visitas: scroll horizontal en pantallas estrechas */
+.dashboard-table-scroll .dashboard-visits-table {
+  min-width: 640px;
+}
+
+/* Nueva visita: grid hora */
+.new-visit-page {
+  box-sizing: border-box;
+}
+
+/* Admin estadísticas */
+.admin-stats-kpi-grid {
+  min-width: 0;
+}
+
+.admin-stats-two-col {
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .main-content-wrap {
+    padding: 16px 12px;
+    max-width: 100%;
+  }
+
+  .encabezado-dashboard h1 {
+    font-size: 20px !important;
+  }
+
+  .dashboard-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .dashboard-section-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .dashboard-section-header h2 {
+    font-size: 17px !important;
+  }
+
+  .dashboard-nueva-visita-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    margin-bottom: 24px !important;
+  }
+
+  .filters-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .guards-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .guards-container {
+    padding: 16px 12px !important;
+  }
+
+  .new-visit-page {
+    padding: 16px 12px !important;
+  }
+
+  .new-visit-time-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .admin-stats-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .admin-stats-two-col {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .dashboard-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-stats-kpi-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

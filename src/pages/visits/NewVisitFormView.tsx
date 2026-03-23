@@ -87,7 +87,7 @@ const styles = {
     timeGrid: {
         display: 'grid',
         gridTemplateColumns: '1fr 1fr 1fr',
-        gap: '10px'
+        gap: '10px',
     },
     input: controlStyle,
     select: controlStyle,
@@ -152,7 +152,7 @@ function NewVisitFormView({
     onSubmit
 }: NewVisitFormViewProps) {
     return (
-        <div style={styles.page}>
+        <div className="new-visit-page" style={styles.page}>
             <div style={styles.container}>
                 <h1 style={styles.title}>Nueva visita</h1>
                 <p style={styles.description}>Completa los datos para generar el QR de acceso.</p>
@@ -199,7 +199,7 @@ function NewVisitFormView({
                     </Field>
 
                     <Field label="Hora" htmlFor="visit_hour" required>
-                        <div style={styles.timeGrid}>
+                        <div className="new-visit-time-grid" style={styles.timeGrid}>
                             <select
                                 id="visit_hour"
                                 name="visit_hour"

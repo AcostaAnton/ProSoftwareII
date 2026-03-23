@@ -120,11 +120,13 @@ export default function TablaVisitasRecientes({
     <section>
       {/* Encabezado de la sección */}
       <div
+        className="dashboard-section-header"
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           marginBottom: 14,
+          gap: 12,
         }}
       >
         <h2
@@ -146,6 +148,7 @@ export default function TablaVisitasRecientes({
             variant="primary"
             size="md"
             onClick={onNuevaVisita}
+            className="dashboard-nueva-visita-btn"
             style={{ borderRadius: 16, padding: '14px 28px', fontSize: 14 }}
           >
             {textoBotonNuevaVisita}
@@ -155,11 +158,13 @@ export default function TablaVisitasRecientes({
 
       {/* Tabla principal */}
       <div
+        className="dashboard-table-scroll"
         style={{
           background: '#0f172a',
           border: '1px solid #1e293b',
           borderRadius: 24,
-          overflow: 'hidden',
+          overflow: 'auto',
+          WebkitOverflowScrolling: 'touch',
         }}
       >
         {visitas.length === 0 ? (
@@ -174,7 +179,7 @@ export default function TablaVisitasRecientes({
             No hay visitas recientes.
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table className="dashboard-visits-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
                 {['VISITANTE', 'RESIDENTE', 'FECHA', 'ESTADO', ''].map((columna) => (

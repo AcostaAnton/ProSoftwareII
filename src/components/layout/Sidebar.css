@@ -18,8 +18,15 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
   z-index: 999;
+}
+
+@media (max-width: 767px) {
+  .sidebar {
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+  }
 }
 
 .logo-wrapper {
