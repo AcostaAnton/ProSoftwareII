@@ -17,6 +17,7 @@ import VisitDetail from '../pages/visits/VisitDetail'
 import ScanPage from '../pages/scan/ScanPage'
 import AdminUsers from '../pages/admin/AdminUsers'
 import AdminGuards from '../pages/admin/AdminGuards'
+import AdminStats from '../pages/admin/AdminStats'
 import VisitorAccessPage from '../pages/visits/VisitorAccessPage'
 import ResidentVisitList from '../pages/visits/ResidentVisitList'
 // import RegisterPage from '../pages/auth/Register'
@@ -72,6 +73,14 @@ export default function AppRoutes() {
                             }
                         />
                         <Route path="admin/guards" element={<AdminGuards />} />
+                        <Route
+                            path="admin/stats"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin']}>
+                                    <AdminStats />
+                                </ProtectedRoute>
+                            }
+                        />
                     </Route>
                 </Route>
             </Routes>
