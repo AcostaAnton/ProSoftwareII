@@ -63,35 +63,18 @@ export async function getProfilesByCommunity(communityId: string): Promise<Profi
   }))
 }
 
-/** Fila mínima de `units` para listas desplegables (p. ej. alta de usuario). */
-export type CommunityUnitRow = {
-  id: string
-  number: string
-  owner_id: string | null
-  co_owner_id: string | null
-}
+// - Obtener todos los perfiles por estado
+export async function getProfilesByStatus(
+  status: Profile['status'], role: Profile['role']
+): Promise<Profile[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('status', status)
+    .eq('role', role)
 
-/** Todas las unidades de la comunidad, ordenadas por número. */
-export async function getUnitsByCommunityForSelect(communityId: string): Promise<CommunityUnitRow[]> {
-  const full = await supabase
-    .from('units')
-    .select('id, number, owner_id, co_owner_id')
-    .eq('community_id', communityId)
-    .order('number', { ascending: true })
-
-  if (full.error && isUnitsCoOwnerColumnError(full.error)) {
-    const legacy = await supabase
-      .from('units')
-      .select('id, number, owner_id')
-      .eq('community_id', communityId)
-      .order('number', { ascending: true })
-    if (legacy.error) throw legacy.error
-    return ((legacy.data ?? []) as { id: string; number: string; owner_id: string | null }[]).map(
-      (r) => ({ ...r, co_owner_id: null }),
-    )
-  }
-  if (full.error) throw full.error
-  return (full.data ?? []) as CommunityUnitRow[]
+  if (error) throw error
+  return data as Profile[]
 }
 
 /** Actualiza el rol de un perfil */
