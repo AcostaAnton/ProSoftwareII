@@ -18,6 +18,7 @@ import ScanPage from '../pages/scan/ScanPage'
 import AdminUsers from '../pages/admin/AdminUsers'
 import AdminGuards from '../pages/admin/AdminGuards'
 import VisitorAccessPage from '../pages/visits/VisitorAccessPage'
+import ResidentVisitList from '../pages/visits/ResidentVisitList'
 // import RegisterPage from '../pages/auth/Register'
 
 export default function AppRoutes() {
@@ -45,6 +46,14 @@ export default function AppRoutes() {
                         <Route path="dashboard" element={<DashboardPage />} />
                         <Route path="visits/new" element={<NewVisit />} />
                         <Route path="visits/list" element={<VisitList />} />
+                        <Route
+                            path="visits/my-visits"
+                            element={
+                                <ProtectedRoute allowedRoles={['resident']}>
+                                    <ResidentVisitList />
+                                </ProtectedRoute>
+                            }
+                        />
                         <Route path="visits/:id" element={<VisitDetail />} />
                         <Route
                             path="scan"

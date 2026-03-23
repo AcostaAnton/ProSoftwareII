@@ -190,3 +190,7 @@ export async function updateVisitStatus(
   return data as Visit
 }
 
+// - Cancelar una visita (residente)
+export async function cancelVisit(visitId: string): Promise<Visit> {
+  return updateVisitStatus(visitId, 'cancelled')
+}
