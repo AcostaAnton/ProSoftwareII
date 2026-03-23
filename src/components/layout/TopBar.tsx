@@ -20,12 +20,45 @@ const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
   const title = getTitleForPath(location.pathname);
 
   return (
-    <div style={{ background: '#0f172a', color: 'white', padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #1e293b' }}>
-      <Button type="button" variant="ghost" size="lg" onClick={toggleSidebar} style={{ fontSize: 24, padding: '4px 8px' }} aria-label="Abrir menú">
+    <header
+      className="app-topbar"
+      style={{
+        background: '#0f172a',
+        color: 'white',
+        minHeight: 52,
+        padding: '10px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        borderBottom: '1px solid #1e293b',
+        position: 'sticky',
+        top: 0,
+        zIndex: 40,
+      }}
+    >
+      <Button
+        type="button"
+        variant="ghost"
+        size="lg"
+        onClick={toggleSidebar}
+        style={{ fontSize: 22, padding: '6px 10px', flexShrink: 0, minWidth: 44 }}
+        aria-label="Abrir o cerrar menú"
+      >
         ☰
       </Button>
-      <div style={{ flex: 1, textAlign: isMobile ? 'center' : 'left', marginLeft: isMobile ? '-24px' : '0' }}>{title}</div>
-    </div>
+      <div
+        style={{
+          flex: 1,
+          textAlign: isMobile ? 'center' : 'left',
+          fontFamily: "'Syne', sans-serif",
+          fontWeight: 700,
+          fontSize: isMobile ? 17 : 18,
+          paddingRight: isMobile ? 44 : 0,
+        }}
+      >
+        {title}
+      </div>
+    </header>
   );
 };
 

@@ -84,7 +84,10 @@ export default function Sidebar({ isOpen, toggle }: SidebarProps) {
                     <button
                       key={n.id}
                       type="button"
-                      onClick={() => navigate(n.path)}
+                      onClick={() => {
+                        navigate(n.path);
+                        if (isMobile) toggle();
+                      }}
                       className={`nav-button ${isActive ? 'nav-button-active' : ''}`}
                     >
                       {n.icon} {n.label}

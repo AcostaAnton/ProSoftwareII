@@ -43,7 +43,7 @@ export default function EncabezadoDashboard({
 // Ejemplo: "Carlos Mendoza" -> "Carlos"
 
   return (
-    <div style={{ marginBottom: 24 }}>
+    <div className="encabezado-dashboard" style={{ marginBottom: 24 }}>
       <h1
         style={{
           fontFamily: "'Syne', sans-serif",
