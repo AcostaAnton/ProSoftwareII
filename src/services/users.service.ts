@@ -119,6 +119,40 @@ export async function getCommunitiesForSelect(): Promise<CommunityOption[]> {
   return (data ?? []) as CommunityOption[]
 }
 
+export type CommunityUnitRow = {
+  id: string
+  number: string
+  owner_id: string | null
+  co_owner_id?: string | null
+}
+
+export async function getUnitsByCommunityForSelect(communityId: string): Promise<CommunityUnitRow[]> {
+  const { data, error } = await supabase
+    .from('units')
+    .select('id, number, owner_id, co_owner_id')
+    .eq('community_id', communityId)
+    .order('number', { ascending: true })
+
+  if (error && isUnitsCoOwnerColumnError(error)) {
+    const legacy = await supabase
+      .from('units')
+      .select('id, number, owner_id')
+      .eq('community_id', communityId)
+      .order('number', { ascending: true })
+
+    if (legacy.error) throw legacy.error
+
+    return (legacy.data ?? []).map((u) => ({
+      ...u,
+      co_owner_id: null,
+    })) as CommunityUnitRow[]
+  } else if (error) {
+    throw error
+  }
+
+  return (data ?? []) as CommunityUnitRow[]
+}
+
 /** Quita al perfil de owner_id / co_owner_id en todas las unidades donde aparezca. */
 export async function clearProfileFromAllUnits(profileId: string): Promise<void> {
   const { error: eOwner } = await supabase

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { RoleBadge } from './Badge'
+import { RoleBadge } from '../components/ui/Badge'
 
 describe('RoleBadge', () => {
   it('muestra la etiqueta Admin para role admin', () => {
