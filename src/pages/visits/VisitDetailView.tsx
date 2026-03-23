@@ -4,8 +4,10 @@ import type {
     ReactNode
 } from 'react'
 import QRGenerator from '../../components/shared/QRGenerator'
+import type { VisitQrDisplayData } from '../../services/visits.service'
 import type { Visit } from '../../types/index'
 import { formatDate, formatPhone, formatTime } from '../../utils/formatDate'
+import { getQrInvitationLines } from '../../utils/qrInvitationMessage'
 import {
     getVisitStatusColor,
     getVisitStatusLabel,
@@ -22,6 +24,7 @@ interface VisitDetailViewProps {
     showQRModal: boolean
     showSuccessModal: boolean
     visit: Visit | null
+    qrDisplay: VisitQrDisplayData | null
     onBack: () => void
     onCloseQR: () => void
     onCloseSuccess: () => void
@@ -234,6 +237,7 @@ function VisitDetailView({
     showQRModal,
     showSuccessModal,
     visit,
+    qrDisplay,
     onBack,
     onCloseQR,
     onCloseSuccess,
@@ -253,6 +257,8 @@ function VisitDetailView({
         return <EmptyState />
     }
 
+    const invitation = getQrInvitationLines(visit, qrDisplay)
+
     return (
         <div style={styles.page}>
             <div style={styles.container}>
@@ -261,6 +267,68 @@ function VisitDetailView({
                         Volver
                     </Button>
                     <h1 style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>Detalles de la Visita</h1>
+                </div>
+
+                <div
+                    style={{
+                        marginBottom: '20px',
+                        padding: '16px 18px',
+                        borderRadius: '12px',
+                        backgroundColor: '#0f172a',
+                        border: '1px solid #1e293b',
+                    }}
+                >
+                    <p
+                        style={{
+                            margin: 0,
+                            fontSize: '16px',
+                            lineHeight: 1.5,
+                            color: '#e2e8f0',
+                            fontWeight: 600,
+                            fontFamily: "'DM Sans', system-ui, sans-serif",
+                        }}
+                    >
+                        {qrDisplay?.residentName?.trim() &&
+                        invitation.primary.startsWith(`${qrDisplay.residentName.trim()},`) ? (
+                            <>
+                                <span style={{ fontWeight: 800, color: '#ffffff' }}>
+                                    {qrDisplay.residentName.trim()}
+                                </span>
+                                {invitation.primary.slice(qrDisplay.residentName.trim().length)}
+                            </>
+                        ) : invitation.primary.startsWith('Acceso de visita para ') ? (
+                            <>
+                                Acceso de visita para{' '}
+                                <span style={{ fontWeight: 800, color: '#ffffff' }}>
+                                    {visit.visitor_name?.trim() || 'Visitante'}
+                                </span>
+                            </>
+                        ) : invitation.primary.startsWith('Invitación para ') ? (
+                            <>
+                                Invitación para{' '}
+                                <span style={{ fontWeight: 800, color: '#ffffff' }}>
+                                    {visit.visitor_name?.trim() || 'Visitante'}
+                                </span>
+                            </>
+                        ) : (
+                            invitation.primary
+                        )}
+                    </p>
+                    {invitation.secondary ? (
+                        <p
+                            style={{
+                                margin: '10px 0 0',
+                                fontSize: '18px',
+                                fontWeight: 800,
+                                color: '#22d3ee',
+                                textTransform: 'uppercase',
+                                letterSpacing: 0.3,
+                                fontFamily: "'Syne', 'DM Sans', system-ui, sans-serif",
+                            }}
+                        >
+                            {invitation.secondary}
+                        </p>
+                    ) : null}
                 </div>
 
                 <div style={styles.card}>
@@ -374,6 +442,15 @@ function VisitDetailView({
                 <QRGenerator
                     visit={visit}
                     mode="modal"
+                    qrDisplay={
+                        qrDisplay
+                            ? {
+                                  residentName: qrDisplay.residentName,
+                                  communityName: qrDisplay.communityName,
+                                  unitNumber: qrDisplay.unitNumber,
+                              }
+                            : undefined
+                    }
                     onClose={onCloseQR}
                 />
             )}

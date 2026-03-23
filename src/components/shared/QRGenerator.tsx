@@ -3,6 +3,278 @@ import QRCode from 'qrcode'
 import type { Visit } from '../../types/index'
 import { Button } from '../ui/Button'
 import { getVisitorAccessUrl } from '../../utils/visitorAccessUrl'
+import { formatQrCreatedAt } from '../../utils/formatDate'
+import { getQrInvitationLines } from '../../utils/qrInvitationMessage'
+
+const QR_IMG_SIZE = 280
+/** Tamaño generado cuando el QR va en modal (móvil); se ve completo sin ocupar toda la pantalla. */
+const QR_IMG_SIZE_MODAL = 200
+
+/** Paleta alineada con el resto de la app (dashboard, formularios). */
+const APP = {
+    bgCard: '#0f172a',
+    bgDeep: '#020617',
+    bgMuted: '#1e293b',
+    border: '#1e293b',
+    borderLight: '#334155',
+    accent: '#22d3ee',
+    text: '#e2e8f0',
+    textBright: '#ffffff',
+    textMuted: '#94a3b8',
+    qrLight: '#ffffff',
+} as const
+
+/** Datos opcionales para el encabezado tipo invitación (residente / comunidad / unidad). */
+export type QrDisplayContext = {
+    residentName?: string | null
+    communityName?: string | null
+    unitNumber?: string | null
+}
+
+const VISITOR_RULES: { icon: string; text: string }[] = [
+    { icon: '🪪', text: 'Presente QR e identidad' },
+    { icon: '🏍️', text: 'Quítate el casco' },
+    { icon: '🚗', text: 'Baja vidrios y abre el baúl' },
+    { icon: '⛔', text: 'Respeta las señales' },
+    { icon: '🏁', text: 'Velocidad máx. 20 km/h' },
+]
+
+function greyBarText(visit: Visit, unitNumber?: string | null): string | null {
+    const dest = visit.visit_destination?.trim()
+    if (dest) return dest
+    const u = unitNumber?.trim()
+    if (u) return `Unidad: ${u}`
+    return null
+}
+
+function InviteHeadline({
+    visit,
+    qrDisplay,
+    compact,
+}: {
+    visit: Pick<Visit, 'visitor_name'>
+    qrDisplay?: QrDisplayContext
+    compact?: boolean
+}) {
+    const base: React.CSSProperties = {
+        color: APP.text,
+        fontWeight: 700,
+        fontSize: compact ? 13 : 15,
+        margin: 0,
+        lineHeight: 1.45,
+        fontFamily: "'DM Sans', system-ui, sans-serif",
+    }
+    const communityStyle: React.CSSProperties = {
+        color: APP.accent,
+        fontWeight: 800,
+        fontSize: compact ? 14 : 17,
+        margin: compact ? '6px 0 0' : '10px 0 0',
+        lineHeight: 1.2,
+        textTransform: 'uppercase',
+        letterSpacing: 0.3,
+        fontFamily: "'DM Sans', system-ui, sans-serif",
+    }
+
+    const { primary, secondary } = getQrInvitationLines(visit, qrDisplay ?? null)
+
+    /** Destaca «Residente» al inicio cuando el mensaje sigue el formato «X, Y te ha invitado a:» */
+    const residentName = qrDisplay?.residentName?.trim()
+    const primaryWithEmphasis =
+        residentName && primary.startsWith(`${residentName},`) ? (
+            <>
+                <span style={{ fontWeight: 800 }}>{residentName}</span>
+                {primary.slice(residentName.length)}
+            </>
+        ) : primary.startsWith('Acceso de visita para ') ? (
+            <>
+                Acceso de visita para{' '}
+                <span style={{ fontWeight: 800 }}>{visit.visitor_name?.trim() || 'Visitante'}</span>
+            </>
+        ) : primary.startsWith('Invitación para ') ? (
+            <>
+                Invitación para{' '}
+                <span style={{ fontWeight: 800 }}>{visit.visitor_name?.trim() || 'Visitante'}</span>
+            </>
+        ) : (
+            primary
+        )
+
+    return (
+        <>
+            <p style={base}>{primaryWithEmphasis}</p>
+            {secondary ? <p style={communityStyle}>{secondary}</p> : null}
+        </>
+    )
+}
+
+function VisitInvitationCard({
+    visit,
+    qrCode,
+    qrDisplay,
+    compact = false,
+}: {
+    visit: Visit
+    qrCode: string
+    qrDisplay?: QrDisplayContext
+    /** Modal móvil: menos padding, QR y reglas más pequeños. */
+    compact?: boolean
+}) {
+    const created = formatQrCreatedAt(visit.created_at)
+    const grey = greyBarText(visit, qrDisplay?.unitNumber)
+    const qrMax = compact ? QR_IMG_SIZE_MODAL : QR_IMG_SIZE
+
+    return (
+        <div
+            style={{
+                background: APP.bgCard,
+                border: `1px solid ${APP.border}`,
+                borderRadius: compact ? 10 : 12,
+                overflow: 'hidden',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
+                maxWidth: compact ? 340 : 400,
+                margin: '0 auto',
+                width: '100%',
+            }}
+        >
+            <div style={{ height: compact ? 3 : 4, background: APP.accent }} />
+
+            <div style={{ padding: compact ? '10px 12px 6px' : '18px 18px 8px' }}>
+                <InviteHeadline visit={visit} qrDisplay={qrDisplay} compact={compact} />
+            </div>
+
+            <div
+                style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    padding: compact ? '6px 10px 10px' : '8px 16px 16px',
+                }}
+            >
+                <div
+                    style={{
+                        border: `2px solid ${APP.borderLight}`,
+                        borderRadius: 4,
+                        padding: compact ? 6 : 8,
+                        background: APP.qrLight,
+                        lineHeight: 0,
+                    }}
+                >
+                    <img
+                        src={qrCode}
+                        alt="Código QR de acceso"
+                        style={{
+                            display: 'block',
+                            width: '100%',
+                            maxWidth: qrMax,
+                            height: 'auto',
+                        }}
+                    />
+                </div>
+            </div>
+
+            <div
+                style={{
+                    padding: compact ? '0 12px 10px' : '0 18px 16px',
+                    fontFamily: "'DM Sans', system-ui, sans-serif",
+                }}
+            >
+                <p style={{ margin: 0, fontSize: compact ? 12 : 14, color: APP.textMuted }}>
+                    Se creó:{' '}
+                    <strong style={{ color: APP.textBright }}>{created}</strong>
+                </p>
+            </div>
+
+            {grey ? (
+                <div
+                    style={{
+                        margin: compact ? '0 10px 10px' : '0 14px 16px',
+                        padding: compact ? '8px 10px' : '12px 14px',
+                        borderRadius: 8,
+                        background: APP.bgMuted,
+                        border: `1px solid ${APP.borderLight}`,
+                        color: APP.text,
+                        fontSize: compact ? 11 : 13,
+                        fontWeight: 600,
+                        lineHeight: 1.4,
+                        fontFamily: "'DM Sans', system-ui, sans-serif",
+                    }}
+                >
+                    {grey}
+                </div>
+            ) : null}
+
+            <div
+                style={{
+                    background: APP.bgDeep,
+                    borderTop: `1px solid ${APP.border}`,
+                    padding: compact ? '8px 6px 10px' : '14px 10px 18px',
+                    color: APP.text,
+                }}
+            >
+                <p
+                    style={{
+                        margin: compact ? '0 0 6px' : '0 0 12px',
+                        textAlign: 'center',
+                        fontWeight: 800,
+                        fontSize: compact ? 10 : 12,
+                        letterSpacing: compact ? 0.5 : 1,
+                        textTransform: 'uppercase',
+                        fontFamily: "'DM Sans', system-ui, sans-serif",
+                        color: APP.accent,
+                    }}
+                >
+                    Reglas de visitante
+                </p>
+                <div
+                    style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+                        gap: compact ? 4 : 8,
+                        alignItems: 'start',
+                        width: '100%',
+                    }}
+                >
+                    {VISITOR_RULES.map((rule) => (
+                        <div
+                            key={rule.text}
+                            style={{
+                                textAlign: 'center',
+                                minWidth: 0,
+                            }}
+                        >
+                            <div
+                                style={{
+                                    width: compact ? 30 : 40,
+                                    height: compact ? 30 : 40,
+                                    margin: compact ? '0 auto 4px' : '0 auto 6px',
+                                    borderRadius: '50%',
+                                    background: APP.bgMuted,
+                                    border: `1px solid ${APP.borderLight}`,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: compact ? 15 : 20,
+                                }}
+                            >
+                                {rule.icon}
+                            </div>
+                            <span
+                                style={{
+                                    fontSize: compact ? 7.5 : 9,
+                                    lineHeight: 1.25,
+                                    display: 'block',
+                                    fontWeight: 600,
+                                    color: APP.textMuted,
+                                }}
+                            >
+                                {rule.text}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    )
+}
 
 /** Texto para compartir (sin emojis: en wa.me a veces se ven mal). */
 function buildShareText(visit: Visit) {
@@ -301,18 +573,20 @@ interface QRGeneratorProps {
     onCreateAnother?: () => void
     onClose?: () => void
     mode?: 'fullscreen' | 'modal'
+    /** Residente, comunidad y unidad cuando se conocen (p. ej. al crear o vía getVisitWithQrDisplay). */
+    qrDisplay?: QrDisplayContext
 }
 
 const QRGenerator: React.FC<QRGeneratorProps> = ({ 
     visit, 
     onCreateAnother, 
     onClose,
-    mode = 'fullscreen'
+    mode = 'fullscreen',
+    qrDisplay,
 }) => {
     const [qrCode, setQrCode] = useState<string>('')
     const [isLoading, setIsLoading] = useState(true)
     const [copyStatus, setCopyStatus] = useState<'copy' | 'copied'>('copy')
-    const [copyLinkStatus, setCopyLinkStatus] = useState<'copy' | 'copied'>('copy')
     const [desktopShareHint, setDesktopShareHint] = useState<string | null>(null)
 
     useEffect(() => {
@@ -331,23 +605,16 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
         }
     }
 
-    const visitorAccessUrl = getVisitorAccessUrl(visit.qr_token)
-
-    const copyVisitorLinkToClipboard = async () => {
-        try {
-            await navigator.clipboard.writeText(visitorAccessUrl)
-            setCopyLinkStatus('copied')
-            setTimeout(() => setCopyLinkStatus('copy'), 2000)
-        } catch (err) {
-            console.error('Error copying link:', err)
-        }
-    }
-
     useEffect(() => {
         const generateQR = async () => {
             try {
                 const qrData = visit.qr_token
-                const qrCodeDataURL = await QRCode.toDataURL(qrData)
+                const width = mode === 'modal' ? QR_IMG_SIZE_MODAL : QR_IMG_SIZE
+                const qrCodeDataURL = await QRCode.toDataURL(qrData, {
+                    width,
+                    margin: 2,
+                    color: { dark: '#000000', light: '#ffffff' },
+                })
                 setQrCode(qrCodeDataURL)
             } catch (err) {
                 console.error('Error generating QR:', err)
@@ -357,7 +624,7 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
         }
 
         generateQR()
-    }, [visit.qr_token])
+    }, [visit.qr_token, mode])
 
     const downloadQR = () => {
         const link = document.createElement('a')
@@ -385,36 +652,48 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
 
     if (mode === 'modal') {
         return (
-            <div style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 1000
-            }}>
-                <div style={{
-                    backgroundColor: '#1a2024',
-                    padding: '30px',
-                    borderRadius: '12px',
-                    maxWidth: '400px',
-                    textAlign: 'center',
-                    color: '#ffffff'
-                }}>
-                    <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '15px', color: '#22d3ee' }}>
-                        Código QR de la Visita
+            <div
+                style={{
+                    position: 'fixed',
+                    inset: 0,
+                    zIndex: 1000,
+                    overflowY: 'auto',
+                    WebkitOverflowScrolling: 'touch',
+                    overscrollBehavior: 'contain',
+                    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                    padding: '12px',
+                    paddingTop: 'max(12px, env(safe-area-inset-top))',
+                    paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
+                    boxSizing: 'border-box',
+                }}
+            >
+                <div
+                    style={{
+                        backgroundColor: '#1a2024',
+                        padding: '14px',
+                        borderRadius: '12px',
+                        maxWidth: 'min(440px, 100%)',
+                        width: '100%',
+                        margin: '16px auto',
+                        textAlign: 'center',
+                        color: '#ffffff',
+                    }}
+                >
+                    <h2 style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '10px', color: '#94a3b8' }}>
+                        Código QR de la visita
                     </h2>
-                    
-                    <div style={{ marginBottom: '20px' }}>
-                        <img src={qrCode} alt="Código QR" style={{ width: '200px', height: '200px' }} />
+
+                    <div style={{ marginBottom: '14px' }}>
+                        <VisitInvitationCard
+                            visit={visit}
+                            qrCode={qrCode}
+                            qrDisplay={qrDisplay}
+                            compact
+                        />
                     </div>
 
-                    <div style={{ marginBottom: '20px', textAlign: 'left' }}>
-                        <p style={{ margin: '0 0 6px 0', fontSize: 12, color: '#a0a0a0' }}>
+                    <div style={{ marginBottom: '12px', textAlign: 'left' }}>
+                        <p style={{ margin: '0 0 6px 0', fontSize: 11, color: '#a0a0a0' }}>
                             Token (para copiar / validar):
                         </p>
                         <div style={{
@@ -429,9 +708,10 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
                                 borderRadius: 10,
                                 backgroundColor: '#0f172a',
                                 color: '#e2e8f0',
-                                fontSize: 13,
+                                fontSize: 12,
                                 wordBreak: 'break-all',
-                                maxWidth: '240px'
+                                maxWidth: '100%',
+                                flex: '1 1 180px',
                             }}>
                                 {visit.qr_token}
                             </code>
@@ -443,45 +723,6 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
                                 style={{ borderRadius: 8, color: '#000000', whiteSpace: 'nowrap' }}
                             >
                                 {copyStatus === 'copied' ? 'Copiado' : 'Copiar'}
-                            </Button>
-                        </div>
-                    </div>
-
-                    <div style={{ marginBottom: '20px', textAlign: 'left' }}>
-                        <p style={{ margin: '0 0 6px 0', fontSize: 12, color: '#a0a0a0' }}>
-                            Enlace para el visitante (WhatsApp a veces no marca en azul las URLs locales):
-                        </p>
-                        <div
-                            style={{
-                                display: 'flex',
-                                alignItems: 'flex-start',
-                                justifyContent: 'center',
-                                gap: 8,
-                                flexWrap: 'wrap',
-                            }}
-                        >
-                            <code
-                                style={{
-                                    padding: '8px 10px',
-                                    borderRadius: 10,
-                                    backgroundColor: '#0f172a',
-                                    color: '#e2e8f0',
-                                    fontSize: 11,
-                                    wordBreak: 'break-all',
-                                    maxWidth: '100%',
-                                    flex: '1 1 200px',
-                                }}
-                            >
-                                {visitorAccessUrl}
-                            </code>
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                size="sm"
-                                onClick={copyVisitorLinkToClipboard}
-                                style={{ borderRadius: 8, whiteSpace: 'nowrap' }}
-                            >
-                                {copyLinkStatus === 'copied' ? 'Copiado' : 'Copiar enlace'}
                             </Button>
                         </div>
                     </div>
@@ -507,17 +748,17 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
     }
 
     return (
-        <div style={{ backgroundColor: '#080c0f', minHeight: '100vh', padding: '20px', color: '#ffffff' }}>
-            <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'center' }}>
-                <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px', color: '#22d3ee' }}>
-                    ¡Nueva visita creada exitosamente!
+        <div style={{ backgroundColor: '#080c0f', minHeight: '100vh', padding: '20px 16px', color: '#ffffff' }}>
+            <div style={{ maxWidth: '440px', margin: '0 auto', textAlign: 'center' }}>
+                <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px', color: '#22d3ee' }}>
+                    ¡Visita creada!
                 </h2>
-                <p style={{ color: '#a0a0a0', marginBottom: '30px' }}>
-                    Código QR generado para el acceso del visitante
+                <p style={{ color: '#a0a0a0', marginBottom: '20px', fontSize: 14 }}>
+                    Comparte el código o la invitación con tu visitante.
                 </p>
-                
-                <div style={{ marginBottom: '30px' }}>
-                    <img src={qrCode} alt="Código QR" style={{ width: '200px', height: '200px' }} />
+
+                <div style={{ marginBottom: '24px' }}>
+                    <VisitInvitationCard visit={visit} qrCode={qrCode} qrDisplay={qrDisplay} />
                 </div>
 
                 <div style={{ marginBottom: '20px', textAlign: 'center' }}>
@@ -550,46 +791,6 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
                             style={{ borderRadius: 8, color: '#000000', whiteSpace: 'nowrap' }}
                         >
                             {copyStatus === 'copied' ? 'Copiado' : 'Copiar'}
-                        </Button>
-                    </div>
-                </div>
-
-                <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-                    <p style={{ margin: '0 0 6px 0', fontSize: 12, color: '#a0a0a0' }}>
-                        Enlace para el visitante (WhatsApp a veces no marca en azul las URLs locales):
-                    </p>
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            justifyContent: 'center',
-                            gap: 8,
-                            flexWrap: 'wrap',
-                        }}
-                    >
-                        <code
-                            style={{
-                                padding: '8px 10px',
-                                borderRadius: 10,
-                                backgroundColor: '#0f172a',
-                                color: '#e2e8f0',
-                                fontSize: 11,
-                                wordBreak: 'break-all',
-                                maxWidth: '100%',
-                                flex: '1 1 200px',
-                                textAlign: 'left',
-                            }}
-                        >
-                            {visitorAccessUrl}
-                        </code>
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            onClick={copyVisitorLinkToClipboard}
-                            style={{ borderRadius: 8, whiteSpace: 'nowrap' }}
-                        >
-                            {copyLinkStatus === 'copied' ? 'Copiado' : 'Copiar enlace'}
                         </Button>
                     </div>
                 </div>

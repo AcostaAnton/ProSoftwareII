@@ -31,3 +31,23 @@ export const formatPhone = (phone?: string | null): string => {
     if (!phone || phone.length !== 8) return phone || ''
     return `${phone.slice(0, 4)}-${phone.slice(4)}`
 }
+
+/** Fecha/hora corta para la tarjeta de invitación QR (ej. 17 mar 2026 – 1:03 p. m.) */
+export function formatQrCreatedAt(iso: string): string {
+    try {
+        const d = new Date(iso)
+        const dateStr = d.toLocaleDateString('es-HN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+        })
+        const timeStr = d.toLocaleTimeString('es-HN', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+        })
+        return `${dateStr} – ${timeStr}`
+    } catch {
+        return iso
+    }
+}
