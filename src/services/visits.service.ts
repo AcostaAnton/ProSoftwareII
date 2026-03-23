@@ -30,6 +30,8 @@ export function groupVisitsByResident(visits: any[]): ResidentVisits[] {
   })
 
   return Object.values(map)
+}
+
 // - Función auxiliar para generar token QR
 function generateQRToken(): string {
   return Math.random().toString(36).substring(2, 10)
