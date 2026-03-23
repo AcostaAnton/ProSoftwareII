@@ -8,7 +8,8 @@ import type { NewVisitForm } from '../../types/index'
 import {
     HOUR_OPTIONS,
     MINUTE_OPTIONS,
-    PERIOD_OPTIONS
+    PERIOD_OPTIONS,
+    VISIT_LOCATION_OPTIONS
 } from './newVisit.helpers'
 import { Button } from '../../components/ui/Button'
 
@@ -247,16 +248,33 @@ function NewVisitFormView({
                         />
                     </Field>
 
-                    <Field label="A donde va" htmlFor="visit_destination">
-                        <input
+                    <Field label="Destino" htmlFor="visit_destination">
+                        <select
                             id="visit_destination"
                             name="visit_destination"
-                            type="text"
-                            value={formData.visit_destination}
+                            value={VISIT_LOCATION_OPTIONS.some((o: { value: string }) => o.value === formData.visit_destination)
+                                ? formData.visit_destination
+                                : 'Otro'}
                             onChange={onChange}
-                            placeholder="Unidad o lugar de destino"
-                            style={styles.input}
-                        />
+                            style={styles.select}
+                        >
+                            {renderOptions('visit_destination', VISIT_LOCATION_OPTIONS)}
+                        </select>
+                        {/* Texto libre cuando elige "Otro" o ya hay texto personalizado */}
+                        {!VISIT_LOCATION_OPTIONS.some(
+                            (o: { value: string }) => o.value === formData.visit_destination && o.value !== 'Otro'
+                        ) && formData.visit_destination !== '' ? (
+                            <input
+                                id="visit_destination_custom"
+                                name="visit_destination"
+                                type="text"
+                                value={formData.visit_destination === 'Otro' ? '' : formData.visit_destination}
+                                onChange={onChange}
+                                placeholder="Escribe el destino..."
+                                autoFocus
+                                style={{ ...styles.input, marginTop: '8px' }}
+                            />
+                        ) : null}
                     </Field>
 
                     <Button type="submit" variant="primary" size="lg" fullWidth disabled={isSubmitting} style={styles.submitButton}>
