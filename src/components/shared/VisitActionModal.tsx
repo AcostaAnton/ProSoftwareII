@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../../services/supabase'
 import type { Visit } from '../../types/index'
 import CameraCapture from './CameraCapture'
+import { Button } from '../ui/Button'
 
 interface VisitActionModalProps {
   visit: Visit
@@ -195,8 +196,10 @@ const VisitActionModal: React.FC<VisitActionModalProps> = ({ visit, onClose, onS
                   )}
 
                   <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
-                    <button onClick={() => setIsCameraOpen(true)} style={buttonStyle}>📷 Tomar Foto</button>
-                    <label htmlFor="file-upload" style={{...buttonStyle, flex: 1, backgroundColor: '#334155', textAlign: 'center' }}>
+                    <Button type="button" variant="accent" size="lg" onClick={() => setIsCameraOpen(true)} style={{ flex: 1, borderRadius: 8 }}>
+                      📷 Tomar Foto
+                    </Button>
+                    <label htmlFor="file-upload" style={{...filePickLabelStyle, flex: 1, textAlign: 'center' }}>
                       📂 Elegir Archivo
                     </label>
                     <input
@@ -249,19 +252,19 @@ const VisitActionModal: React.FC<VisitActionModalProps> = ({ visit, onClose, onS
           )}
 
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button
-              onClick={onClose}
-              style={{ flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #334155', backgroundColor: 'transparent', color: 'white', cursor: 'pointer' }}
-            >
+            <Button type="button" variant="outline" size="lg" onClick={onClose} style={{ flex: 1, borderRadius: 8, borderColor: '#334155', color: 'white' }}>
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
+              type="button"
+              variant="success"
+              size="lg"
               onClick={isEntry ? handleEntry : isExit ? handleExit : () => {}}
               disabled={loading}
-              style={{ flex: 2, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#10b981', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}
+              style={{ flex: 2, borderRadius: 8, background: '#10b981' }}
             >
               {loading ? 'Procesando...' : isEntry ? 'Registrar Entrada' : isExit ? 'Registrar Salida' : 'Acción'}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -269,16 +272,19 @@ const VisitActionModal: React.FC<VisitActionModalProps> = ({ visit, onClose, onS
   )
 }
 
-const buttonStyle: React.CSSProperties = {
+const filePickLabelStyle: React.CSSProperties = {
   flex: 1,
   padding: '12px',
   borderRadius: '8px',
   border: 'none',
-  backgroundColor: '#4f46e5',
+  backgroundColor: '#334155',
   color: 'white',
   fontWeight: 'bold',
   cursor: 'pointer',
-  fontSize: '14px'
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: 14,
 }
 
 export default VisitActionModal

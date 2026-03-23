@@ -115,10 +115,15 @@ export const guardsService = {
   },
 
   async getGuardsActivity(): Promise<GuardActivity[]> {
-    // Procesar datos de prueba
-    return MOCK_GUARDS.map(guard => {
-      const guardLogs = MOCK_LOGS.filter(log => log.guard_id === guard.id)
-      const lastLog = guardLogs[0]
+    return MOCK_GUARDS.map((guard) => {
+      const guardLogs = MOCK_LOGS.filter((log) => log.guard_id === guard.id)
+      const sorted = [...guardLogs].sort(
+        (a, b) =>
+          `${b.date} ${b.entry_time}`.localeCompare(`${a.date} ${a.entry_time}`, undefined, {
+            numeric: true,
+          }),
+      )
+      const lastLog = sorted[0]
       
       return {
         guard,
@@ -144,8 +149,8 @@ export const guardsService = {
     return MOCK_LOGS.filter(log => log.guard_id === guardId)
   },
 
-  async toggleGuardStatus(guardId: string, active: boolean) {
-    console.log(`Toggle guard ${guardId} to ${active}`)
+  async toggleGuardStatus(_guardId: string, _active: boolean) {
+    // Mock: sin backend aún; evitar side effects en consola
     return Promise.resolve()
   }
 }

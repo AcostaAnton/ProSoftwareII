@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react'
+import { Button } from '../ui/Button'
 
 interface CameraCaptureProps {
   onCapture: (file: File) => void
@@ -71,7 +72,9 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onClose }) => 
         {error ? (
           <div style={{ color: '#ef4444', textAlign: 'center' }}>
             <p>{error}</p>
-            <button onClick={onClose} style={buttonStyle}>Cerrar</button>
+            <Button type="button" variant="secondary" size="lg" onClick={onClose}>
+              Cerrar
+            </Button>
           </div>
         ) : (
           <>
@@ -83,28 +86,18 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onClose }) => 
             />
             <canvas ref={canvasRef} style={{ display: 'none' }} />
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-              <button onClick={handleCapture} style={{ ...buttonStyle, flex: 2, backgroundColor: '#10b981' }}>
+              <Button type="button" variant="success" size="lg" onClick={handleCapture} style={{ flex: 2, borderRadius: 8, background: '#10b981' }}>
                 Capturar Foto
-              </button>
-              <button onClick={onClose} style={{ ...buttonStyle, flex: 1, backgroundColor: '#64748b' }}>
+              </Button>
+              <Button type="button" variant="secondary" size="lg" onClick={onClose} style={{ flex: 1, borderRadius: 8, backgroundColor: '#64748b' }}>
                 Cancelar
-              </button>
+              </Button>
             </div>
           </>
         )}
       </div>
     </div>
   )
-}
-
-const buttonStyle: React.CSSProperties = {
-  padding: '12px 20px',
-  borderRadius: '8px',
-  border: 'none',
-  color: 'white',
-  fontWeight: 'bold',
-  cursor: 'pointer',
-  fontSize: '16px'
 }
 
 export default CameraCapture

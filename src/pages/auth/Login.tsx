@@ -1,8 +1,31 @@
-// Página de Login — validación: ingresar correo/contraseña, redirigir a dashboard con sidebar + "En construcción"
+// Página de Login — validación: ingresar correo/contraseña, redirigir al dashboard
 
-import { useState } from 'react'
+import { useState, type CSSProperties, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LoginWithEmail } from '../../services/auth.service'
+import { loginWithEmail } from '../../services/auth.service'
+import { Button } from '../../components/ui/Button'
+
+const LOGIN_TIMEOUT_MS = 12_000
+
+function withTimeout<T>(promise: Promise<T>, ms: number, timeoutCode: string): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(timeoutCode)), ms)
+  })
+  return Promise.race([
+    promise.finally(() => {
+      if (timeoutId !== undefined) clearTimeout(timeoutId)
+    }),
+    timeoutPromise,
+  ])
+}
+
+function errorMessageFromUnknown(err: unknown): string {
+  if (err && typeof err === 'object' && 'message' in err && typeof (err as Error).message === 'string') {
+    return (err as Error).message
+  }
+  return ''
+}
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -11,7 +34,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError('')
     const trimEmail = email.trim()
@@ -20,18 +43,15 @@ export default function LoginPage() {
       return
     }
     setLoading(true)
-    const TIMEOUT_MS = 12000 // 12 segundos
-    const loginPromise = LoginWithEmail({ email: trimEmail, password })
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('TIMEOUT')), TIMEOUT_MS)
-    )
     try {
-      await Promise.race([loginPromise, timeoutPromise])
+      await withTimeout(loginWithEmail({ email: trimEmail, password }), LOGIN_TIMEOUT_MS, 'TIMEOUT')
       navigate('/dashboard', { replace: true })
     } catch (err) {
-      const msg = err?.message ?? ''
+      const msg = errorMessageFromUnknown(err)
       if (msg === 'TIMEOUT') {
-        setError('La conexión tardó demasiado. Revisa tu internet y que .env.local tenga VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY correctos.')
+        setError(
+          'La conexión tardó demasiado. Revisa tu internet y que .env.local tenga VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY correctos.',
+        )
       } else if (msg.includes('Invalid login') || msg.includes('invalid') || msg.includes('credentials')) {
         setError('Credenciales incorrectas. Revisa correo y contraseña.')
       } else if (msg.includes('Email not confirmed')) {
@@ -46,15 +66,22 @@ export default function LoginPage() {
 
   return (
     <div className="login-page" style={styles.wrapper}>
-      {/* Blur orbs como en la demo */}
       <div style={styles.orb1} />
       <div style={styles.orb2} />
 
       <div style={styles.container}>
-        {/* Logo y título */}
         <div style={styles.header}>
           <div style={styles.logoBox}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#0f172a"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M12 2L2 7l10 5 10-5-10-5z" />
               <path d="M2 17l10 5 10-5" />
               <path d="M2 12l10 5 10-5" />
@@ -64,7 +91,6 @@ export default function LoginPage() {
           <p style={styles.subtitle}>Control de acceso inteligente</p>
         </div>
 
-        {/* Card del formulario */}
         <div style={styles.card}>
           <form onSubmit={handleSubmit} style={styles.form}>
             <div style={styles.field}>
@@ -92,18 +118,17 @@ export default function LoginPage() {
               />
             </div>
             {error && <div style={styles.error}>{error}</div>}
-            <button type="submit" style={styles.btnPrimary} disabled={loading}>
+            <Button type="submit" variant="primary" size="md" fullWidth disabled={loading} style={styles.btnPrimary}>
               {loading ? 'Verificando...' : 'Iniciar sesión'}
-            </button>
+            </Button>
           </form>
-
         </div>
       </div>
     </div>
   )
 }
 
-const styles = {
+const styles: Record<string, CSSProperties> = {
   wrapper: {
     minHeight: '100vh',
     display: 'flex',
@@ -218,43 +243,5 @@ const styles = {
     cursor: 'pointer',
     transition: 'background .15s',
     fontFamily: "'DM Sans', sans-serif",
-  },
-  demoSection: {
-    marginTop: 20,
-    paddingTop: 20,
-    borderTop: '1px solid #1e293b',
-  },
-  demoLabel: {
-    fontSize: 12,
-    color: '#64748b',
-    marginBottom: 8,
-    fontWeight: 500,
-  },
-  demoBtn: {
-    width: '100%',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    background: 'rgba(30,41,59,.6)',
-    border: 'none',
-    borderRadius: 10,
-    padding: '8px 12px',
-    marginBottom: 6,
-    transition: 'background .15s',
-    cursor: 'pointer',
-    fontFamily: "'DM Sans', sans-serif",
-  },
-  demoName: {
-    fontSize: 13,
-    color: '#cbd5e1',
-    fontWeight: 500,
-  },
-  roleBadge: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: '3px 10px',
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: 500,
   },
 }

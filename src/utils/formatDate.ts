@@ -11,7 +11,7 @@ export const formatDate = (dateString: string): string => {
     }
 }
 
-export const formatTime = (timeString?: string): string => {
+export const formatTime = (timeString?: string | null): string => {
     if (!timeString) return ''
     try {
         const [hours, minutes] = timeString.split(':').map(Number)
@@ -23,11 +23,11 @@ export const formatTime = (timeString?: string): string => {
     }
 }
 
-export const formatDateTime = (dateString: string, timeString: string): string => {
+export const formatDateTime = (dateString: string, timeString?: string | null): string => {
     return `${formatDate(dateString)} a las ${formatTime(timeString)}`
 }
 
-export const formatPhone = (phone?: string): string => {
+export const formatPhone = (phone?: string | null): string => {
     if (!phone || phone.length !== 8) return phone || ''
     return `${phone.slice(0, 4)}-${phone.slice(4)}`
 }

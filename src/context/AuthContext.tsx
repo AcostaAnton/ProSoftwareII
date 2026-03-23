@@ -6,7 +6,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import type {ReactNode} from 'react'
 import { supabase } from '../services/supabase'
-import { GetCurrentProfile } from '../services/auth.service'
+import { getCurrentProfile } from '../services/auth.service'
 import type {AuthUser, Profile, UserRole} from '../types/index'
 
 // - Tipos de contexto
@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     async function loadProfile(userId: string, email: string) {
         try {
-            const profilePromise = GetCurrentProfile(userId)
+            const profilePromise = getCurrentProfile(userId)
             const timeoutPromise = new Promise<never>((_, reject) =>
                 setTimeout(() => reject(new Error('Profile timeout')), PROFILE_TIMEOUT_MS)
             )

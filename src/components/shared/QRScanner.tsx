@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import QrScanner from 'qr-scanner'
+import { Button } from '../ui/Button'
 //recurso: https://cdnjs.cloudflare.com/ajax/libs/qr-scanner/1.4.2/qr-scanner-worker.min.js
 
 interface QRScannerProps {
@@ -75,21 +76,15 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanResult }) => {
         {!cameraActive && <p style={{ color: '#64748b', position: 'absolute' }}>Cámara inactiva</p>}
       </div>
 
-      <button
+      <Button
+        type="button"
+        variant={cameraActive ? 'danger' : 'success'}
+        fullWidth
         onClick={cameraActive ? stopCameraScan : startCameraScan}
-        style={{
-          width: '100%',
-          padding: '14px',
-          borderRadius: '10px',
-          border: 'none',
-          backgroundColor: cameraActive ? '#ef4444' : '#22c55e',
-          color: 'white',
-          fontWeight: 'bold',
-          cursor: 'pointer'
-        }}
+        style={{ padding: '14px', borderRadius: 10 }}
       >
         {cameraActive ? '✕ Detener Escáner' : '📷 Iniciar Cámara'}
-      </button>
+      </Button>
 
       {cameraError && (
         <div style={{ padding: '12px', backgroundColor: '#450a0a', border: '1px solid #dc2626', borderRadius: '8px', color: '#fca5a5', fontSize: '14px', marginTop: '10px' }}>

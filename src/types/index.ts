@@ -23,7 +23,9 @@ export interface Unit {
     id: string
     community_id: string
     number: string
-    owner_id: string
+    owner_id: string | null
+    /** Segundo residente de la misma vivienda (requiere migración 003_units_co_owner.sql). */
+    co_owner_id?: string | null
     created_at: string
 }
 
@@ -31,14 +33,25 @@ export interface Visit {
     id: string
     resident_id: string
     visitor_name: string
-    visitor_phone?: string
+    visitor_phone: string | null
     visit_date: string
-    visit_time?: string
-    visit_purpose?: string
-    visit_destination?: string
+    visit_time: string | null
+    visit_purpose: string | null
+    visit_destination: string | null
     qr_token: string
     status: VisitStatus
     created_at: string
+}
+
+export interface CreateVisitInput {
+    resident_id: string
+    visitor_name: string
+    visitor_phone?: string | null
+    visit_date: string
+    visit_time?: string | null
+    visit_purpose?: string | null
+    visit_destination?: string | null
+    status: VisitStatus
 }
 
 export interface AccessLog {
@@ -101,8 +114,11 @@ export interface NewVisitForm {
     visitor_name: string
     visitor_phone: string
     visit_date: string
-    visit_time: string
-    reason: string
+    visit_hour: string
+    visit_minute: string
+    visit_period: 'AM' | 'PM'
+    visit_purpose: string
+    visit_destination: string
 }
 
 export interface AuthUser {
