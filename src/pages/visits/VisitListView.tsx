@@ -18,6 +18,7 @@ import {
     getVisitStatusColor,
     getVisitStatusLabel
 } from './visitStatus.helpers'
+import { Button } from '../../components/ui/Button'
 
 type OpenDropdown = 'date' | 'status' | null
 
@@ -88,15 +89,6 @@ const styles = {
         backgroundColor: '#1a2024',
         borderRadius: '8px'
     },
-    clearButton: {
-        padding: '5px 10px',
-        backgroundColor: '#2a3034',
-        color: '#ffffff',
-        border: 'none',
-        borderRadius: '4px',
-        cursor: 'pointer',
-        fontSize: '12px'
-    },
     dateRow: {
         display: 'flex',
         gap: '10px',
@@ -108,18 +100,6 @@ const styles = {
         border: '1px solid #334155',
         backgroundColor: '#0f172a',
         color: '#ffffff'
-    },
-    dropdownButton: {
-        width: '100%',
-        padding: '10px',
-        backgroundColor: '#1a2024',
-        border: '1px solid #334155',
-        borderRadius: '8px',
-        color: '#ffffff',
-        cursor: 'pointer',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
     },
     dropdownMenu: {
         position: 'absolute',
@@ -136,16 +116,6 @@ const styles = {
     },
     dropdownContent: {
         padding: '10px'
-    },
-    dropdownClearButton: {
-        width: '100%',
-        padding: '8px',
-        backgroundColor: '#ef4444',
-        color: '#ffffff',
-        border: 'none',
-        borderRadius: '4px',
-        cursor: 'pointer',
-        marginBottom: '10px'
     },
     dropdownOption: {
         display: 'flex',
@@ -208,10 +178,16 @@ function CheckboxFilterOption({ checked, label, onToggle }: CheckboxFilterOption
 
 function DropdownButton({ isOpen, label, onClick }: DropdownButtonProps) {
     return (
-        <button onClick={onClick} style={styles.dropdownButton}>
+        <Button
+            type="button"
+            variant="panel"
+            fullWidth
+            onClick={onClick}
+            style={{ justifyContent: 'space-between', fontWeight: 600 }}
+        >
             <span>{label}</span>
             <span>{isOpen ? '▲' : '▼'}</span>
-        </button>
+        </Button>
     )
 }
 
@@ -437,9 +413,9 @@ function VisitListView({
                     >
                         <h3 style={{ margin: 0, fontSize: '18px' }}>Filtros</h3>
                         {hasActiveFilters && (
-                            <button onClick={onClearAllFilters} style={styles.clearButton}>
+                            <Button type="button" variant="secondary" size="sm" onClick={onClearAllFilters} style={{ borderRadius: 4, fontSize: 12, padding: '5px 10px' }}>
                                 Limpiar filtros
-                            </button>
+                            </Button>
                         )}
                     </div>
 
@@ -489,12 +465,15 @@ function VisitListView({
                             {openDropdown === 'date' && (
                                 <div style={styles.dropdownMenu}>
                                     <div style={styles.dropdownContent}>
-                                        <button
+                                        <Button
+                                            type="button"
+                                            variant="danger"
+                                            fullWidth
                                             onClick={onClearDateFilters}
-                                            style={styles.dropdownClearButton}
+                                            style={{ marginBottom: 10, borderRadius: 4, padding: '8px' }}
                                         >
                                             Ninguno
-                                        </button>
+                                        </Button>
                                         {renderDateFilterOptions(filters.quickDateFilters, onToggleDateFilter)}
                                     </div>
                                 </div>
@@ -522,12 +501,15 @@ function VisitListView({
                             {openDropdown === 'status' && (
                                 <div style={styles.dropdownMenu}>
                                     <div style={styles.dropdownContent}>
-                                        <button
+                                        <Button
+                                            type="button"
+                                            variant="danger"
+                                            fullWidth
                                             onClick={onClearStatusFilters}
-                                            style={styles.dropdownClearButton}
+                                            style={{ marginBottom: 10, borderRadius: 4, padding: '8px' }}
                                         >
                                             Ninguno
-                                        </button>
+                                        </Button>
                                         {renderStatusFilterOptions(filters.statusFilters, onToggleStatusFilter)}
                                     </div>
                                 </div>

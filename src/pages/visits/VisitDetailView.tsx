@@ -11,6 +11,7 @@ import {
     getVisitStatusLabel,
     VISIT_STATUS_OPTIONS
 } from './visitStatus.helpers'
+import { Button } from '../../components/ui/Button'
 
 interface VisitDetailViewProps {
     error: string | null
@@ -105,35 +106,10 @@ const styles = {
         display: 'flex',
         gap: '10px'
     },
-    primaryButton: {
+    actionBtn: {
         flex: 1,
-        padding: '12px',
-        backgroundColor: '#22d3ee',
-        color: '#000000',
-        border: 'none',
-        borderRadius: '8px',
-        cursor: 'pointer',
-        fontSize: '16px',
-        fontWeight: 'bold'
     },
-    secondaryButton: {
-        flex: 1,
-        padding: '12px',
-        backgroundColor: '#2a3034',
-        color: '#ffffff',
-        border: 'none',
-        borderRadius: '8px',
-        cursor: 'pointer',
-        fontSize: '16px',
-        fontWeight: 'bold'
-    },
-    smallButton: {
-        padding: '8px 16px',
-        backgroundColor: '#2a3034',
-        color: '#ffffff',
-        border: 'none',
-        borderRadius: '8px',
-        cursor: 'pointer',
+    backBtn: {
         marginBottom: '20px'
     },
     statusRow: {
@@ -155,15 +131,8 @@ const styles = {
         color: '#ffffff',
         border: '1px solid #334155'
     },
-    saveButton: {
-        marginLeft: '10px',
-        padding: '6px 12px',
-        backgroundColor: '#22c55e',
-        color: '#080c0f',
-        border: 'none',
-        borderRadius: '4px',
-        cursor: 'pointer',
-        fontSize: '14px'
+    saveBtnWrap: {
+        marginLeft: '10px'
     },
     modalBackdrop: {
         position: 'fixed',
@@ -238,9 +207,9 @@ function ErrorState({ error, onBack }: { error: string; onBack: () => void }) {
         <div style={styles.page}>
             <div style={styles.container}>
                 <div style={styles.message}>Error: {error}</div>
-                <button onClick={onBack} style={styles.secondaryButton}>
+                <Button variant="secondary" size="lg" onClick={onBack} fullWidth>
                     Volver a lista de visitas
-                </button>
+                </Button>
             </div>
         </div>
     )
@@ -288,9 +257,9 @@ function VisitDetailView({
         <div style={styles.page}>
             <div style={styles.container}>
                 <div style={{ marginBottom: '30px' }}>
-                    <button onClick={onBack} style={styles.smallButton}>
+                    <Button variant="secondary" size="md" onClick={onBack} style={styles.backBtn}>
                         Volver
-                    </button>
+                    </Button>
                     <h1 style={{ fontSize: '32px', fontWeight: 'bold', margin: 0 }}>Detalles de la Visita</h1>
                 </div>
 
@@ -309,13 +278,17 @@ function VisitDetailView({
                                     >
                                         {renderStatusOptions()}
                                     </select>
-                                    <button
-                                        onClick={onSaveStatus}
-                                        disabled={isUpdating}
-                                        style={styles.saveButton}
-                                    >
-                                        {isUpdating ? '...' : 'Guardar'}
-                                    </button>
+                                    <span style={styles.saveBtnWrap}>
+                                        <Button
+                                            variant="success"
+                                            size="sm"
+                                            onClick={onSaveStatus}
+                                            disabled={isUpdating}
+                                            style={{ borderRadius: 4, fontSize: 14 }}
+                                        >
+                                            {isUpdating ? '...' : 'Guardar'}
+                                        </Button>
+                                    </span>
                                 </>
                             ) : (
                                 <span
@@ -374,12 +347,12 @@ function VisitDetailView({
                 </div>
 
                 <div style={styles.actionRow}>
-                    <button onClick={onOpenQR} style={styles.primaryButton}>
+                    <Button variant="primary" size="lg" onClick={onOpenQR} style={styles.actionBtn}>
                         Ver QR
-                    </button>
-                    <button onClick={onBack} style={styles.secondaryButton}>
+                    </Button>
+                    <Button variant="secondary" size="lg" onClick={onBack} style={styles.actionBtn}>
                         Volver a Visitas
-                    </button>
+                    </Button>
                 </div>
             </div>
 
@@ -390,9 +363,9 @@ function VisitDetailView({
                         <p style={styles.modalText}>
                             El estado de la visita ha sido actualizado correctamente.
                         </p>
-                        <button onClick={onCloseSuccess} style={styles.primaryButton}>
+                        <Button variant="primary" size="lg" onClick={onCloseSuccess} fullWidth>
                             OK
-                        </button>
+                        </Button>
                     </div>
                 </div>
             )}

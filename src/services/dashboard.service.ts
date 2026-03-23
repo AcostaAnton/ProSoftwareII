@@ -4,6 +4,7 @@
 
 import type { Profile, Unit } from '../types/index'
 import { supabase } from './supabase'
+import { isUnitsCoOwnerColumnError } from './units.schema'
 
 // - Obtener perfiles por una lista de IDs
 export async function getProfilesByIds(profileIds: string[]): Promise<Profile[]> {
@@ -18,15 +19,32 @@ export async function getProfilesByIds(profileIds: string[]): Promise<Profile[]>
   return (data ?? []) as Profile[]
 }
 
-// - Obtener unidades por lista de propietarios
+// - Obtener unidades donde alguno de los IDs es titular (owner o co_owner)
 export async function getUnitsByOwnerIds(ownerIds: string[]): Promise<Unit[]> {
   if (ownerIds.length === 0) return []
 
-  const { data, error } = await supabase
+  const { data: byOwner, error: errOwner } = await supabase
     .from('units')
     .select('*')
     .in('owner_id', ownerIds)
 
-  if (error) throw error
-  return (data ?? []) as Unit[]
+  if (errOwner) throw errOwner
+
+  const { data: byCo, error: errCo } = await supabase
+    .from('units')
+    .select('*')
+    .in('co_owner_id', ownerIds)
+
+  let coList: Unit[] = []
+  if (!errCo) {
+    coList = (byCo ?? []) as Unit[]
+  } else if (!isUnitsCoOwnerColumnError(errCo)) {
+    throw errCo
+  }
+
+  const map = new Map<string, Unit>()
+  for (const u of [...(byOwner ?? []), ...coList] as Unit[]) {
+    map.set(u.id, u)
+  }
+  return [...map.values()]
 }

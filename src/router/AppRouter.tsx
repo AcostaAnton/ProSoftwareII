@@ -36,7 +36,14 @@ export default function AppRoutes() {
                     <Route path="visits/list" element={<VisitList />} />
                     <Route path="visits/:id" element={<VisitDetail />} />
                     <Route path="scan" element={<ProtectedRoute allowedRoles={["admin","security"]}><ScanPage /></ProtectedRoute>} />
-                    <Route path="admin/users" element={<AdminUsers />} />
+                    <Route
+                        path="admin/users"
+                        element={
+                            <ProtectedRoute allowedRoles={['admin']}>
+                                <AdminUsers />
+                            </ProtectedRoute>
+                        }
+                    />
                      <Route path="admin/guards" element={<AdminGuards />} />
                 </Route>
             </Routes>

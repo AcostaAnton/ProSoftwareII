@@ -5,9 +5,10 @@
 import type { CreateVisitInput, Visit } from '../types/index'
 import { supabase } from './supabase'
 
-// - Función auxiliar para generar token QR
 function generateQRToken(): string {
-  return Math.random().toString(36).substring(2, 10)
+  const bytes = new Uint8Array(6)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
 }
 
 function normalizeNullableText(value?: string | null): string | null {

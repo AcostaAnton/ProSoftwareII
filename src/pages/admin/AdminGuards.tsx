@@ -1,5 +1,6 @@
 // src/pages/admin/AdminGuards.tsx
 import React, { useState, useEffect } from 'react'
+import { Button } from '../../components/ui/Button'
 import { guardsService } from '../../services/guards.service'
 import type { GuardActivity } from '../../services/guards.service'
 import { useAuth } from '../../hooks/useAuth'
@@ -102,19 +103,12 @@ export const AdminGuards: React.FC = () => {
                         />
                     </div>
                     <div className="flex items-end">
-                        <button
-                            onClick={() => setSearchTerm('')}
-                            className="filter-button"
-                        >
+                        <Button type="button" variant="primary" size="sm" onClick={() => setSearchTerm('')} className="filter-button">
                             Limpiar
-                        </button>
-                        <button
-                            onClick={loadData}
-                            className="filter-button"
-                            style={{ marginLeft: '8px' }}
-                        >
+                        </Button>
+                        <Button type="button" variant="primary" size="sm" onClick={loadData} className="filter-button" style={{ marginLeft: 8 }}>
                             Actualizar
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -200,7 +194,9 @@ const GuardCard: React.FC<{
                 
                 {isAdmin && (
                     <div>
-                        <button
+                        <Button
+                            type="button"
+                            variant="unstyled"
                             onClick={(e) => {
                                 e.stopPropagation()
                                 onToggleStatus(guard.id, guard.active)
@@ -208,7 +204,7 @@ const GuardCard: React.FC<{
                             className={`guard-status ${guard.active ? 'status-active' : 'status-inactive'}`}
                         >
                             {guard.active ? 'Activo' : 'Inactivo'}
-                        </button>
+                        </Button>
                     </div>
                 )}
             </div>

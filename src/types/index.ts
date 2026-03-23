@@ -23,7 +23,9 @@ export interface Unit {
     id: string
     community_id: string
     number: string
-    owner_id: string
+    owner_id: string | null
+    /** Segundo residente de la misma vivienda (requiere migración 003_units_co_owner.sql). */
+    co_owner_id?: string | null
     created_at: string
 }
 

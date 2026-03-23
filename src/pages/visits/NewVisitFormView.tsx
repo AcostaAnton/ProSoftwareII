@@ -10,6 +10,7 @@ import {
     MINUTE_OPTIONS,
     PERIOD_OPTIONS
 } from './newVisit.helpers'
+import { Button } from '../../components/ui/Button'
 
 interface NewVisitFormViewProps {
     error: string | null
@@ -91,15 +92,11 @@ const styles = {
     input: controlStyle,
     select: controlStyle,
     submitButton: {
-        padding: '12px',
-        backgroundColor: '#22d3ee',
+        width: '100%',
+        borderRadius: 20,
+        fontSize: 16,
         color: '#000000',
-        border: 'none',
-        borderRadius: '20px',
-        fontSize: '16px',
-        cursor: 'pointer',
-        width: '100%'
-    }
+    },
 } satisfies Record<string, CSSProperties>
 
 function Field({ children, htmlFor, label, required = false }: FieldProps) {
@@ -262,9 +259,9 @@ function NewVisitFormView({
                         />
                     </Field>
 
-                    <button type="submit" disabled={isSubmitting} style={styles.submitButton}>
+                    <Button type="submit" variant="primary" size="lg" fullWidth disabled={isSubmitting} style={styles.submitButton}>
                         {renderSubmitLabel(isSubmitting)}
-                    </button>
+                    </Button>
                 </form>
             </div>
         </div>

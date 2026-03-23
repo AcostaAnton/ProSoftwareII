@@ -2,82 +2,74 @@
 // Todas las funciones de autenticación con Supabase Auth
 // ============================================================
 
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import type { LoginForm, RegisterForm } from '../types/index'
 
-//- Login con email y contraseña
-
-export async function LoginWithEmail({email, password}: LoginForm) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-    })
-    if (error) throw error
-    return data
+export async function loginWithEmail({ email, password }: LoginForm) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
+  if (error) throw error
+  return data
 }
 
-// - Registro de nuevo usuario
+export async function registerUser({
+  name,
+  email,
+  password,
+  phone,
+  role,
+  community_id,
+}: RegisterForm) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { name, role },
+    },
+  })
+  if (error) throw error
 
-export async function RegisterUser({name,email, password, phone, role, community_id}: RegisterForm) {
-    const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-            data: {name,role},
-        },
-    })
-    if (error) throw error
+  if (data.user) {
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({ name, phone, role, community_id, email })
+      .eq('id', data.user.id)
 
-    if (data.user) {
-        const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ name, phone, role, community_id, email })
-        .eq('id', data.user.id)
+    if (profileError) throw profileError
+  }
 
-        if (profileError) throw profileError
-    }
-
-    return data
+  return data
 }
 
-// - Cerrar sesión
-
-export async function Logout() {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+export async function logout() {
+  const { error } = await supabase.auth.signOut()
+  if (error) throw error
 }
 
-// - Obtener sesión actual
-
-export async function GetCurrentSession() {
-    const { data, error } = await supabase.auth.getSession()
-    if (error) throw error
-    return data.session
+export async function getCurrentSession() {
+  const { data, error } = await supabase.auth.getSession()
+  if (error) throw error
+  return data.session
 }
 
-// - Obtener usuario actual
-
-export async function GetCurrentUser() {
-    const  {data, error} = await supabase.auth.getUser()
-    if (error) throw error
-    return data.user
+export async function getCurrentUser() {
+  const { data, error } = await supabase.auth.getUser()
+  if (error) throw error
+  return data.user
 }
 
-// - Obtener perfil del usuario actual
+export async function getCurrentProfile(userId: string) {
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
 
-export async function GetCurrentProfile(userId: string) {
-    const {data, error} = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single()
-
-    if (error) throw error
-    return data  
+  if (error) throw error
+  return data
 }
 
-// - Escuchar cambios de sesion (login/logout)
-
-export function onAuthStateChange(callback: (event: string , session: any) => void) {
-    supabase.auth.onAuthStateChange(callback)
+export function onAuthStateChange(
+  callback: (event: AuthChangeEvent, session: Session | null) => void
+) {
+  return supabase.auth.onAuthStateChange(callback)
 }

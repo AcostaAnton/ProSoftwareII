@@ -128,7 +128,8 @@ export function useDashboard(): ResultadoUseDashboard {
         })
 
         unidadesRelacionadas.forEach((unidad) => {
-          mapaUnidades.set(unidad.owner_id, unidad)
+          if (unidad.owner_id) mapaUnidades.set(unidad.owner_id, unidad)
+          if (unidad.co_owner_id) mapaUnidades.set(unidad.co_owner_id, unidad)
         })
 
         // ------------------------------------------------------------

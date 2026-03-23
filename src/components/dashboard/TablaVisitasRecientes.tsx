@@ -1,13 +1,5 @@
-// ============================================================
-// COMPONENTE: TablaVisitasRecientes
-// ------------------------------------------------------------
-// Representa la sección principal del dashboard donde se muestran
-// las visitas recientes registradas en el sistema.
-//
-// Este componente solo renderiza la UI.
-// La lógica y transformación de datos se hace en Dashboard.tsx
-// o en hooks/servicios auxiliares.
-// ============================================================
+import { Button } from '../ui/Button'
+
 
 export type EstadoVisualVisita =
   | 'pendiente'
@@ -149,22 +141,15 @@ export default function TablaVisitasRecientes({
 
         {/* Botón visible para residente y admin */}
         {mostrarBotonNuevaVisita && (
-          <button
+          <Button
             type="button"
+            variant="primary"
+            size="md"
             onClick={onNuevaVisita}
-            style={{
-              background: '#22d3ee',
-              border: 'none',
-              borderRadius: 16,
-              padding: '14px 28px',
-              color: '#0f172a',
-              fontWeight: 700,
-              fontSize: 14,
-              cursor: 'pointer',
-            }}
+            style={{ borderRadius: 16, padding: '14px 28px', fontSize: 14 }}
           >
             {textoBotonNuevaVisita}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -294,20 +279,9 @@ export default function TablaVisitasRecientes({
                     }}
                   >
                     {visita.mostrarAccionQr ? (
-                      <button
-                        type="button"
-                        onClick={() => onVerQR?.(visita.id)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#22d3ee',
-                          fontWeight: 700,
-                          fontSize: 13,
-                          cursor: 'pointer',
-                        }}
-                      >
+                      <Button type="button" variant="link" size="sm" onClick={() => onVerQR?.(visita.id)}>
                         Ver QR →
-                      </button>
+                      </Button>
                     ) : null}
                   </td>
                 </tr>

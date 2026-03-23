@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import QRCode from 'qrcode'
 import type { Visit } from '../../types/index'
+import { Button } from '../ui/Button'
 
 interface QRGeneratorProps {
     visit: Visit
@@ -121,55 +122,25 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
                             }}>
                                 {visit.qr_token}
                             </code>
-                            <button
+                            <Button
+                                type="button"
+                                variant="primary"
+                                size="sm"
                                 onClick={copyTokenToClipboard}
-                                style={{
-                                    padding: '8px 14px',
-                                    backgroundColor: '#22d3ee',
-                                    color: '#000000',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    cursor: 'pointer',
-                                    fontSize: 12,
-                                    fontWeight: 700,
-                                    whiteSpace: 'nowrap'
-                                }}
+                                style={{ borderRadius: 8, color: '#000000', whiteSpace: 'nowrap' }}
                             >
                                 {copyStatus === 'copied' ? 'Copiado' : 'Copiar'}
-                            </button>
+                            </Button>
                         </div>
                     </div>
 
                     <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                        <button
-                            onClick={downloadQR}
-                            style={{
-                                padding: '10px 20px',
-                                backgroundColor: '#22d3ee',
-                                color: '#000000',
-                                border: 'none',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: 'bold'
-                            }}
-                        >
+                        <Button type="button" variant="primary" size="md" onClick={downloadQR} style={{ color: '#000000', fontSize: 14 }}>
                             Descargar
-                        </button>
-                        <button
-                            onClick={onClose}
-                            style={{
-                                padding: '10px 20px',
-                                backgroundColor: '#2a3034',
-                                color: '#ffffff',
-                                border: 'none',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontSize: '14px'
-                            }}
-                        >
+                        </Button>
+                        <Button type="button" variant="secondary" size="md" onClick={onClose} style={{ fontSize: 14 }}>
                             Cerrar
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>
@@ -212,54 +183,25 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
                         }}>
                             {visit.qr_token}
                         </code>
-                        <button
+                        <Button
+                            type="button"
+                            variant="primary"
+                            size="sm"
                             onClick={copyTokenToClipboard}
-                            style={{
-                                padding: '8px 14px',
-                                backgroundColor: '#22d3ee',
-                                color: '#000000',
-                                border: 'none',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontSize: 12,
-                                fontWeight: 700,
-                                whiteSpace: 'nowrap'
-                            }}
+                            style={{ borderRadius: 8, color: '#000000', whiteSpace: 'nowrap' }}
                         >
                             {copyStatus === 'copied' ? 'Copiado' : 'Copiar'}
-                        </button>
+                        </Button>
                     </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                    <button
-                        onClick={downloadQR}
-                        style={{
-                            padding: '10px 20px',
-                            backgroundColor: '#22d3ee',
-                            color: '#000000',
-                            border: 'none',
-                            borderRadius: '20px',
-                            cursor: 'pointer',
-                            fontSize: '14px'
-                        }}
-                    >
+                    <Button type="button" variant="primary" size="md" onClick={downloadQR} style={{ borderRadius: 20, color: '#000000', fontSize: 14 }}>
                         Descargar QR
-                    </button>
-                    <button
-                        onClick={onCreateAnother}
-                        style={{
-                            padding: '10px 20px',
-                            backgroundColor: '#2a3034',
-                            color: '#ffffff',
-                            border: 'none',
-                            borderRadius: '20px',
-                            cursor: 'pointer',
-                            fontSize: '14px'
-                        }}
-                    >
+                    </Button>
+                    <Button type="button" variant="secondary" size="md" onClick={onCreateAnother} style={{ borderRadius: 20, fontSize: 14 }}>
                         Volver
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

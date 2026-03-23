@@ -6,6 +6,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useVisits } from '../../hooks/useVisits'
 import useResponsive from '../../hooks/useResponsive'
 import type { Visit } from '../../types/index'
+import { Button } from '../../components/ui/Button'
 
 const ScanPage: React.FC = () => {
   const { user } = useAuth()
@@ -66,12 +67,20 @@ const ScanPage: React.FC = () => {
               backgroundColor: '#1a2024', color: 'white' 
             }}
           />
-          <button 
+          <Button
+            type="button"
+            variant="primary"
+            size="lg"
             onClick={handleManualSearch}
-            style={{ padding: '0 20px', borderRadius: '8px', border: 'none', backgroundColor: '#3b82f6', color: 'white', fontWeight: 'bold' }}
+            style={{
+              padding: '0 20px',
+              borderRadius: 8,
+              background: '#3b82f6',
+              color: 'white',
+            }}
           >
             Buscar
-          </button>
+          </Button>
         </div>
 
         {/* Mensajes de Error */}
