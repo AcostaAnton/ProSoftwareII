@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { useAuth } from '../../hooks/useAuth'
 import { createVisit } from '../../services/visits.service'
+import { getCommunityNameById } from '../../services/users.service'
 import QRGenerator from '../../components/shared/QRGenerator'
 import type { NewVisitForm, Visit } from '../../types/index'
 import {
@@ -14,12 +15,27 @@ import {
 import NewVisitFormView from './NewVisitFormView'
 
 function NewVisit() {
-    const { user } = useAuth()
+    const { user, profile } = useAuth()
     const [formData, setFormData] = useState(INITIAL_NEW_VISIT_FORM)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [createdVisit, setCreatedVisit] = useState<Visit | null>(null)
+    const [communityName, setCommunityName] = useState<string | null>(null)
     const minVisitDate = getTodayInputDate()
+
+    useEffect(() => {
+        if (!createdVisit || !profile?.community_id) {
+            setCommunityName(null)
+            return
+        }
+        let cancelled = false
+        void getCommunityNameById(profile.community_id).then((name) => {
+            if (!cancelled) setCommunityName(name)
+        })
+        return () => {
+            cancelled = true
+        }
+    }, [createdVisit?.id, profile?.community_id])
 
     function handleChange(event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
         const { name, value } = event.target
@@ -81,6 +97,11 @@ function NewVisit() {
             <QRGenerator
                 visit={createdVisit}
                 onCreateAnother={handleCreateAnother}
+                qrDisplay={{
+                    residentName: profile?.name ?? null,
+                    communityName,
+                    unitNumber: profile?.unit_number ?? null,
+                }}
             />
         )
     }

@@ -150,6 +150,18 @@ export async function getCommunitiesForSelect(): Promise<CommunityOption[]> {
   return (data ?? []) as CommunityOption[]
 }
 
+/** Nombre de la comunidad para tarjetas QR (sin lanzar si falla RLS). */
+export async function getCommunityNameById(communityId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('communities')
+    .select('name')
+    .eq('id', communityId)
+    .maybeSingle()
+
+  if (error || !data?.name) return null
+  return data.name
+}
+
 /** Quita al perfil de owner_id / co_owner_id en todas las unidades donde aparezca. */
 export async function clearProfileFromAllUnits(profileId: string): Promise<void> {
   const { error: eOwner } = await supabase
