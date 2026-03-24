@@ -5,7 +5,7 @@
 import type { CreateVisitInput, Visit } from '../types/index'
 import { supabase } from './supabase'
 
-type ResidentVisits = {
+export type ResidentVisits = {
   residentId: string
   name: string
   count: number
@@ -113,6 +113,43 @@ export async function getAllVisits(): Promise<any[]> {
 
   if (error) throw error
   return data
+}
+
+/**
+ * Obtiene visitas con paginación y filtros opcionales.
+ * Esta función está optimizada para cargar solo lo necesario.
+ */
+export async function getVisitsPaginated(
+  page: number,
+  pageSize: number,
+  filters: { status?: Visit['status']; residentId?: string } = {},
+) {
+  const from = (page - 1) * pageSize
+  const to = from + pageSize - 1
+
+  let query = supabase
+    .from('visits')
+    .select(
+      `
+      *,
+      profiles:resident_id (
+        id,
+        name
+      )
+    `,
+      { count: 'exact' },
+    )
+    .order('visit_date', { ascending: false })
+    .order('visit_time', { ascending: false })
+    .range(from, to)
+
+  if (filters.status) query = query.eq('status', filters.status)
+  if (filters.residentId) query = query.eq('resident_id', filters.residentId)
+
+  const { data, error, count } = await query
+
+  if (error) throw error
+  return { data: data ?? [], count: count ?? 0 }
 }
 
 // - Obtener todas las visitas por estado

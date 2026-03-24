@@ -9,7 +9,9 @@
         "select-name": "off",
         "label": "off"
       }
-    ]
+    ],
+    "no-inline-styles": "off",
+    "typescript-config/consistent-casing": "off"
   },
   "browserslist": [
     "defaults",
