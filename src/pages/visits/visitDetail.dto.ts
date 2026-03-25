@@ -37,6 +37,7 @@ export interface VisitDetailDto {
     invitationPrimary: string
     invitationSecondary: string | null
     qrToken: string
+    creatorName: string | null
     statusColor: string
     statusHistory: VisitStatusHistoryDto[]
     statusLabel: string
@@ -68,6 +69,7 @@ export function createVisitDetailDto(
         invitationPrimary: invitation.primary,
         invitationSecondary: invitation.secondary ?? null,
         qrToken: visit.qr_token,
+        creatorName: qrDisplay?.creatorName ?? visit.profiles?.name ?? null,
         statusHistory: (visit.visit_status_history ?? []).map((historyEntry, index) => ({
             actorLabel: createActorLabel(historyEntry.profiles?.name, historyEntry.profiles?.role),
             changedAtLabel: formatTimestamp(historyEntry.changed_at),

@@ -43,6 +43,10 @@ export type VisitStatusHistoryRecord = {
 export type VisitDetailRecord = Visit & {
   access_logs?: VisitAccessLogRecord[]
   visit_status_history?: VisitStatusHistoryRecord[]
+  profiles?: {
+    id?: string
+    name?: string | null
+  } | null
 }
 
 export function groupVisitsByResident(visits: VisitWithResidentSummary[]): ResidentVisits[] {
@@ -257,6 +261,7 @@ export async function getVisitById(visitId: string): Promise<VisitDetailRecord> 
 export type VisitQrDisplayData = {
   visit: VisitDetailRecord
   residentName: string | null
+  creatorName: string | null
   communityName: string | null
   unitNumber: string | null
 }
@@ -268,6 +273,20 @@ export async function getVisitWithQrDisplay(visitId: string): Promise<VisitQrDis
     .select('name, unit_number, community_id')
     .eq('id', visit.resident_id)
     .maybeSingle()
+
+  const creatorId = (visit as any).created_by || visit.resident_id
+  let creatorName: string | null = null
+
+  if (creatorId === visit.resident_id) {
+    creatorName = profile?.name ?? null
+  } else {
+    const { data: creatorProfile } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('id', creatorId)
+      .maybeSingle()
+    creatorName = creatorProfile?.name ?? null
+  }
 
   let communityName: string | null = null
   if (profile?.community_id) {
@@ -282,6 +301,7 @@ export async function getVisitWithQrDisplay(visitId: string): Promise<VisitQrDis
   return {
     visit,
     residentName: profile?.name ?? null,
+    creatorName,
     communityName,
     unitNumber: profile?.unit_number ?? null,
   }
