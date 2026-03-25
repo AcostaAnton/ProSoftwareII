@@ -315,7 +315,10 @@ function VisitDetailView({
                     <DetailField label="ID de visita">
                         <p className="visit-detail-mono">{detail.visitId}</p>
                     </DetailField>
-                    <DetailField label="Creado">
+                    <DetailField label="Autor / Residente">
+                        <p>{detail.creatorName || 'Desconocido'}</p>
+                    </DetailField>
+                    <DetailField label="Fecha de creacion">
                         <p>{detail.createdAtLabel}</p>
                     </DetailField>
                     <DetailField label="Token QR">
