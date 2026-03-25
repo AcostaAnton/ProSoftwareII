@@ -13,7 +13,7 @@ export type QrDisplayLike = {
 } | null
 
 /**
- * Mismo texto que la tarjeta del QR: «Residente, Visitante te ha invitado a:» + comunidad.
+ * Mismo texto que la tarjeta del QR: «Visitante, Residente te ha invitado a:» + comunidad.
  */
 export function getQrInvitationLines(
     visit: Pick<Visit, 'visitor_name'>,
@@ -25,13 +25,13 @@ export function getQrInvitationLines(
 
     if (residentName && communityName) {
         return {
-            primary: `${residentName}, ${visitorName} te ha invitado a:`,
+            primary: `${visitorName}, ${residentName} te ha invitado a:`,
             secondary: communityName,
         }
     }
     if (residentName && !communityName) {
         return {
-            primary: `${residentName}, ${visitorName} te ha invitado a:`,
+            primary: `${visitorName}, ${residentName} te ha invitado a:`,
             secondary: null,
         }
     }
