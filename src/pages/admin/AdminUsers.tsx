@@ -51,8 +51,8 @@ export default function AdminUsers() {
 
   if (!profile?.community_id) {
     return (
-      <main style={styles.main}>
-        <div style={styles.wrapper}>
+      <main className="admin-users-page" style={styles.main}>
+        <div className="admin-users-wrapper" style={styles.wrapper}>
           <p style={styles.subtitle}>No tienes una comunidad asignada.</p>
         </div>
       </main>
@@ -62,12 +62,14 @@ export default function AdminUsers() {
   const communityId = profile.community_id
 
   return (
-    <main style={styles.main}>
-      <div style={styles.wrapper}>
-        <div style={styles.headerRow}>
-          <div>
-            <h2 style={styles.title}>Gestión de Usuarios</h2>
-            <p style={styles.subtitle}>
+    <main className="admin-users-page" style={styles.main}>
+      <div className="admin-users-wrapper" style={styles.wrapper}>
+        <div className="admin-users-header" style={styles.headerRow}>
+          <div className="admin-users-header-text">
+            <h2 className="admin-users-title" style={styles.title}>
+              Gestión de Usuarios
+            </h2>
+            <p className="admin-users-subtitle" style={styles.subtitle}>
               Solo los administradores pueden crear usuarios y gestionar roles. Cada vivienda admite
               hasta {MAX_RESIDENTS_PER_UNIT} cuentas residente. Al dar de alta un{' '}
               <strong style={{ color: '#e2e8f0' }}>residente</strong>, podrás asignarle una vivienda.
@@ -78,6 +80,7 @@ export default function AdminUsers() {
             variant="primary"
             size="md"
             onClick={() => setCreatingUser(true)}
+            className="admin-users-btn-create"
             style={{
               ...styles.btnCreate,
               ...(editingUser != null || creatingUser ? { opacity: 0.45, cursor: 'not-allowed' } : {}),
@@ -90,22 +93,25 @@ export default function AdminUsers() {
 
         {error && <div style={styles.error}>{error}</div>}
 
-        <div style={styles.statsGrid}>
+        <div className="admin-users-stats" style={styles.statsGrid}>
           {ROLES.map((role) => (
-            <div key={role} style={styles.statCard}>
-              <p style={styles.statValue}>{byRole[role]}</p>
+            <div key={role} className="admin-users-stat-card" style={styles.statCard}>
+              <p className="admin-users-stat-value" style={styles.statValue}>
+                {byRole[role]}
+              </p>
               <RoleBadge role={role} />
             </div>
           ))}
         </div>
 
-        <div style={styles.card}>
+        <div className="admin-users-card" style={styles.card}>
           {loading ? (
             <div style={styles.empty}>Cargando usuarios...</div>
           ) : profiles.length === 0 ? (
             <div style={styles.empty}>No hay usuarios en esta comunidad.</div>
           ) : (
-            <table style={styles.table}>
+            <div className="admin-users-table-wrap">
+            <table className="admin-users-table" style={styles.table}>
               <thead>
                 <tr>
                   <th style={styles.th}>Usuario</th>
@@ -156,6 +162,7 @@ export default function AdminUsers() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
 
