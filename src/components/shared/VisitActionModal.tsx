@@ -18,6 +18,7 @@ const VisitActionModal: React.FC<VisitActionModalProps> = ({ visit, onClose, onS
   const [isCameraOpen, setIsCameraOpen] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [isRejected, setIsRejected] = useState(false)
+  const [isPhotoExpanded, setIsPhotoExpanded] = useState(false)
 
   const [attachedPhoto, setAttachedPhoto] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
@@ -63,7 +64,7 @@ const VisitActionModal: React.FC<VisitActionModalProps> = ({ visit, onClose, onS
     try {
       const photoUrl = attachedPhoto ? await uploadVisitPhoto(attachedPhoto) : null
 
-      // Actualizar access_logs
+      
       const { error: logError } = await supabase
         .from('access_logs')
         .insert({
@@ -76,7 +77,7 @@ const VisitActionModal: React.FC<VisitActionModalProps> = ({ visit, onClose, onS
         })
       if (logError) throw logError
 
-      // Actualizar visits
+      
       const { error: visitError } = await supabase
         .from('visits')
         .update({ status: 'approved', approved_by: userId })
@@ -94,7 +95,7 @@ const VisitActionModal: React.FC<VisitActionModalProps> = ({ visit, onClose, onS
           notes: `Entrada registrada: ${entryNotes}`
         })
 
-      // Mostrar mensaje de éxito en el modal antes de cerrar
+      
       setIsSuccess(true)
       setTimeout(() => {
         onSuccess()
@@ -118,7 +119,7 @@ const VisitActionModal: React.FC<VisitActionModalProps> = ({ visit, onClose, onS
     try {
       const photoUrl = attachedPhoto ? await uploadVisitPhoto(attachedPhoto) : null
 
-      // Guardar evidencia en access_logs aunque sea rechazado
+     
       const { error: logError } = await supabase
         .from('access_logs')
         .insert({
@@ -131,7 +132,7 @@ const VisitActionModal: React.FC<VisitActionModalProps> = ({ visit, onClose, onS
         })
       if (logError) throw logError
 
-      // Actualizar estado a 'rejected'
+      
       const { error: visitError } = await supabase
         .from('visits')
         .update({ status: 'rejected' })
@@ -191,7 +192,7 @@ const VisitActionModal: React.FC<VisitActionModalProps> = ({ visit, onClose, onS
           notes: `Salida registrada: ${exitNotes}`
         })
 
-      // Mostrar mensaje de éxito en el modal antes de cerrar
+      
       setIsSuccess(true)
       setTimeout(() => {
         onSuccess()
@@ -211,13 +212,41 @@ const VisitActionModal: React.FC<VisitActionModalProps> = ({ visit, onClose, onS
           onClose={() => setIsCameraOpen(false)}
         />
       )}
+
+      {/* Vista de Foto Expandida (Lightbox) */}
+      {isPhotoExpanded && photoPreview && (
+        <div 
+          onClick={() => setIsPhotoExpanded(false)}
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.9)', display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '20px',
+            cursor: 'zoom-out'
+          }}
+        >
+          <img 
+            src={photoPreview} 
+            alt="Foto expandida" 
+            style={{ maxWidth: '95%', maxHeight: '75vh', borderRadius: '12px', boxShadow: '0 0 30px rgba(0,0,0,0.5)', objectFit: 'contain' }} 
+          />
+          {photoNotes && (
+            <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#1e293b', borderRadius: '10px', maxWidth: '90%', border: '1px solid #334155' }}>
+              <p style={{ color: '#94a3b8', fontSize: '11px', textTransform: 'uppercase', marginBottom: '5px', letterSpacing: '0.5px' }}>Comentario de la foto</p>
+              <p style={{ color: 'white', margin: 0, fontSize: '16px' }}>{photoNotes}</p>
+            </div>
+          )}
+          <p style={{ color: '#64748b', marginTop: '15px', fontSize: '14px' }}>Toca en cualquier lugar para cerrar</p>
+        </div>
+      )}
+
       <div style={{
         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
         backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px'
       }}>
         <div style={{
-          backgroundColor: '#1e293b', width: '100%', maxWidth: '450px', borderRadius: '20px',
-          padding: '30px', border: '1px solid #334155', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
+          backgroundColor: '#1e293b', width: '100%', maxWidth: isEntry ? '850px' : '450px', borderRadius: '16px', // Radio de borde ligeramente más pequeño
+          padding: '20px', border: '1px solid #334155', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5)', // Sombra ligeramente menos prominente
+          maxHeight: '95vh', overflowY: 'auto'
         }}>
           
           {/* Vista de Éxito */}
@@ -239,113 +268,120 @@ const VisitActionModal: React.FC<VisitActionModalProps> = ({ visit, onClose, onS
           </h2>
           <hr style={{ borderColor: '#334155', margin: '20px 0' }} />
 
-          <div style={{ display: 'grid', gap: '15px', marginBottom: '25px' }}>
-            <div>
-              <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Nombre</label>
-              <p style={{ margin: '4px 0', fontSize: '18px', fontWeight: 'bold' }}>{visit.visitor_name}</p>
-            </div>
-            <div>
-              <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Asunto</label>
-              <p style={{ margin: '4px 0' }}>{visit.visit_purpose || 'No especificado'}</p>
-            </div>
-            <div>
-              <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Fecha</label>
-              <p style={{ margin: '4px 0' }}>{visit.visit_date} - {visit.visit_time}</p>
-            </div>
-
-            {isEntry && (
-              <>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '30px', marginBottom: '25px' }}>
+            {/* Columna Lateral: Información y Foto */}
+            <div style={{ flex: '1 1 280px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div>
+                <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Visitante</label>
+                <p style={{ margin: '4px 0', fontSize: '18px', fontWeight: 'bold' }}>{visit.visitor_name}</p>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <div>
-                  <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Adjuntar Fotografía</label>
-                  
-                  {photoPreview && (
-                    <div style={{ marginTop: '10px', marginBottom: '10px', textAlign: 'center' }}>
-                      <img src={photoPreview} alt="Vista previa" style={{ maxHeight: '150px', borderRadius: '8px', border: '1px solid #334155' }} />
+                  <label style={{ color: '#94a3b8', fontSize: '11px', textTransform: 'uppercase' }}>Asunto</label>
+                  <p style={{ margin: '2px 0', fontSize: '14px' }}>{visit.visit_purpose || 'No especificado'}</p>
+                </div>
+                <div>
+                  <label style={{ color: '#94a3b8', fontSize: '11px', textTransform: 'uppercase' }}>Fecha/Hora</label>
+                  <p style={{ margin: '2px 0', fontSize: '14px' }}>{visit.visit_date}<br/>{visit.visit_time}</p>
+                </div>
+              </div>
+
+              {isEntry && (
+                <div>
+                  <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Fotografía de Ingreso</label>
+                  {photoPreview ? (
+                    <div 
+                      onClick={() => setIsPhotoExpanded(true)}
+                      style={{ marginTop: '10px', marginBottom: '10px', textAlign: 'center', cursor: 'zoom-in', position: 'relative' }}
+                    >
+                      <img src={photoPreview} alt="Vista previa" style={{ width: '100%', maxHeight: '180px', borderRadius: '12px', border: '2px solid #334155', objectFit: 'cover' }} />
+                      <div style={{ position: 'absolute', bottom: '8px', right: '8px', backgroundColor: 'rgba(0,0,0,0.6)', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '10px' }}>
+                        🔍 Ampliar
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ height: '150px', border: '2px dashed #334155', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', marginTop: '10px' }}>
+                      Sin foto adjunta
                     </div>
                   )}
 
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
-                    <Button type="button" variant="accent" size="lg" onClick={() => setIsCameraOpen(true)} style={{ flex: 1, borderRadius: 8 }}>
-                      📷 Tomar Foto
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                    <Button type="button" variant="accent" size="sm" onClick={() => setIsCameraOpen(true)} style={{ flex: 1, borderRadius: 8 }}>
+                      📷 Cámara
                     </Button>
-                    <label htmlFor="file-upload" style={{...filePickLabelStyle, flex: 1, textAlign: 'center' }}>
-                      📂 Elegir Archivo
+                    <label htmlFor="file-upload" style={{...filePickLabelStyle, flex: 1, textAlign: 'center', padding: '8px', fontSize: '12px' }}>
+                      📂 Archivo
                     </label>
-                    <input
-                      id="file-upload"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      style={{ display: 'none' }}
-                    />
+                    <input id="file-upload" type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
                   </div>
                 </div>
-                <div>
-                  <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Notas de la Fotografía</label>
-                  <textarea
-                    value={photoNotes}
-                    onChange={(e) => setPhotoNotes(e.target.value)}
-                    placeholder="Añada una descripción para la foto (opcional)..."
-                    style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '6px', backgroundColor: '#0f172a', color: 'white', border: '1px solid #334155', minHeight: '60px' }}
-                  />
-                </div>
-                <div>
-                  <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Notas de Entrada</label>
-                  <textarea
-                    value={entryNotes}
-                    onChange={(e) => { setEntryNotes(e.target.value); setError(null); }}
-                    placeholder="Comentarios de entrada o motivo de rechazo..."
-                    style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '6px', backgroundColor: '#0f172a', color: 'white', border: '1px solid #334155', minHeight: '60px' }}
-                  />
-                </div>
-              </>
-            )}
-
-            {isExit && (
-              <div>
-                <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Notas de Salida</label>
-                <textarea
-                  value={exitNotes}
-                  onChange={(e) => setExitNotes(e.target.value)}
-                  placeholder="Comentarios de salida..."
-                  style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '6px', backgroundColor: '#0f172a', color: 'white', border: '1px solid #334155', minHeight: '60px' }}
-                />
-              </div>
-            )}
-          </div>
-
-          {error && (
-            <div style={{ marginBottom: '15px', color: '#ef4444', fontWeight: 'bold', textAlign: 'center' }}>
-              {error}
+              )}
             </div>
-          )}
 
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Button type="button" variant="outline" size="lg" onClick={onClose} style={{ flex: 1, borderRadius: 8, borderColor: '#334155', color: 'white' }}>
-              Cancelar
-            </Button>
+            {/* Columna Principal: Notas y Botones */}
+            <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              {isEntry && (
+                <>
+                  <div>
+                    <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Notas de la Fotografía</label>
+                    <textarea
+                      value={photoNotes}
+                      onChange={(e) => setPhotoNotes(e.target.value)}
+                      placeholder="Descripción de la foto (placa, estado...)"
+                      style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '8px', backgroundColor: '#0f172a', color: 'white', border: '1px solid #334155', minHeight: '70px', fontSize: '14px' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Notas de Entrada</label>
+                    <textarea
+                      value={entryNotes}
+                      onChange={(e) => { setEntryNotes(e.target.value); setError(null); }}
+                      placeholder="Observaciones generales o motivo de rechazo..."
+                      style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '8px', backgroundColor: '#0f172a', color: 'white', border: '1px solid #334155', minHeight: '70px', fontSize: '14px' }}
+                    />
+                  </div>
+                </>
+              )}
 
-            {isEntry ? (
-              <>
-                <Button type="button" variant="danger" size="lg" onClick={handleDeny} disabled={loading} style={{ flex: 1, borderRadius: 8, background: '#7f1d1d', border: '1px solid #991b1b' }}>
-                  {loading ? '...' : 'Denegar'}
+              {isExit && (
+                <div>
+                  <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Notas de Salida</label>
+                  <textarea
+                    value={exitNotes}
+                    onChange={(e) => setExitNotes(e.target.value)}
+                    placeholder="Comentarios sobre la salida..."
+                    style={{ width: '100%', padding: '10px', marginTop: '5px', borderRadius: '8px', backgroundColor: '#0f172a', color: 'white', border: '1px solid #334155', minHeight: '120px', fontSize: '14px' }}
+                  />
+                </div>
+              )}
+
+              {error && (
+                <div style={{ color: '#ef4444', fontWeight: 'bold', textAlign: 'center', fontSize: '14px', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '8px', borderRadius: '6px' }}>
+                  {error}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '10px', marginTop: 'auto', paddingTop: '10px' }}>
+                <Button type="button" variant="outline" size="lg" onClick={onClose} style={{ flex: 1, borderRadius: 8, borderColor: '#334155', color: 'white' }}>
+                  Cancelar
                 </Button>
-                <Button type="button" variant="success" size="lg" onClick={handleEntry} disabled={loading} style={{ flex: 2, borderRadius: 8, background: '#10b981' }}>
-                  {loading ? 'Procesando...' : 'Permitir Acceso'}
-                </Button>
-              </>
-            ) : (
-              <Button
-                type="button"
-                variant="success"
-                size="lg"
-                onClick={isExit ? handleExit : () => {}}
-                disabled={loading}
-                style={{ flex: 2, borderRadius: 8, background: '#10b981' }}
-              >
-                {loading ? 'Procesando...' : isExit ? 'Registrar Salida' : 'Acción'}
-              </Button>
-            )}
+
+                {isEntry ? (
+                  <>
+                    <Button type="button" variant="danger" size="lg" onClick={handleDeny} disabled={loading} style={{ flex: 1, borderRadius: 8, background: '#7f1d1d', border: '1px solid #991b1b' }}>
+                      {loading ? '...' : 'Denegar'}
+                    </Button>
+                    <Button type="button" variant="success" size="lg" onClick={handleEntry} disabled={loading} style={{ flex: 2, borderRadius: 8, background: '#10b981' }}>
+                      {loading ? '...' : 'Permitir'}
+                    </Button>
+                  </>
+                ) : (
+                  <Button type="button" variant="success" size="lg" onClick={isExit ? handleExit : () => {}} disabled={loading} style={{ flex: 2, borderRadius: 8, background: '#10b981' }}>
+                    {loading ? '...' : isExit ? 'Registrar Salida' : 'Acción'}
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
             </>
           )}
