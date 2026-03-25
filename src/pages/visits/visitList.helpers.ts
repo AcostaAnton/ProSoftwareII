@@ -1,4 +1,13 @@
 import type { Visit } from '../../types/index'
+import {
+    addDays,
+    createDateOnly,
+    createDateRange,
+    getDateKey,
+    isCurrentOrFutureVisit,
+    compareVisitsByDateTimeAsc,
+    compareVisitsByDateTimeDesc
+} from './visitDate.helpers'
 
 export type FilterType = 'today' | 'tomorrow' | 'thisWeek' | 'nextWeek' | 'thisMonth'
 
@@ -10,17 +19,12 @@ export interface VisitListFilters {
     statusFilters: Set<Visit['status']>
 }
 
-interface DateFilterOption {
+interface VisitFilterOptionDto<T> {
     label: string
-    value: FilterType
+    value: T
 }
 
-interface StatusFilterOption {
-    label: string
-    value: Visit['status']
-}
-
-export const DATE_FILTER_OPTIONS: DateFilterOption[] = [
+export const DATE_FILTER_OPTIONS: VisitFilterOptionDto<FilterType>[] = [
     { value: 'today', label: 'Hoy' },
     { value: 'tomorrow', label: 'Manana' },
     { value: 'thisWeek', label: 'Esta semana' },
@@ -28,7 +32,7 @@ export const DATE_FILTER_OPTIONS: DateFilterOption[] = [
     { value: 'thisMonth', label: 'Este mes' }
 ]
 
-export const STATUS_FILTER_OPTIONS: StatusFilterOption[] = [
+export const STATUS_FILTER_OPTIONS: VisitFilterOptionDto<Visit['status']>[] = [
     { value: 'pending', label: 'Pendiente' },
     { value: 'approved', label: 'Aprobada' },
     { value: 'rejected', label: 'Rechazada' },
@@ -49,32 +53,22 @@ export function createInitialVisitListFilters(): VisitListFilters {
 export function filterVisits(visits: Visit[], filters: VisitListFilters): Visit[] {
     const normalizedSearchTerm = filters.searchTerm.trim().toLowerCase()
     const shouldSearchAcrossAllVisits = normalizedSearchTerm.length > 0 || hasCustomDateRange(filters)
-
-    let filteredVisits = shouldSearchAcrossAllVisits
+    const searchableVisits = shouldSearchAcrossAllVisits
         ? [...visits]
         : visits.filter(isCurrentOrFutureVisit)
 
+    const visitsBySearch = normalizedSearchTerm
+        ? searchableVisits.filter((visit) => matchesSearchTerm(visit, normalizedSearchTerm))
+        : searchableVisits
+
+    const visitsByDate = filterVisitsByDate(visitsBySearch, filters)
+    const visitsByStatus = filterVisitsByStatus(visitsByDate, filters.statusFilters)
+
     if (normalizedSearchTerm) {
-        filteredVisits = filteredVisits.filter((visit) => matchesSearchTerm(visit, normalizedSearchTerm))
+        return [...visitsByStatus].sort(compareVisitsByDateTimeDesc)
     }
 
-    if (filters.startDate || filters.endDate) {
-        filteredVisits = filteredVisits.filter((visit) =>
-            matchesCustomDateRange(visit.visit_date, filters.startDate, filters.endDate)
-        )
-    } else if (filters.quickDateFilters.size > 0) {
-        filteredVisits = filteredVisits.filter((visit) =>
-            matchesQuickDateFilters(visit.visit_date, filters.quickDateFilters)
-        )
-    }
-
-    if (filters.statusFilters.size > 0) {
-        filteredVisits = filteredVisits.filter((visit) => filters.statusFilters.has(visit.status))
-    }
-
-    return normalizedSearchTerm
-        ? sortVisitsByDateTimeDesc(filteredVisits)
-        : sortVisitsByDateTimeAsc(filteredVisits)
+    return [...visitsByStatus].sort(compareVisitsByDateTimeAsc)
 }
 
 export function hasActiveVisitListFilters(filters: VisitListFilters): boolean {
@@ -104,11 +98,36 @@ export function toggleSetValue<T>(values: Set<T>, value: T): Set<T> {
 
     if (nextValues.has(value)) {
         nextValues.delete(value)
-    } else {
-        nextValues.add(value)
+        return nextValues
     }
 
+    nextValues.add(value)
+
     return nextValues
+}
+
+function filterVisitsByDate(visits: Visit[], filters: VisitListFilters): Visit[] {
+    if (filters.startDate || filters.endDate) {
+        return visits.filter((visit) =>
+            matchesCustomDateRange(visit.visit_date, filters.startDate, filters.endDate)
+        )
+    }
+
+    if (filters.quickDateFilters.size === 0) {
+        return visits
+    }
+
+    return visits.filter((visit) =>
+        matchesQuickDateFilters(visit.visit_date, filters.quickDateFilters)
+    )
+}
+
+function filterVisitsByStatus(visits: Visit[], statusFilters: Set<Visit['status']>): Visit[] {
+    if (statusFilters.size === 0) {
+        return visits
+    }
+
+    return visits.filter((visit) => statusFilters.has(visit.status))
 }
 
 function matchesSearchTerm(visit: Visit, term: string): boolean {
@@ -132,7 +151,11 @@ function hasCustomDateRange(filters: VisitListFilters): boolean {
     return filters.startDate.length > 0 || filters.endDate.length > 0
 }
 
-function matchesCustomDateRange(visitDateValue: string, startDateValue: string, endDateValue: string): boolean {
+function matchesCustomDateRange(
+    visitDateValue: string,
+    startDateValue: string,
+    endDateValue: string
+): boolean {
     const visitDate = getDateKey(visitDateValue)
     const startDate = startDateValue ? getDateKey(startDateValue) : null
     const endDate = endDateValue ? getDateKey(endDateValue) : null
@@ -152,7 +175,10 @@ function matchesCustomDateRange(visitDateValue: string, startDateValue: string, 
     return true
 }
 
-function matchesQuickDateFilters(visitDateValue: string, quickDateFilters: Set<FilterType>): boolean {
+function matchesQuickDateFilters(
+    visitDateValue: string,
+    quickDateFilters: Set<FilterType>
+): boolean {
     const visitDate = createDateOnly(visitDateValue)
 
     for (const filter of quickDateFilters) {
@@ -166,109 +192,33 @@ function matchesQuickDateFilters(visitDateValue: string, quickDateFilters: Set<F
     return false
 }
 
-function getDateRange(filter: FilterType): { end: Date; start: Date } {
+function getDateRange(filter: FilterType) {
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
     switch (filter) {
         case 'today':
-            return createRange(today, 1)
-        case 'tomorrow': {
-            const tomorrow = addDays(today, 1)
-            return createRange(tomorrow, 1)
-        }
+            return createDateRange(today, 1)
+        case 'tomorrow':
+            return createDateRange(addDays(today, 1), 1)
         case 'thisWeek': {
             const monday = new Date(today)
             monday.setDate(today.getDate() - today.getDay() + 1)
-            return createRange(monday, 7)
+            return createDateRange(monday, 7)
         }
         case 'nextWeek': {
             const nextMonday = new Date(today)
             nextMonday.setDate(today.getDate() - today.getDay() + 8)
-            return createRange(nextMonday, 7)
+            return createDateRange(nextMonday, 7)
         }
         case 'thisMonth': {
             const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
             const firstDayOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+
             return {
                 start: firstDay,
                 end: firstDayOfNextMonth
             }
         }
     }
-}
-
-function addDays(date: Date, days: number): Date {
-    return new Date(date.getTime() + days * 24 * 60 * 60 * 1000)
-}
-
-function createRange(startDate: Date, durationInDays: number) {
-    return {
-        start: startDate,
-        end: addDays(startDate, durationInDays)
-    }
-}
-
-function isCurrentOrFutureVisit(visit: Visit): boolean {
-    return getDateKey(visit.visit_date) >= getTodayDateKey()
-}
-
-function sortVisitsByDateTimeAsc(visits: Visit[]): Visit[] {
-    return [...visits].sort(compareVisitsByDateTimeAsc)
-}
-
-function sortVisitsByDateTimeDesc(visits: Visit[]): Visit[] {
-    return [...visits].sort(compareVisitsByDateTimeDesc)
-}
-
-function compareVisitsByDateTimeAsc(firstVisit: Visit, secondVisit: Visit): number {
-    const firstTimestamp = createVisitDateTime(firstVisit)
-    const secondTimestamp = createVisitDateTime(secondVisit)
-
-    return firstTimestamp - secondTimestamp
-}
-
-function compareVisitsByDateTimeDesc(firstVisit: Visit, secondVisit: Visit): number {
-    const firstTimestamp = createVisitDateTime(firstVisit)
-    const secondTimestamp = createVisitDateTime(secondVisit)
-
-    return secondTimestamp - firstTimestamp
-}
-
-function createVisitDateTime(visit: Visit): number {
-    const visitDate = createDateOnly(visit.visit_date)
-    const visitTime = visit.visit_time ?? '23:59'
-    const [hours, minutes] = visitTime.split(':').map(Number)
-
-    return new Date(
-        visitDate.getFullYear(),
-        visitDate.getMonth(),
-        visitDate.getDate(),
-        hours,
-        minutes
-    ).getTime()
-}
-
-function createDateOnly(dateValue: string): Date {
-    const [year, month, day] = getDateKey(dateValue).split('-').map(Number)
-
-    return new Date(year, month - 1, day)
-}
-
-function getTodayDateKey(): string {
-    const now = new Date()
-
-    return createDateKey(now.getFullYear(), now.getMonth() + 1, now.getDate())
-}
-
-function getDateKey(dateValue: string): string {
-    return dateValue.slice(0, 10)
-}
-
-function createDateKey(year: number, month: number, day: number): string {
-    return [
-        year.toString().padStart(4, '0'),
-        month.toString().padStart(2, '0'),
-        day.toString().padStart(2, '0')
-    ].join('-')
 }

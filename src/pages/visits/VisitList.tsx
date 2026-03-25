@@ -1,9 +1,16 @@
-import { useDeferredValue, useEffect, useState } from 'react'
+import {
+    startTransition,
+    useDeferredValue,
+    useEffect,
+    useState
+} from 'react'
 import type { ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { getAllVisits, getVisitsByResident } from '../../services/visits.service'
 import type { Visit } from '../../types/index'
+import { resolveAsync } from './visitAsync.helpers'
+import { createVisitCardDtos } from './visitCard.dto'
 import VisitListView from './VisitListView'
 import {
     createInitialVisitListFilters,
@@ -31,41 +38,42 @@ function VisitList() {
     const userId = user?.id
 
     useEffect(() => {
-        async function run() {
-            if (!userId) {
+        let isActive = true
+
+        if (!userId) {
+            setVisits([])
+            setError(null)
+            setLoading(false)
+            return
+        }
+
+        setLoading(true)
+        setError(null)
+
+        const visitsRequest = role === 'resident'
+            ? getVisitsByResident(userId)
+            : getAllVisits()
+
+        void resolveAsync(visitsRequest, 'Error al cargar las visitas').then((result) => {
+            if (!isActive) {
+                return
+            }
+
+            if (result.error !== null) {
                 setVisits([])
+                setError(result.error)
                 setLoading(false)
                 return
             }
 
-            setLoading(true)
-            setError(null)
+            setVisits(result.data)
+            setLoading(false)
+        })
 
-            try {
-                const visitsData = role === 'resident'
-                    ? await getVisitsByResident(userId)
-                    : await getAllVisits()
-
-                setVisits(visitsData)
-            } catch (loadError) {
-                setError(loadError instanceof Error ? loadError.message : 'Error al cargar las visitas')
-            } finally {
-                setLoading(false)
-            }
+        return () => {
+            isActive = false
         }
-
-        void run()
     }, [role, userId])
-
-    useEffect(() => {
-        setCurrentPage(1)
-    }, [
-        filters.searchTerm,
-        filters.startDate,
-        filters.endDate,
-        filters.quickDateFilters,
-        filters.statusFilters
-    ])
 
     const deferredFilters: VisitListFilters = {
         ...filters,
@@ -78,18 +86,17 @@ function VisitList() {
         (safeCurrentPage - 1) * VISIT_LIST_PAGE_SIZE,
         safeCurrentPage * VISIT_LIST_PAGE_SIZE
     )
-
-    useEffect(() => {
-        if (safeCurrentPage !== currentPage) {
-            setCurrentPage(safeCurrentPage)
-        }
-    }, [currentPage, safeCurrentPage])
+    const visitCards = createVisitCardDtos(paginatedVisits)
 
     function updateFilters(nextFilters: Partial<VisitListFilters>) {
-        setFilters((currentFilters) => ({
-            ...currentFilters,
-            ...nextFilters
-        }))
+        setCurrentPage(1)
+
+        startTransition(() => {
+            setFilters((currentFilters) => ({
+                ...currentFilters,
+                ...nextFilters
+            }))
+        })
     }
 
     function handleSearchTermChange(event: ChangeEvent<HTMLInputElement>) {
@@ -129,6 +136,7 @@ function VisitList() {
     }
 
     function handleClearAllFilters() {
+        setCurrentPage(1)
         setFilters(createInitialVisitListFilters())
         setOpenDropdown(null)
     }
@@ -146,6 +154,10 @@ function VisitList() {
     }
 
     function handlePageChange(nextPage: number) {
+        if (nextPage < 1 || nextPage > totalPages) {
+            return
+        }
+
         setCurrentPage(nextPage)
     }
 
@@ -159,7 +171,7 @@ function VisitList() {
             openDropdown={openDropdown}
             totalPages={totalPages}
             totalVisits={visits.length}
-            visits={paginatedVisits}
+            visits={visitCards}
             onClearAllFilters={handleClearAllFilters}
             onClearDateFilters={handleClearDateFilters}
             onClearStatusFilters={handleClearStatusFilters}

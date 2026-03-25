@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
+import QRGenerator from '../../components/shared/QRGenerator'
 import { useAuth } from '../../hooks/useAuth'
 import { createVisit } from '../../services/visits.service'
 import { getCommunityNameById } from '../../services/users.service'
-import QRGenerator from '../../components/shared/QRGenerator'
 import type { NewVisitForm, Visit } from '../../types/index'
+import { resolveAsync } from './visitAsync.helpers'
+import NewVisitFormView from './NewVisitFormView'
 import {
     buildCreateVisitInput,
     getTodayInputDate,
@@ -12,7 +14,6 @@ import {
     updateNewVisitForm,
     validateNewVisitForm,
 } from './newVisit.helpers'
-import NewVisitFormView from './NewVisitFormView'
 
 function NewVisit() {
     const { user, profile } = useAuth()
@@ -25,21 +26,26 @@ function NewVisit() {
     const createdVisitId = createdVisit?.id
 
     useEffect(() => {
+        let isActive = true
+
         if (!createdVisitId || !profile?.community_id) {
             setCommunityName(null)
             return
         }
 
-        let cancelled = false
-
-        void getCommunityNameById(profile.community_id).then((name) => {
-            if (!cancelled) {
-                setCommunityName(name)
+        void resolveAsync(
+            getCommunityNameById(profile.community_id),
+            'No se pudo cargar la comunidad'
+        ).then((result) => {
+            if (!isActive || result.error !== null) {
+                return
             }
+
+            setCommunityName(result.data)
         })
 
         return () => {
-            cancelled = true
+            isActive = false
         }
     }, [createdVisitId, profile?.community_id])
 
@@ -61,10 +67,6 @@ function NewVisit() {
         setCreatedVisit(null)
     }
 
-    function resetForm() {
-        setFormData(INITIAL_NEW_VISIT_FORM)
-    }
-
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault()
 
@@ -83,22 +85,21 @@ function NewVisit() {
         setIsSubmitting(true)
         setError(null)
 
-        try {
-            const visitData = buildCreateVisitInput(formData, user.id)
-            const visit = await createVisit(visitData)
+        const visitData = buildCreateVisitInput(formData, user.id)
+        const createResult = await resolveAsync(
+            createVisit(visitData),
+            'Error al crear la visita'
+        )
 
-            setCreatedVisit(visit)
-            resetForm()
-        } catch (submissionError) {
-            console.error('Error creating visit:', submissionError)
-            setError(
-                submissionError instanceof Error
-                    ? submissionError.message
-                    : 'Error al crear la visita'
-            )
-        } finally {
-            setIsSubmitting(false)
+        setIsSubmitting(false)
+
+        if (createResult.error !== null) {
+            setError(createResult.error)
+            return
         }
+
+        setCreatedVisit(createResult.data)
+        setFormData(INITIAL_NEW_VISIT_FORM)
     }
 
     if (createdVisit) {

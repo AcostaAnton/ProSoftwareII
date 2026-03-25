@@ -1,10 +1,11 @@
 import type {
     ChangeEvent,
-    MouseEvent,
     ReactNode
 } from 'react'
 import type { Visit } from '../../types/index'
-import { formatDate, formatPhone, formatTime } from '../../utils/formatDate'
+import { Button } from '../../components/ui/Button'
+import { Pagination } from '../../components/ui/Pagination'
+import type { VisitCardDto } from './visitCard.dto'
 import {
     DATE_FILTER_OPTIONS,
     getVisitListEmptyMessage,
@@ -13,12 +14,6 @@ import {
     type VisitListFilters,
     STATUS_FILTER_OPTIONS
 } from './visitList.helpers'
-import {
-    getVisitStatusColor,
-    getVisitStatusLabel
-} from './visitStatus.helpers'
-import { Button } from '../../components/ui/Button'
-import { Pagination } from '../../components/ui/Pagination'
 import './visitPages.css'
 
 type OpenDropdown = 'date' | 'status' | null
@@ -32,7 +27,7 @@ interface VisitListViewProps {
     openDropdown: OpenDropdown
     totalPages: number
     totalVisits: number
-    visits: Visit[]
+    visits: VisitCardDto[]
     onClearAllFilters: () => void
     onClearDateFilters: () => void
     onClearStatusFilters: () => void
@@ -65,7 +60,7 @@ interface DropdownButtonProps {
 
 interface VisitCardProps {
     onVisitSelect: (visitId: string) => void
-    visit: Visit
+    visit: VisitCardDto
 }
 
 function PanelSection({ children }: PanelSectionProps) {
@@ -96,10 +91,11 @@ function DropdownButton({ isOpen, label, onClick }: DropdownButtonProps) {
             variant="panel"
             fullWidth
             onClick={onClick}
-            style={{ justifyContent: 'space-between', borderRadius: 14, padding: '12px 14px' }}
+            className="visit-dropdown-button"
+            aria-expanded={isOpen}
         >
             <span>{label}</span>
-            <span>{isOpen ? 'Arriba' : 'Abrir'}</span>
+            <span>{isOpen ? 'Cerrar' : 'Abrir'}</span>
         </Button>
     )
 }
@@ -125,123 +121,52 @@ function VisitCard({ onVisitSelect, visit }: VisitCardProps) {
         onVisitSelect(visit.id)
     }
 
-    function handleMouseEnter(event: MouseEvent<HTMLButtonElement>) {
-        event.currentTarget.style.transform = 'translateY(-2px)'
-    }
-
-    function handleMouseLeave(event: MouseEvent<HTMLButtonElement>) {
-        event.currentTarget.style.transform = 'translateY(0)'
-    }
-
     return (
         <button
             type="button"
             onClick={handleClick}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
             className="visit-history-card"
         >
             <div className="visit-card-top">
                 <div className="visit-card-copy">
                     <p className="visit-card-eyebrow">
-                        {formatDate(visit.visit_date)}
-                        {visit.visit_time ? ` · ${formatTime(visit.visit_time)}` : ''}
+                        {visit.visitDateLabel}
+                        {visit.visitTimeLabel ? ` · ${visit.visitTimeLabel}` : ''}
                     </p>
-                    <h3 className="visit-card-title">{visit.visitor_name}</h3>
+                    <h3 className="visit-card-title">{visit.visitorName}</h3>
                 </div>
 
                 <span
                     className="visit-status-badge"
                     style={{
-                        backgroundColor: getVisitStatusColor(visit.status),
+                        backgroundColor: visit.statusColor,
                         color: '#082f49'
                     }}
                 >
-                    {getVisitStatusLabel(visit.status)}
+                    {visit.statusLabel}
                 </span>
             </div>
 
             <div className="visit-card-meta-group">
-                {visit.visitor_phone && (
+                {visit.visitorPhone && (
                     <p className="visit-card-meta">
-                        Telefono: {formatPhone(visit.visitor_phone)}
+                        Telefono: {visit.visitorPhone}
                     </p>
                 )}
 
-                {visit.visit_purpose && (
-                    <p className="visit-card-purpose">{visit.visit_purpose}</p>
+                {visit.visitPurpose && (
+                    <p className="visit-card-purpose">{visit.visitPurpose}</p>
                 )}
-
             </div>
 
             <div className="visit-card-footer">
                 <span className="visit-card-token">
-                    QR {visit.qr_token.slice(0, 8).toUpperCase()}
+                    QR {visit.qrTokenPreview}
                 </span>
                 <span className="visit-card-link">Ver detalle</span>
             </div>
         </button>
     )
-}
-
-function renderDateFilterOptions(
-    selectedFilters: Set<FilterType>,
-    onToggleDateFilter: (filter: FilterType) => void
-) {
-    return DATE_FILTER_OPTIONS.map((option) => (
-        <CheckboxFilterOption
-            key={option.value}
-            checked={selectedFilters.has(option.value)}
-            label={option.label}
-            onToggle={createDateFilterToggleHandler(option.value, onToggleDateFilter)}
-        />
-    ))
-}
-
-function renderStatusFilterOptions(
-    selectedStatuses: Set<Visit['status']>,
-    onToggleStatusFilter: (status: Visit['status']) => void
-) {
-    return STATUS_FILTER_OPTIONS.map((option) => (
-        <CheckboxFilterOption
-            key={option.value}
-            checked={selectedStatuses.has(option.value)}
-            label={option.label}
-            onToggle={createStatusFilterToggleHandler(option.value, onToggleStatusFilter)}
-        />
-    ))
-}
-
-function renderVisitCards(visits: Visit[], onVisitSelect: (visitId: string) => void) {
-    return visits.map((visit) => (
-        <VisitCard
-            key={visit.id}
-            visit={visit}
-            onVisitSelect={onVisitSelect}
-        />
-    ))
-}
-
-function createDateFilterToggleHandler(
-    filter: FilterType,
-    onToggleDateFilter: (filter: FilterType) => void
-) {
-    function handleToggle() {
-        onToggleDateFilter(filter)
-    }
-
-    return handleToggle
-}
-
-function createStatusFilterToggleHandler(
-    status: Visit['status'],
-    onToggleStatusFilter: (status: Visit['status']) => void
-) {
-    function handleToggle() {
-        onToggleStatusFilter(status)
-    }
-
-    return handleToggle
 }
 
 function getSelectedCountLabel(count: number): string {
@@ -321,7 +246,7 @@ function VisitListView({
                             variant="secondary"
                             size="sm"
                             onClick={onClearAllFilters}
-                            style={{ borderRadius: 14 }}
+                            className="visit-rounded-button"
                         >
                             Limpiar filtros
                         </Button>
@@ -389,13 +314,20 @@ function VisitListView({
                                     variant="secondary"
                                     fullWidth
                                     onClick={onClearDateFilters}
-                                    style={{ borderRadius: 12 }}
+                                    className="visit-rounded-button visit-rounded-button--sm"
                                 >
                                     Ninguno
                                 </Button>
 
                                 <div className="visit-dropdown-options">
-                                    {renderDateFilterOptions(filters.quickDateFilters, onToggleDateFilter)}
+                                    {DATE_FILTER_OPTIONS.map((option) => (
+                                        <CheckboxFilterOption
+                                            key={option.value}
+                                            checked={filters.quickDateFilters.has(option.value)}
+                                            label={option.label}
+                                            onToggle={() => onToggleDateFilter(option.value)}
+                                        />
+                                    ))}
                                 </div>
                             </div>
                         )}
@@ -424,13 +356,20 @@ function VisitListView({
                                     variant="secondary"
                                     fullWidth
                                     onClick={onClearStatusFilters}
-                                    style={{ borderRadius: 12 }}
+                                    className="visit-rounded-button visit-rounded-button--sm"
                                 >
                                     Ninguno
                                 </Button>
 
                                 <div className="visit-dropdown-options">
-                                    {renderStatusFilterOptions(filters.statusFilters, onToggleStatusFilter)}
+                                    {STATUS_FILTER_OPTIONS.map((option) => (
+                                        <CheckboxFilterOption
+                                            key={option.value}
+                                            checked={filters.statusFilters.has(option.value)}
+                                            label={option.label}
+                                            onToggle={() => onToggleStatusFilter(option.value)}
+                                        />
+                                    ))}
                                 </div>
                             </div>
                         )}
@@ -459,7 +398,13 @@ function VisitListView({
                 ) : (
                     <>
                         <div className="visit-card-grid">
-                            {renderVisitCards(visits, onVisitSelect)}
+                            {visits.map((visit) => (
+                                <VisitCard
+                                    key={visit.id}
+                                    visit={visit}
+                                    onVisitSelect={onVisitSelect}
+                                />
+                            ))}
                         </div>
 
                         <Pagination

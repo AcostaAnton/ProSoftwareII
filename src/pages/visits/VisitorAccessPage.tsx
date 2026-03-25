@@ -1,149 +1,182 @@
-// Página pública: el visitante abre el enlace y ve el mismo QR que en la app (token en la URL).
-
-import { useEffect, useState } from 'react'
+import {
+    useEffect,
+    useEffectEvent,
+    useState
+} from 'react'
 import { useParams } from 'react-router-dom'
 import QRCode from 'qrcode'
 import { Button } from '../../components/ui/Button'
 import { getVisitorAccessUrl } from '../../utils/visitorAccessUrl'
+import './visitPages.css'
+
+type CopyLabel = 'Copiar enlace' | 'Copiado'
 
 export default function VisitorAccessPage() {
     const { token: tokenParam } = useParams<{ token: string }>()
     const token = tokenParam ? decodeURIComponent(tokenParam).trim() : ''
     const [qrDataUrl, setQrDataUrl] = useState('')
-    const [copyLabel, setCopyLabel] = useState<'Copiar enlace' | 'Copiado'>('Copiar enlace')
+    const [copyLabel, setCopyLabel] = useState<CopyLabel>('Copiar enlace')
+    const accessUrl = token ? getVisitorAccessUrl(token) : ''
+    const resetCopyLabel = useEffectEvent(() => {
+        setCopyLabel('Copiar enlace')
+    })
 
     useEffect(() => {
-        document.title = token ? 'Tu acceso — QR' : 'Acceso visita'
+        document.title = token ? 'Tu acceso - QR' : 'Acceso visita'
     }, [token])
 
     useEffect(() => {
-        if (!token) return
-        let cancelled = false
-        QRCode.toDataURL(token, { width: 280, margin: 2, color: { dark: '#0f172a', light: '#ffffff' } })
+        if (copyLabel !== 'Copiado') {
+            return
+        }
+
+        const timeoutId = window.setTimeout(() => {
+            resetCopyLabel()
+        }, 2000)
+
+        return () => {
+            window.clearTimeout(timeoutId)
+        }
+    }, [copyLabel])
+
+    useEffect(() => {
+        if (!token) {
+            setQrDataUrl('')
+            return
+        }
+
+        let isActive = true
+
+        void QRCode.toDataURL(token, {
+            width: 280,
+            margin: 2,
+            color: {
+                dark: '#0f172a',
+                light: '#ffffff'
+            }
+        })
             .then((url) => {
-                if (!cancelled) setQrDataUrl(url)
+                if (!isActive) {
+                    return
+                }
+
+                setQrDataUrl(url)
             })
             .catch(() => {
-                if (!cancelled) setQrDataUrl('')
+                if (!isActive) {
+                    return
+                }
+
+                setQrDataUrl('')
             })
+
         return () => {
-            cancelled = true
+            isActive = false
         }
     }, [token])
 
-    const accessUrl = token ? getVisitorAccessUrl(token) : ''
-
-    const copyLink = async () => {
-        if (!accessUrl) return
-        try {
-            await navigator.clipboard.writeText(accessUrl)
-            setCopyLabel('Copiado')
-            setTimeout(() => setCopyLabel('Copiar enlace'), 2000)
-        } catch {
-            /* ignore */
+    function handleCopyLink() {
+        if (!accessUrl) {
+            return
         }
+
+        void copyText(accessUrl).then((copied) => {
+            if (!copied) {
+                return
+            }
+
+            setCopyLabel('Copiado')
+        })
     }
 
-    const copyToken = async () => {
-        if (!token) return
-        try {
-            await navigator.clipboard.writeText(token)
-        } catch {
-            /* ignore */
+    function handleCopyToken() {
+        if (!token) {
+            return
         }
+
+        void copyText(token)
     }
 
     if (!token) {
         return (
-            <div
-                style={{
-                    minHeight: '100vh',
-                    background: '#020617',
-                    color: '#e2e8f0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: 24,
-                    fontFamily: "'DM Sans', system-ui, sans-serif",
-                }}
-            >
-                <p>Enlace no válido.</p>
+            <div className="visitor-access-page visitor-access-page--invalid">
+                <p>Enlace no valido.</p>
             </div>
         )
     }
 
     return (
-        <div
-            style={{
-                minHeight: '100vh',
-                background: 'linear-gradient(180deg, #020617 0%, #0f172a 100%)',
-                color: '#e2e8f0',
-                padding: '24px 16px 40px',
-                fontFamily: "'DM Sans', system-ui, sans-serif",
-            }}
-        >
-            <div style={{ maxWidth: 400, margin: '0 auto', textAlign: 'center' }}>
-                <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 22, fontWeight: 800, color: '#22d3ee', margin: '0 0 8px' }}>
-                    Tu acceso
-                </h1>
-                <p style={{ color: '#94a3b8', fontSize: 14, margin: '0 0 24px' }}>Muestra este código en portería</p>
+        <div className="visitor-access-page">
+            <div className="visitor-access-container">
+                <h1 className="visitor-access-title">Tu acceso</h1>
+                <p className="visitor-access-note">Muestra este codigo en porteria.</p>
 
-                <div
-                    style={{
-                        display: 'inline-block',
-                        padding: 16,
-                        background: '#fff',
-                        borderRadius: 16,
-                        marginBottom: 20,
-                        boxShadow: '0 20px 50px rgba(0,0,0,.4)',
-                    }}
-                >
+                <div className="visitor-access-card">
                     {qrDataUrl ? (
-                        <img src={qrDataUrl} alt="Código QR de acceso" width={260} height={260} style={{ display: 'block' }} />
+                        <img
+                            src={qrDataUrl}
+                            alt="Codigo QR de acceso"
+                            width={260}
+                            height={260}
+                            className="visitor-access-qr"
+                        />
                     ) : (
-                        <div style={{ width: 260, height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
-                            Generando…
+                        <div className="visitor-access-qr-placeholder">
+                            Generando...
                         </div>
                     )}
                 </div>
 
-                <p style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>Código (por si no puedes mostrar el QR):</p>
-                <code
-                    style={{
-                        display: 'block',
-                        padding: '10px 12px',
-                        background: '#1e293b',
-                        borderRadius: 10,
-                        fontSize: 14,
-                        wordBreak: 'break-all',
-                        marginBottom: 16,
-                        color: '#e2e8f0',
-                    }}
-                >
+                <p className="visitor-access-code-label">
+                    Codigo alterno:
+                </p>
+
+                <code className="visitor-access-code">
                     {token}
                 </code>
 
-                <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 24 }}>
-                    <Button type="button" variant="secondary" size="sm" onClick={copyToken}>
-                        Copiar código
+                <div className="visitor-access-actions">
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleCopyToken}
+                        className="visit-rounded-button visit-rounded-button--sm"
+                    >
+                        Copiar codigo
                     </Button>
-                    <Button type="button" variant="primary" size="sm" onClick={copyLink} style={{ color: '#0f172a' }}>
+                    <Button
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        onClick={handleCopyLink}
+                        className="visit-rounded-button visit-rounded-button--sm"
+                    >
                         {copyLabel}
                     </Button>
                 </div>
 
-                <p style={{ fontSize: 12, color: '#475569', lineHeight: 1.5, margin: 0 }}>
-                    No reenvíes este enlace a personas que no sean el visitante: quien lo tenga puede usar el mismo acceso.
+                <p className="visitor-access-footnote">
+                    No compartas este enlace con otras personas. Quien lo tenga puede usar el mismo acceso.
                 </p>
-                {import.meta.env.DEV ? (
-                    <p style={{ fontSize: 11, color: '#64748b', lineHeight: 1.45, margin: '16px 0 0', textAlign: 'left' }}>
-                        <strong>Desarrollo:</strong> desde otro móvil, <code>localhost</code> no es tu PC. En{' '}
-                        <code>.env.local</code> pon{' '}
-                        <code style={{ wordBreak: 'break-all' }}>VITE_PUBLIC_APP_URL=http://TU_IP:5173</code> (IP de tu Mac en
-                        la misma Wi‑Fi; con <code>npm run dev</code> el servidor ya escucha en la red por defecto).
+
+                {import.meta.env.DEV && (
+                    <p className="visitor-access-devnote">
+                        Desarrollo: en otro movil, `localhost` no apunta a tu PC. Usa `VITE_PUBLIC_APP_URL=http://TU_IP:5173`
+                        en `.env.local`.
                     </p>
-                ) : null}
+                )}
             </div>
         </div>
     )
+}
+
+function copyText(value: string): Promise<boolean> {
+    if (!navigator.clipboard || !value) {
+        return Promise.resolve(false)
+    }
+
+    return navigator.clipboard.writeText(value)
+        .then(() => true)
+        .catch(() => false)
 }

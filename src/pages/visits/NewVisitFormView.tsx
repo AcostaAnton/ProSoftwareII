@@ -186,7 +186,7 @@ function NewVisitFormView({
                             size="lg"
                             fullWidth
                             disabled={isSubmitting}
-                            style={{ borderRadius: 18 }}
+                            className="visit-rounded-button"
                         >
                             {renderSubmitLabel(isSubmitting)}
                         </Button>
