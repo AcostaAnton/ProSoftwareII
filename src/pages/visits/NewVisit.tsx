@@ -22,30 +22,39 @@ function NewVisit() {
     const [createdVisit, setCreatedVisit] = useState<Visit | null>(null)
     const [communityName, setCommunityName] = useState<string | null>(null)
     const minVisitDate = getTodayInputDate()
+    const createdVisitId = createdVisit?.id
 
     useEffect(() => {
-        if (!createdVisit || !profile?.community_id) {
+        if (!createdVisitId || !profile?.community_id) {
             setCommunityName(null)
             return
         }
+
         let cancelled = false
+
         void getCommunityNameById(profile.community_id).then((name) => {
-            if (!cancelled) setCommunityName(name)
+            if (!cancelled) {
+                setCommunityName(name)
+            }
         })
+
         return () => {
             cancelled = true
         }
-    }, [createdVisit?.id, profile?.community_id])
+    }, [createdVisitId, profile?.community_id])
 
-    function handleChange(event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+    function handleChange(
+        event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    ) {
         const { name, value } = event.target
-        const nextFormData = updateNewVisitForm(
-            formData,
-            name as keyof NewVisitForm,
-            value
-        )
 
-        setFormData(nextFormData)
+        setFormData((currentFormData) =>
+            updateNewVisitForm(
+                currentFormData,
+                name as keyof NewVisitForm,
+                value
+            )
+        )
     }
 
     function handleCreateAnother() {

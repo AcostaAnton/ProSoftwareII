@@ -1,6 +1,5 @@
 import type {
     ChangeEvent,
-    CSSProperties,
     FormEvent,
     ReactNode
 } from 'react'
@@ -8,17 +7,19 @@ import type { NewVisitForm } from '../../types/index'
 import {
     HOUR_OPTIONS,
     MINUTE_OPTIONS,
-    PERIOD_OPTIONS,
-    VISIT_LOCATION_OPTIONS
+    PERIOD_OPTIONS
 } from './newVisit.helpers'
 import { Button } from '../../components/ui/Button'
+import './visitPages.css'
 
 interface NewVisitFormViewProps {
     error: string | null
     formData: NewVisitForm
     isSubmitting: boolean
     minVisitDate: string
-    onChange: (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void
+    onChange: (
+        event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    ) => void
     onSubmit: (event: FormEvent<HTMLFormElement>) => void
 }
 
@@ -34,76 +35,10 @@ interface SelectOption {
     value: string
 }
 
-const controlStyle: CSSProperties = {
-    width: '100%',
-    padding: '12px',
-    backgroundColor: '#1a2024',
-    border: '1px solid #2a3034',
-    borderRadius: '20px',
-    color: '#ffffff',
-    fontSize: '16px'
-}
-
-const styles = {
-    page: {
-        backgroundColor: '#080c0f',
-        minHeight: '100vh',
-        padding: '20px',
-        color: '#ffffff'
-    },
-    container: {
-        maxWidth: '400px',
-        margin: '0 auto'
-    },
-    title: {
-        fontSize: '32px',
-        fontWeight: 'bold',
-        marginBottom: '10px'
-    },
-    description: {
-        color: '#a0a0a0',
-        marginBottom: '30px'
-    },
-    error: {
-        marginBottom: '20px',
-        padding: '10px',
-        backgroundColor: '#2a3034',
-        border: '1px solid #ff6b6b',
-        borderRadius: '8px',
-        color: '#ff6b6b'
-    },
-    form: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '20px'
-    },
-    field: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '5px'
-    },
-    label: {
-        color: '#b0b0b0'
-    },
-    timeGrid: {
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr 1fr',
-        gap: '10px',
-    },
-    input: controlStyle,
-    select: controlStyle,
-    submitButton: {
-        width: '100%',
-        borderRadius: 20,
-        fontSize: 16,
-        color: '#000000',
-    },
-} satisfies Record<string, CSSProperties>
-
 function Field({ children, htmlFor, label, required = false }: FieldProps) {
     return (
-        <div style={styles.field}>
-            <label htmlFor={htmlFor} style={styles.label}>
+        <div className="visit-field">
+            <label htmlFor={htmlFor} className="visit-label">
                 {label}
                 {required ? ' *' : ''}
             </label>
@@ -113,35 +48,19 @@ function Field({ children, htmlFor, label, required = false }: FieldProps) {
 }
 
 function renderOptions(fieldName: string, options: readonly SelectOption[]) {
-    const optionElements = []
-
-    for (const option of options) {
+    return options.map((option) => {
         const key = `${fieldName}-${option.value || option.label}`
 
-        optionElements.push(
+        return (
             <option key={key} value={option.value}>
                 {option.label}
             </option>
         )
-    }
-
-    return optionElements
-}
-
-function renderError(error: string | null) {
-    if (!error) {
-        return null
-    }
-
-    return <div style={styles.error}>{error}</div>
+    })
 }
 
 function renderSubmitLabel(isSubmitting: boolean) {
-    if (isSubmitting) {
-        return 'Creando...'
-    }
-
-    return 'Crear visita y generar QR'
+    return isSubmitting ? 'Creando visita...' : 'Crear visita y generar QR'
 }
 
 function NewVisitFormView({
@@ -153,135 +72,131 @@ function NewVisitFormView({
     onSubmit
 }: NewVisitFormViewProps) {
     return (
-        <div className="new-visit-page" style={styles.page}>
-            <div style={styles.container}>
-                <h1 style={styles.title}>Nueva visita</h1>
-                <p style={styles.description}>Completa los datos para generar el QR de acceso.</p>
+        <div className="visit-workspace visit-workspace--form-only">
+            <section className="visit-panel">
+                <div className="visit-panel-header">
+                    <div>
+                        <h1 className="visit-panel-title">Nueva visita</h1>
+                        <p className="visit-panel-note">
+                            Completa el formulario para generar el QR de acceso.
+                        </p>
+                    </div>
+                </div>
 
-                {renderError(error)}
+                {error && <div className="visit-inline-alert visit-inline-alert--error">{error}</div>}
 
-                <form onSubmit={onSubmit} style={styles.form}>
-                    <Field label="Nombre del visitante" htmlFor="visitor_name" required>
-                        <input
-                            id="visitor_name"
-                            name="visitor_name"
-                            type="text"
-                            value={formData.visitor_name}
-                            onChange={onChange}
-                            placeholder="Nombre Apellido"
-                            required
-                            style={styles.input}
-                        />
-                    </Field>
-
-                    <Field label="Telefono" htmlFor="visitor_phone">
-                        <input
-                            id="visitor_phone"
-                            name="visitor_phone"
-                            type="tel"
-                            value={formData.visitor_phone}
-                            onChange={onChange}
-                            placeholder="9999-9999"
-                            style={styles.input}
-                        />
-                    </Field>
-
-                    <Field label="Fecha" htmlFor="visit_date" required>
-                        <input
-                            id="visit_date"
-                            name="visit_date"
-                            type="date"
-                            value={formData.visit_date}
-                            onChange={onChange}
-                            min={minVisitDate}
-                            required
-                            style={styles.input}
-                        />
-                    </Field>
-
-                    <Field label="Hora" htmlFor="visit_hour" required>
-                        <div className="new-visit-time-grid" style={styles.timeGrid}>
-                            <select
-                                id="visit_hour"
-                                name="visit_hour"
-                                value={formData.visit_hour}
+                <form onSubmit={onSubmit} className="visit-form">
+                    <div className="visit-form-grid">
+                        <Field label="Nombre del visitante" htmlFor="visitor_name" required>
+                            <input
+                                id="visitor_name"
+                                name="visitor_name"
+                                type="text"
+                                value={formData.visitor_name}
                                 onChange={onChange}
+                                placeholder="Nombre y apellido"
+                                autoComplete="name"
                                 required
-                                style={styles.select}
-                            >
-                                {renderOptions('visit_hour', HOUR_OPTIONS)}
-                            </select>
+                                className="visit-control"
+                            />
+                        </Field>
 
-                            <select
-                                id="visit_minute"
-                                name="visit_minute"
-                                value={formData.visit_minute}
+                        <Field label="Telefono" htmlFor="visitor_phone">
+                            <input
+                                id="visitor_phone"
+                                name="visitor_phone"
+                                type="tel"
+                                value={formData.visitor_phone}
                                 onChange={onChange}
-                                required
-                                style={styles.select}
-                            >
-                                {renderOptions('visit_minute', MINUTE_OPTIONS)}
-                            </select>
+                                placeholder="9999-9999"
+                                autoComplete="tel-national"
+                                inputMode="tel"
+                                className="visit-control"
+                            />
+                        </Field>
+                    </div>
 
-                            <select
-                                id="visit_period"
-                                name="visit_period"
-                                value={formData.visit_period}
+                    <div className="visit-form-grid visit-form-grid--balanced">
+                        <Field label="Fecha" htmlFor="visit_date" required>
+                            <input
+                                id="visit_date"
+                                name="visit_date"
+                                type="date"
+                                value={formData.visit_date}
                                 onChange={onChange}
+                                min={minVisitDate}
                                 required
-                                style={styles.select}
-                            >
-                                {renderOptions('visit_period', PERIOD_OPTIONS)}
-                            </select>
-                        </div>
-                    </Field>
+                                className="visit-control"
+                            />
+                        </Field>
+
+                        <Field label="Hora" htmlFor="visit_hour" required>
+                            <div className="visit-time-row">
+                                <select
+                                    id="visit_hour"
+                                    name="visit_hour"
+                                    value={formData.visit_hour}
+                                    onChange={onChange}
+                                    required
+                                    className="visit-control"
+                                >
+                                    {renderOptions('visit_hour', HOUR_OPTIONS)}
+                                </select>
+
+                                <select
+                                    id="visit_minute"
+                                    name="visit_minute"
+                                    value={formData.visit_minute}
+                                    onChange={onChange}
+                                    required
+                                    className="visit-control"
+                                >
+                                    {renderOptions('visit_minute', MINUTE_OPTIONS)}
+                                </select>
+
+                                <select
+                                    id="visit_period"
+                                    name="visit_period"
+                                    value={formData.visit_period}
+                                    onChange={onChange}
+                                    required
+                                    className="visit-control"
+                                >
+                                    {renderOptions('visit_period', PERIOD_OPTIONS)}
+                                </select>
+                            </div>
+                        </Field>
+                    </div>
 
                     <Field label="Asunto" htmlFor="visit_purpose">
-                        <input
+                        <textarea
                             id="visit_purpose"
                             name="visit_purpose"
-                            type="text"
                             value={formData.visit_purpose}
                             onChange={onChange}
-                            placeholder="Motivo de la visita"
-                            style={styles.input}
+                            placeholder="Ejemplo: reunion familiar, entrega de paquete o visita personal"
+                            className="visit-control visit-control--textarea"
                         />
                     </Field>
 
-                    <Field label="Destino" htmlFor="visit_destination">
-                        <select
-                            id="visit_destination"
-                            name="visit_destination"
-                            value={VISIT_LOCATION_OPTIONS.some((o: { value: string }) => o.value === formData.visit_destination)
-                                ? formData.visit_destination
-                                : 'Otro'}
-                            onChange={onChange}
-                            style={styles.select}
+                    <div className="visit-form-actions">
+                        <Button
+                            type="submit"
+                            variant="primary"
+                            size="lg"
+                            fullWidth
+                            disabled={isSubmitting}
+                            style={{ borderRadius: 18 }}
                         >
-                            {renderOptions('visit_destination', VISIT_LOCATION_OPTIONS)}
-                        </select>
-                        {/* Texto libre cuando elige "Otro" o ya hay texto personalizado */}
-                        {!VISIT_LOCATION_OPTIONS.some(
-                            (o: { value: string }) => o.value === formData.visit_destination && o.value !== 'Otro'
-                        ) && formData.visit_destination !== '' ? (
-                            <input
-                                id="visit_destination_custom"
-                                name="visit_destination"
-                                type="text"
-                                value={formData.visit_destination === 'Otro' ? '' : formData.visit_destination}
-                                onChange={onChange}
-                                placeholder="Escribe el destino..."
-                                autoFocus
-                                style={{ ...styles.input, marginTop: '8px' }}
-                            />
-                        ) : null}
-                    </Field>
+                            {renderSubmitLabel(isSubmitting)}
+                        </Button>
 
-                    <Button type="submit" variant="primary" size="lg" fullWidth disabled={isSubmitting} style={styles.submitButton}>
-                        {renderSubmitLabel(isSubmitting)}
-                    </Button>
+                        <p className="visit-inline-note">
+                            Puedes desplazarte sin problema en celular. Para nuevas visitas solo se permiten fechas desde hoy.
+                        </p>
+                    </div>
                 </form>
-            </div>
+            </section>
         </div>
     )
 }

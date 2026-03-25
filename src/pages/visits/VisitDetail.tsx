@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useVisits } from '../../hooks/useVisits'
 import {
     getVisitWithQrDisplay,
+    type VisitDetailRecord,
     type VisitQrDisplayData,
 } from '../../services/visits.service'
 import type { Visit } from '../../types/index'
@@ -15,7 +16,7 @@ function VisitDetail() {
     const { role } = useAuth()
     const { changeStatus, refresh } = useVisits()
 
-    const [visit, setVisit] = useState<Visit | null>(null)
+    const [visit, setVisit] = useState<VisitDetailRecord | null>(null)
     const [qrDisplay, setQrDisplay] = useState<VisitQrDisplayData | null>(null)
     const [newStatus, setNewStatus] = useState<Visit['status']>('pending')
     const [isUpdating, setIsUpdating] = useState(false)
@@ -25,29 +26,29 @@ function VisitDetail() {
     const [showQRModal, setShowQRModal] = useState(false)
 
     useEffect(() => {
-        void loadVisit()
-    }, [id])
+        async function run() {
+            setLoading(true)
+            setError(null)
 
-    async function loadVisit() {
-        setLoading(true)
-        setError(null)
+            try {
+                if (!id) {
+                    setError('ID de visita no proporcionado')
+                    return
+                }
 
-        try {
-            if (!id) {
-                setError('ID de visita no proporcionado')
-                return
+                const data = await getVisitWithQrDisplay(id)
+                setVisit(data.visit)
+                setQrDisplay(data)
+                setNewStatus(data.visit.status)
+            } catch (loadError) {
+                setError(loadError instanceof Error ? loadError.message : 'Error al cargar la visita')
+            } finally {
+                setLoading(false)
             }
-
-            const data = await getVisitWithQrDisplay(id)
-            setVisit(data.visit)
-            setQrDisplay(data)
-            setNewStatus(data.visit.status)
-        } catch (loadError) {
-            setError(loadError instanceof Error ? loadError.message : 'Error al cargar la visita')
-        } finally {
-            setLoading(false)
         }
-    }
+
+        void run()
+    }, [id])
 
     async function handleStatusUpdate() {
         if (!visit) {

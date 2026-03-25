@@ -47,14 +47,15 @@ export function createInitialVisitListFilters(): VisitListFilters {
 }
 
 export function filterVisits(visits: Visit[], filters: VisitListFilters): Visit[] {
-    let filteredVisits = hasCustomDateRange(filters)
+    const normalizedSearchTerm = filters.searchTerm.trim().toLowerCase()
+    const shouldSearchAcrossAllVisits = normalizedSearchTerm.length > 0 || hasCustomDateRange(filters)
+
+    let filteredVisits = shouldSearchAcrossAllVisits
         ? [...visits]
         : visits.filter(isCurrentOrFutureVisit)
 
-    if (filters.searchTerm) {
-        const normalizedTerm = filters.searchTerm.toLowerCase()
-
-        filteredVisits = filteredVisits.filter((visit) => matchesSearchTerm(visit, normalizedTerm))
+    if (normalizedSearchTerm) {
+        filteredVisits = filteredVisits.filter((visit) => matchesSearchTerm(visit, normalizedSearchTerm))
     }
 
     if (filters.startDate || filters.endDate) {
@@ -71,7 +72,9 @@ export function filterVisits(visits: Visit[], filters: VisitListFilters): Visit[
         filteredVisits = filteredVisits.filter((visit) => filters.statusFilters.has(visit.status))
     }
 
-    return sortVisitsByDateTimeAsc(filteredVisits)
+    return normalizedSearchTerm
+        ? sortVisitsByDateTimeDesc(filteredVisits)
+        : sortVisitsByDateTimeAsc(filteredVisits)
 }
 
 export function hasActiveVisitListFilters(filters: VisitListFilters): boolean {
@@ -113,7 +116,6 @@ function matchesSearchTerm(visit: Visit, term: string): boolean {
         visit.visitor_name.toLowerCase().includes(term) ||
         containsText(visit.visit_purpose, term) ||
         containsText(visit.visitor_phone, term) ||
-        containsText(visit.visit_destination, term) ||
         visit.qr_token.toLowerCase().includes(term)
     )
 }
@@ -215,11 +217,22 @@ function sortVisitsByDateTimeAsc(visits: Visit[]): Visit[] {
     return [...visits].sort(compareVisitsByDateTimeAsc)
 }
 
+function sortVisitsByDateTimeDesc(visits: Visit[]): Visit[] {
+    return [...visits].sort(compareVisitsByDateTimeDesc)
+}
+
 function compareVisitsByDateTimeAsc(firstVisit: Visit, secondVisit: Visit): number {
     const firstTimestamp = createVisitDateTime(firstVisit)
     const secondTimestamp = createVisitDateTime(secondVisit)
 
     return firstTimestamp - secondTimestamp
+}
+
+function compareVisitsByDateTimeDesc(firstVisit: Visit, secondVisit: Visit): number {
+    const firstTimestamp = createVisitDateTime(firstVisit)
+    const secondTimestamp = createVisitDateTime(secondVisit)
+
+    return secondTimestamp - firstTimestamp
 }
 
 function createVisitDateTime(visit: Visit): number {

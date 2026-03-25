@@ -7,8 +7,7 @@ export const INITIAL_NEW_VISIT_FORM: NewVisitForm = {
     visit_hour: '12',
     visit_minute: '00',
     visit_period: 'AM',
-    visit_purpose: '',
-    visit_destination: ''
+    visit_purpose: ''
 }
 
 export const HOUR_OPTIONS = buildHourOptions()
@@ -24,19 +23,6 @@ export const MINUTE_OPTIONS = [
 export const PERIOD_OPTIONS = [
     { value: 'AM', label: 'AM' },
     { value: 'PM', label: 'PM' }
-]
-
-export const VISIT_LOCATION_OPTIONS = [
-    { value: '', label: 'Selecciona el destino...' },
-    { value: 'Mi residencia', label: '🏠 Mi residencia' },
-    { value: 'Parque', label: '🌳 Parque' },
-    { value: 'Cancha deportiva', label: '⚽ Cancha deportiva' },
-    { value: 'Piscina', label: '🏊 Piscina' },
-    { value: 'Salón de eventos', label: '🎉 Salón de eventos' },
-    { value: 'Área de juegos', label: '🎠 Área de juegos' },
-    { value: 'Gimnasio', label: '💪 Gimnasio' },
-    { value: 'Oficina administrativa', label: '🏢 Oficina administrativa' },
-    { value: 'Otro', label: '✏️ Otro...' },
 ]
 
 export function getTodayInputDate(): string {
@@ -81,7 +67,7 @@ export function buildCreateVisitInput(
         visit_date: visitDate,
         visit_time: buildVisitTime(formData.visit_hour, formData.visit_minute, formData.visit_period),
         visit_purpose: normalizeOptionalText(formData.visit_purpose),
-        visit_destination: normalizeOptionalText(formData.visit_destination),
+        visit_destination: null,
         status: 'pending'
     }
 }

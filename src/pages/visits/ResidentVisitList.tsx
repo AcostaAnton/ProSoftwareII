@@ -37,30 +37,31 @@ function ResidentVisitList() {
     const [activeTab, setActiveTab] = useState<ResidentTab>('upcoming')
     const [cancellingId, setCancellingId] = useState<string | null>(null)
     const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null)
+    const userId = user?.id
 
     useEffect(() => {
-        void loadVisits()
-    }, [user])
+        async function run() {
+            if (!userId) {
+                setVisits([])
+                setLoading(false)
+                return
+            }
 
-    async function loadVisits() {
-        if (!user) {
-            setVisits([])
-            setLoading(false)
-            return
+            setLoading(true)
+            setError(null)
+
+            try {
+                const data = await getVisitsByResident(userId)
+                setVisits(data)
+            } catch (loadError) {
+                setError(loadError instanceof Error ? loadError.message : 'Error al cargar las visitas')
+            } finally {
+                setLoading(false)
+            }
         }
 
-        setLoading(true)
-        setError(null)
-
-        try {
-            const data = await getVisitsByResident(user.id)
-            setVisits(data)
-        } catch (loadError) {
-            setError(loadError instanceof Error ? loadError.message : 'Error al cargar las visitas')
-        } finally {
-            setLoading(false)
-        }
-    }
+        void run()
+    }, [userId])
 
     const upcomingVisits = visits.filter(isUpcoming).sort(sortAscByDate)
     const historyVisits = visits.filter(isPast).sort(sortDescByDate)

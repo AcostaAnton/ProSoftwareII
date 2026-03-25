@@ -5,7 +5,12 @@ import {
     type ReactNode
 } from 'react'
 import QRGenerator from '../../components/shared/QRGenerator'
-import type { VisitQrDisplayData } from '../../services/visits.service'
+import type {
+    VisitAccessLogRecord,
+    VisitDetailRecord,
+    VisitQrDisplayData,
+    VisitStatusHistoryRecord
+} from '../../services/visits.service'
 import type { Visit } from '../../types/index'
 import { formatDate, formatPhone, formatTime } from '../../utils/formatDate'
 import { getQrInvitationLines } from '../../utils/qrInvitationMessage'
@@ -25,7 +30,7 @@ interface VisitDetailViewProps {
     newStatus: Visit['status']
     showQRModal: boolean
     showSuccessModal: boolean
-    visit: any | null
+    visit: VisitDetailRecord | null
     qrDisplay: VisitQrDisplayData | null
     onBack: () => void
     onCloseQR: () => void
@@ -235,6 +240,58 @@ function renderStatusOptions() {
     return options
 }
 
+function renderAccessLog(log: VisitAccessLogRecord, index: number) {
+    return (
+        <div key={log.id || index} style={{ marginBottom: 15, paddingBottom: 10, borderBottom: '1px solid #2a3034' }}>
+            <p style={{ color: '#22d3ee', fontSize: 13, margin: '0 0 5px 0' }}>
+                Entrada: {formatDate(log.entry_time)} {formatTime(log.entry_time)}
+            </p>
+
+            {log.vehicle_photo_url && (
+                <div style={styles.photoContainer}>
+                    <ImageWithFallback
+                        src={getPhotoUrl(log.vehicle_photo_url)}
+                        alt="Foto de ingreso"
+                    />
+                </div>
+            )}
+
+            {log.vehicle_notes && <DetailField label="Notas Foto"><p style={styles.fieldValue}>{log.vehicle_notes}</p></DetailField>}
+            {log.entry_notes && <DetailField label="Notas Entrada"><p style={styles.fieldValue}>{log.entry_notes}</p></DetailField>}
+            {log.exit_time && (
+                <>
+                    <p style={{ color: '#f87171', fontSize: 13, margin: '10px 0 5px 0' }}>
+                        Salida: {formatDate(log.exit_time)} {formatTime(log.exit_time)}
+                    </p>
+                    {log.exit_notes && <DetailField label="Notas Salida"><p style={styles.fieldValue}>{log.exit_notes}</p></DetailField>}
+                </>
+            )}
+        </div>
+    )
+}
+
+function renderStatusHistoryEntry(historyEntry: VisitStatusHistoryRecord, index: number) {
+    return (
+        <div key={historyEntry.id || index} style={{ marginBottom: 8, fontSize: 13, color: '#a0a0a0' }}>
+            <span style={{ color: '#fff' }}>
+                {formatDate(historyEntry.changed_at)} {formatTime(historyEntry.changed_at)}
+            </span>
+            : Cambio de <b>{historyEntry.old_status}</b> a{' '}
+            <b style={{ color: getVisitStatusColor(historyEntry.new_status) }}>
+                {historyEntry.new_status}
+            </b>
+            {historyEntry.profiles && (
+                <span> por {historyEntry.profiles.name} ({historyEntry.profiles.role})</span>
+            )}
+            {historyEntry.notes && (
+                <div style={{ fontStyle: 'italic', marginTop: 2, color: '#64748b' }}>
+                    "{historyEntry.notes}"
+                </div>
+            )}
+        </div>
+    )
+}
+
 function LoadingState() {
     return (
         <div style={styles.page}>
@@ -435,9 +492,6 @@ function VisitDetailView({
                             <DetailField label="Asunto">
                                 <p style={styles.fieldValue}>{visit.visit_purpose || 'No especificado'}</p>
                             </DetailField>
-                            <DetailField label="Destino">
-                                <p style={styles.fieldValue}>{visit.visit_destination || 'No especificado'}</p>
-                            </DetailField>
                         </Section>
                     </div>
 
@@ -445,33 +499,7 @@ function VisitDetailView({
                     {visit.access_logs && visit.access_logs.length > 0 && (
                         <div style={styles.sectionDivider}>
                             <Section title="Registro de Acceso (Guardia)">
-                                {visit.access_logs.map((log: any, index: number) => (
-                                    <div key={log.id || index} style={{ marginBottom: 15, paddingBottom: 10, borderBottom: '1px solid #2a3034' }}>
-                                        <p style={{ color: '#22d3ee', fontSize: 13, margin: '0 0 5px 0' }}>
-                                            Entrada: {formatDate(log.entry_time)} {formatTime(log.entry_time)}
-                                        </p>
-                                        
-                                        {log.vehicle_photo_url && (
-                                            <div style={styles.photoContainer}>
-                                                <ImageWithFallback
-                                                    src={getPhotoUrl(log.vehicle_photo_url)} 
-                                                    alt="Foto de ingreso" 
-                                                />
-                                            </div>
-                                        )}
-                                        
-                                        {log.vehicle_notes && <DetailField label="Notas Foto"><p style={styles.fieldValue}>{log.vehicle_notes}</p></DetailField>}
-                                        {log.entry_notes && <DetailField label="Notas Entrada"><p style={styles.fieldValue}>{log.entry_notes}</p></DetailField>}
-                                        {log.exit_time && (
-                                            <>
-                                                <p style={{ color: '#f87171', fontSize: 13, margin: '10px 0 5px 0' }}>
-                                                    Salida: {formatDate(log.exit_time)} {formatTime(log.exit_time)}
-                                                </p>
-                                                {log.exit_notes && <DetailField label="Notas Salida"><p style={styles.fieldValue}>{log.exit_notes}</p></DetailField>}
-                                            </>
-                                        )}
-                                    </div>
-                                ))}
+                                {visit.access_logs.map(renderAccessLog)}
                             </Section>
                         </div>
                     )}
@@ -480,14 +508,7 @@ function VisitDetailView({
                     {visit.visit_status_history && visit.visit_status_history.length > 0 && (
                         <div style={styles.sectionDivider}>
                             <Section title="Historial de Cambios">
-                                {visit.visit_status_history.map((hist: any, i: number) => (
-                                    <div key={hist.id || i} style={{ marginBottom: 8, fontSize: 13, color: '#a0a0a0' }}>
-                                        <span style={{ color: '#fff' }}>{formatDate(hist.changed_at)} {formatTime(hist.changed_at)}</span>: 
-                                        Cambio de <b>{hist.old_status}</b> a <b style={{ color: getVisitStatusColor(hist.new_status) }}>{hist.new_status}</b>
-                                        {hist.profiles && <span> por {hist.profiles.name} ({hist.profiles.role})</span>}
-                                        {hist.notes && <div style={{ fontStyle: 'italic', marginTop: 2, color: '#64748b' }}>"{hist.notes}"</div>}
-                                    </div>
-                                ))}
+                                {visit.visit_status_history.map(renderStatusHistoryEntry)}
                             </Section>
                         </div>
                     )}

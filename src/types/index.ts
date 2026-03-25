@@ -118,7 +118,6 @@ export interface NewVisitForm {
     visit_minute: string
     visit_period: 'AM' | 'PM'
     visit_purpose: string
-    visit_destination: string
 }
 
 export interface AuthUser {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useDeferredValue, useEffect, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
@@ -15,6 +15,8 @@ import {
 
 type OpenDropdown = 'date' | 'status' | null
 
+const VISIT_LIST_PAGE_SIZE = 8
+
 function VisitList() {
     const { user, role } = useAuth()
     const navigate = useNavigate()
@@ -24,35 +26,64 @@ function VisitList() {
     const [error, setError] = useState<string | null>(null)
     const [filters, setFilters] = useState<VisitListFilters>(createInitialVisitListFilters)
     const [openDropdown, setOpenDropdown] = useState<OpenDropdown>(null)
+    const [currentPage, setCurrentPage] = useState(1)
+    const deferredSearchTerm = useDeferredValue(filters.searchTerm)
+    const userId = user?.id
 
     useEffect(() => {
-        void loadVisits()
-    }, [role, user])
+        async function run() {
+            if (!userId) {
+                setVisits([])
+                setLoading(false)
+                return
+            }
 
-    const filteredVisits = filterVisits(visits, filters)
+            setLoading(true)
+            setError(null)
 
-    async function loadVisits() {
-        if (!user) {
-            setVisits([])
-            setLoading(false)
-            return
+            try {
+                const visitsData = role === 'resident'
+                    ? await getVisitsByResident(userId)
+                    : await getAllVisits()
+
+                setVisits(visitsData)
+            } catch (loadError) {
+                setError(loadError instanceof Error ? loadError.message : 'Error al cargar las visitas')
+            } finally {
+                setLoading(false)
+            }
         }
 
-        setLoading(true)
-        setError(null)
+        void run()
+    }, [role, userId])
 
-        try {
-            const visitsData = role === 'resident'
-                ? await getVisitsByResident(user.id)
-                : await getAllVisits()
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [
+        filters.searchTerm,
+        filters.startDate,
+        filters.endDate,
+        filters.quickDateFilters,
+        filters.statusFilters
+    ])
 
-            setVisits(visitsData)
-        } catch (loadError) {
-            setError(loadError instanceof Error ? loadError.message : 'Error al cargar las visitas')
-        } finally {
-            setLoading(false)
-        }
+    const deferredFilters: VisitListFilters = {
+        ...filters,
+        searchTerm: deferredSearchTerm
     }
+    const filteredVisits = filterVisits(visits, deferredFilters)
+    const totalPages = Math.max(1, Math.ceil(filteredVisits.length / VISIT_LIST_PAGE_SIZE))
+    const safeCurrentPage = Math.min(currentPage, totalPages)
+    const paginatedVisits = filteredVisits.slice(
+        (safeCurrentPage - 1) * VISIT_LIST_PAGE_SIZE,
+        safeCurrentPage * VISIT_LIST_PAGE_SIZE
+    )
+
+    useEffect(() => {
+        if (safeCurrentPage !== currentPage) {
+            setCurrentPage(safeCurrentPage)
+        }
+    }, [currentPage, safeCurrentPage])
 
     function updateFilters(nextFilters: Partial<VisitListFilters>) {
         setFilters((currentFilters) => ({
@@ -114,18 +145,26 @@ function VisitList() {
         navigate(`/visits/${visitId}`)
     }
 
+    function handlePageChange(nextPage: number) {
+        setCurrentPage(nextPage)
+    }
+
     return (
         <VisitListView
+            currentPage={safeCurrentPage}
             error={error}
-            filteredVisits={filteredVisits}
+            filteredCount={filteredVisits.length}
             filters={filters}
             loading={loading}
             openDropdown={openDropdown}
+            totalPages={totalPages}
             totalVisits={visits.length}
+            visits={paginatedVisits}
             onClearAllFilters={handleClearAllFilters}
             onClearDateFilters={handleClearDateFilters}
             onClearStatusFilters={handleClearStatusFilters}
             onEndDateChange={handleEndDateChange}
+            onPageChange={handlePageChange}
             onSearchTermChange={handleSearchTermChange}
             onStartDateChange={handleStartDateChange}
             onToggleDateDropdown={handleToggleDateDropdown}
