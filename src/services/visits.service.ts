@@ -11,7 +11,41 @@ export type ResidentVisits = {
   count: number
 }
 
-export function groupVisitsByResident(visits: any[]): ResidentVisits[] {
+type VisitWithResidentSummary = Visit & {
+  profiles?: {
+    id?: string
+    name?: string | null
+  } | null
+}
+
+export type VisitAccessLogRecord = {
+  id?: string
+  entry_time: string
+  exit_time?: string | null
+  vehicle_photo_url?: string | null
+  vehicle_notes?: string | null
+  entry_notes?: string | null
+  exit_notes?: string | null
+}
+
+export type VisitStatusHistoryRecord = {
+  id?: string
+  old_status: string
+  new_status: Visit['status']
+  changed_at: string
+  notes?: string | null
+  profiles?: {
+    name?: string | null
+    role?: string | null
+  } | null
+}
+
+export type VisitDetailRecord = Visit & {
+  access_logs?: VisitAccessLogRecord[]
+  visit_status_history?: VisitStatusHistoryRecord[]
+}
+
+export function groupVisitsByResident(visits: VisitWithResidentSummary[]): ResidentVisits[] {
   const map: Record<string, ResidentVisits> = {}
 
   visits.forEach((visit) => {
@@ -98,7 +132,7 @@ export async function getVisitsByResident(residentId: string): Promise<Visit[]> 
 }
 
 // - Obtener todas las visitas (admin / guardia)
-export async function getAllVisits(): Promise<any[]> {
+export async function getAllVisits(): Promise<VisitWithResidentSummary[]> {
   const { data, error } = await supabase
     .from('visits')
     .select(`
@@ -112,7 +146,7 @@ export async function getAllVisits(): Promise<any[]> {
     .order('visit_time', { ascending: false })
 
   if (error) throw error
-  return data
+  return (data ?? []) as VisitWithResidentSummary[]
 }
 
 /**
@@ -168,7 +202,7 @@ export async function getVisitsByStatus(
 }
 
 // - Obtener una visita específica por ID
-export async function getVisitById(visitId: string): Promise<any> {
+export async function getVisitById(visitId: string): Promise<VisitDetailRecord> {
   // 1. Intento principal: Traer visita con todas las relaciones (logs y historial)
   const { data, error } = await supabase
     .from('visits')
@@ -188,7 +222,7 @@ export async function getVisitById(visitId: string): Promise<any> {
     .single()
 
   // Si funciona correctamente, devolvemos los datos completos
-  if (!error) return data
+  if (!error) return data as VisitDetailRecord
 
   // 2. Fallback: Si falla la carga combinada (JOIN), intentamos cargar por separado.
   // Esto soluciona problemas donde Supabase no detecta automáticamente las relaciones FK.
@@ -212,16 +246,16 @@ export async function getVisitById(visitId: string): Promise<any> {
     .eq('visit_id', visitId)
     .order('changed_at', { ascending: false })
 
-  return { 
+  return {
     ...basicData, 
     access_logs: logs || [], 
     visit_status_history: history || [] 
-  }
+  } as VisitDetailRecord
 }
 
 /** Datos extra para la tarjeta de invitación (residente, comunidad, unidad). */
 export type VisitQrDisplayData = {
-  visit: Visit
+  visit: VisitDetailRecord
   residentName: string | null
   communityName: string | null
   unitNumber: string | null

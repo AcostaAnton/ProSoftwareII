@@ -1,4 +1,10 @@
 import type { CreateVisitInput, NewVisitForm } from '../../types/index'
+import { createDateKey } from './visitDate.helpers'
+
+interface SelectOptionDto {
+    label: string
+    value: string
+}
 
 export const INITIAL_NEW_VISIT_FORM: NewVisitForm = {
     visitor_name: '',
@@ -7,13 +13,12 @@ export const INITIAL_NEW_VISIT_FORM: NewVisitForm = {
     visit_hour: '12',
     visit_minute: '00',
     visit_period: 'AM',
-    visit_purpose: '',
-    visit_destination: ''
+    visit_purpose: ''
 }
 
 export const HOUR_OPTIONS = buildHourOptions()
 
-export const MINUTE_OPTIONS = [
+export const MINUTE_OPTIONS: readonly SelectOptionDto[] = [
     { value: '', label: 'Min' },
     { value: '00', label: '00' },
     { value: '15', label: '15' },
@@ -21,31 +26,19 @@ export const MINUTE_OPTIONS = [
     { value: '45', label: '45' }
 ]
 
-export const PERIOD_OPTIONS = [
+export const PERIOD_OPTIONS: readonly SelectOptionDto[] = [
     { value: 'AM', label: 'AM' },
     { value: 'PM', label: 'PM' }
 ]
 
-export const VISIT_LOCATION_OPTIONS = [
-    { value: '', label: 'Selecciona el destino...' },
-    { value: 'Mi residencia', label: '🏠 Mi residencia' },
-    { value: 'Parque', label: '🌳 Parque' },
-    { value: 'Cancha deportiva', label: '⚽ Cancha deportiva' },
-    { value: 'Piscina', label: '🏊 Piscina' },
-    { value: 'Salón de eventos', label: '🎉 Salón de eventos' },
-    { value: 'Área de juegos', label: '🎠 Área de juegos' },
-    { value: 'Gimnasio', label: '💪 Gimnasio' },
-    { value: 'Oficina administrativa', label: '🏢 Oficina administrativa' },
-    { value: 'Otro', label: '✏️ Otro...' },
-]
-
 export function getTodayInputDate(): string {
     const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const day = String(today.getDate()).padStart(2, '0')
 
-    return `${year}-${month}-${day}`
+    return createDateKey(
+        today.getFullYear(),
+        today.getMonth() + 1,
+        today.getDate()
+    )
 }
 
 export function validateNewVisitForm(formData: NewVisitForm): string | null {
@@ -68,20 +61,14 @@ export function buildCreateVisitInput(
     formData: NewVisitForm,
     residentId: string
 ): CreateVisitInput {
-    const visitDate = normalizeVisitDate(formData.visit_date)
-
-    if (!visitDate) {
-        throw new Error('La fecha de la visita es requerida')
-    }
-
     return {
         resident_id: residentId,
         visitor_name: formData.visitor_name.trim(),
         visitor_phone: normalizePhone(formData.visitor_phone),
-        visit_date: visitDate,
+        visit_date: normalizeVisitDate(formData.visit_date),
         visit_time: buildVisitTime(formData.visit_hour, formData.visit_minute, formData.visit_period),
         visit_purpose: normalizeOptionalText(formData.visit_purpose),
-        visit_destination: normalizeOptionalText(formData.visit_destination),
+        visit_destination: null,
         status: 'pending'
     }
 }
@@ -117,11 +104,13 @@ function normalizeVisitDate(value: string): string {
 
 function normalizePhone(value: string): string | null {
     const cleanedPhone = value.replace(/[\s-]/g, '').trim()
+
     return cleanedPhone || null
 }
 
 function normalizeOptionalText(value: string): string | null {
     const normalizedValue = value.trim()
+
     return normalizedValue || null
 }
 
@@ -129,11 +118,11 @@ function buildVisitTime(
     hourValue: string,
     minuteValue: string,
     period: NewVisitForm['visit_period']
-): string {
+): string | null {
     const hour = Number.parseInt(hourValue, 10)
 
-    if (Number.isNaN(hour)) {
-        throw new Error('La hora de la visita es requerida')
+    if (Number.isNaN(hour) || !minuteValue) {
+        return null
     }
 
     const hour24 = period === 'PM'
@@ -143,8 +132,8 @@ function buildVisitTime(
     return `${hour24.toString().padStart(2, '0')}:${minuteValue}`
 }
 
-function buildHourOptions() {
-    const options = [{ value: '', label: 'Hora' }]
+function buildHourOptions(): readonly SelectOptionDto[] {
+    const options: SelectOptionDto[] = [{ value: '', label: 'Hora' }]
 
     for (let hour = 1; hour <= 12; hour += 1) {
         options.push({

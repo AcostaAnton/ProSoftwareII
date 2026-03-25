@@ -39,9 +39,7 @@ const VISITOR_RULES: { icon: string; text: string }[] = [
     { icon: '🏁', text: 'Velocidad máx. 20 km/h' },
 ]
 
-function greyBarText(visit: Visit, unitNumber?: string | null): string | null {
-    const dest = visit.visit_destination?.trim()
-    if (dest) return dest
+function greyBarText(unitNumber?: string | null): string | null {
     const u = unitNumber?.trim()
     if (u) return `Unidad: ${u}`
     return null
@@ -120,7 +118,7 @@ function VisitInvitationCard({
     compact?: boolean
 }) {
     const created = formatQrCreatedAt(visit.created_at)
-    const grey = greyBarText(visit, qrDisplay?.unitNumber)
+    const grey = greyBarText(qrDisplay?.unitNumber)
     const qrMax = compact ? QR_IMG_SIZE_MODAL : QR_IMG_SIZE
 
     return (

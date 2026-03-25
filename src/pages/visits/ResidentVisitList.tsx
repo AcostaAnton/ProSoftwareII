@@ -1,31 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
-import { getVisitsByResident, cancelVisit } from '../../services/visits.service'
+import { cancelVisit, getVisitsByResident } from '../../services/visits.service'
 import type { Visit } from '../../types/index'
+import { resolveAsync } from './visitAsync.helpers'
+import { createVisitCardDtos } from './visitCard.dto'
+import { buildResidentVisitSections } from './residentVisit.helpers'
 import type { ResidentTab } from './residentVisit.types'
 import ResidentVisitListView from './ResidentVisitListView'
-
-function isUpcoming(visit: Visit): boolean {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const visitDate = new Date(visit.visit_date.slice(0, 10) + 'T00:00:00')
-    return visitDate >= today && (visit.status === 'pending' || visit.status === 'approved')
-}
-
-function isPast(visit: Visit): boolean {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const visitDate = new Date(visit.visit_date.slice(0, 10) + 'T00:00:00')
-    return visitDate < today
-}
-
-function isManageable(visit: Visit): boolean {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const visitDate = new Date(visit.visit_date.slice(0, 10) + 'T00:00:00')
-    return visitDate >= today && (visit.status === 'pending' || visit.status === 'approved')
-}
 
 function ResidentVisitList() {
     const { user } = useAuth()
@@ -37,14 +19,14 @@ function ResidentVisitList() {
     const [activeTab, setActiveTab] = useState<ResidentTab>('upcoming')
     const [cancellingId, setCancellingId] = useState<string | null>(null)
     const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null)
+    const userId = user?.id
 
     useEffect(() => {
-        void loadVisits()
-    }, [user])
+        let isActive = true
 
-    async function loadVisits() {
-        if (!user) {
+        if (!userId) {
             setVisits([])
+            setError(null)
             setLoading(false)
             return
         }
@@ -52,19 +34,34 @@ function ResidentVisitList() {
         setLoading(true)
         setError(null)
 
-        try {
-            const data = await getVisitsByResident(user.id)
-            setVisits(data)
-        } catch (loadError) {
-            setError(loadError instanceof Error ? loadError.message : 'Error al cargar las visitas')
-        } finally {
-            setLoading(false)
-        }
-    }
+        void resolveAsync(
+            getVisitsByResident(userId),
+            'Error al cargar las visitas'
+        ).then((result) => {
+            if (!isActive) {
+                return
+            }
 
-    const upcomingVisits = visits.filter(isUpcoming).sort(sortAscByDate)
-    const historyVisits = visits.filter(isPast).sort(sortDescByDate)
-    const manageableVisits = visits.filter(isManageable).sort(sortAscByDate)
+            if (result.error !== null) {
+                setVisits([])
+                setError(result.error)
+                setLoading(false)
+                return
+            }
+
+            setVisits(result.data)
+            setLoading(false)
+        })
+
+        return () => {
+            isActive = false
+        }
+    }, [userId])
+
+    const sections = buildResidentVisitSections(visits)
+    const upcomingVisits = createVisitCardDtos(sections.upcomingVisits)
+    const historyVisits = createVisitCardDtos(sections.historyVisits)
+    const manageableVisits = createVisitCardDtos(sections.manageableVisits)
 
     function handleVisitSelect(visitId: string) {
         navigate(`/visits/${visitId}`)
@@ -82,23 +79,36 @@ function ResidentVisitList() {
         setConfirmCancelId(null)
     }
 
-    async function handleCancelConfirm() {
-        if (!confirmCancelId) return
-
-        const idToCancel = confirmCancelId
-        setConfirmCancelId(null)
-        setCancellingId(idToCancel)
-
-        try {
-            await cancelVisit(idToCancel)
-            setVisits((prev) =>
-                prev.map((v) => v.id === idToCancel ? { ...v, status: 'cancelled' as const } : v)
-            )
-        } catch (cancelError) {
-            setError(cancelError instanceof Error ? cancelError.message : 'Error al cancelar la visita')
-        } finally {
-            setCancellingId(null)
+    function handleCancelConfirm() {
+        if (!confirmCancelId) {
+            return
         }
+
+        const visitId = confirmCancelId
+
+        setConfirmCancelId(null)
+        setCancellingId(visitId)
+        setError(null)
+
+        void resolveAsync(
+            cancelVisit(visitId),
+            'Error al cancelar la visita'
+        ).then((result) => {
+            setCancellingId(null)
+
+            if (result.error !== null) {
+                setError(result.error)
+                return
+            }
+
+            setVisits((currentVisits) =>
+                currentVisits.map((visit) =>
+                    visit.id === visitId
+                        ? { ...visit, status: 'cancelled' }
+                        : visit
+                )
+            )
+        })
     }
 
     return (
@@ -118,14 +128,6 @@ function ResidentVisitList() {
             onVisitSelect={handleVisitSelect}
         />
     )
-}
-
-function sortAscByDate(a: Visit, b: Visit): number {
-    return a.visit_date.localeCompare(b.visit_date) || (a.visit_time ?? '').localeCompare(b.visit_time ?? '')
-}
-
-function sortDescByDate(a: Visit, b: Visit): number {
-    return b.visit_date.localeCompare(a.visit_date) || (b.visit_time ?? '').localeCompare(a.visit_time ?? '')
 }
 
 export default ResidentVisitList
