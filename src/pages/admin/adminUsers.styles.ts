@@ -53,7 +53,7 @@ export const adminUsersPageStyles: Record<string, CSSProperties> = {
   },
   tr: {},
   td: { padding: '12px 20px', borderBottom: '1px solid #1e293b', fontSize: 13 },
-  userCell: { display: 'flex', alignItems: 'center', gap: 10 },
+  userCell: { display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 },
   userName: { color: 'white', fontWeight: 500 },
   userEmail: { color: '#64748b', fontSize: 11 },
   contact: { color: '#94a3b8', fontSize: 12 },
