@@ -190,10 +190,6 @@ function NewVisitFormView({
                         >
                             {renderSubmitLabel(isSubmitting)}
                         </Button>
-
-                        <p className="visit-inline-note">
-                            Puedes desplazarte sin problema en celular. Para nuevas visitas solo se permiten fechas desde hoy.
-                        </p>
                     </div>
                 </form>
             </section>

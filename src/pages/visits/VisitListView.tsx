@@ -310,8 +310,8 @@ function VisitListView({
                         <h1 className="visit-panel-title">Lista de visitas</h1>
                         <p className="visit-panel-note">
                             {isSearching
-                                ? 'Estas buscando en visitas actuales y antiguas.'
-                                : 'Sin busqueda, la lista se mantiene enfocada en visitas actuales y futuras.'}
+                                ? 'Estas buscando una visita especifica.'
+                                : 'Busca una visita especifica.'}
                         </p>
                     </div>
 
