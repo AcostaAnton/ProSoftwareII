@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import QRCode from 'qrcode'
+import { toPng } from 'html-to-image'
 import type { Visit } from '../../types/index'
 import { Button } from '../ui/Button'
 import { getVisitorAccessUrl } from '../../utils/visitorAccessUrl'
@@ -75,13 +76,13 @@ function InviteHeadline({
 
     const { primary, secondary } = getQrInvitationLines(visit, qrDisplay ?? null)
 
-    /** Destaca «Residente» al inicio cuando el mensaje sigue el formato «X, Y te ha invitado a:» */
-    const residentName = qrDisplay?.residentName?.trim()
+    /** Destaca «Visitante» al inicio cuando el mensaje sigue el formato «X, Y te ha invitado a:» */
+    const visitorName = visit.visitor_name?.trim() || 'Visitante'
     const primaryWithEmphasis =
-        residentName && primary.startsWith(`${residentName},`) ? (
+        primary.startsWith(`${visitorName},`) ? (
             <>
-                <span style={{ fontWeight: 800 }}>{residentName}</span>
-                {primary.slice(residentName.length)}
+                <span style={{ fontWeight: 800 }}>{visitorName}</span>
+                {primary.slice(visitorName.length)}
             </>
         ) : primary.startsWith('Acceso de visita para ') ? (
             <>
@@ -123,6 +124,7 @@ function VisitInvitationCard({
 
     return (
         <div
+            id="visit-card-container"
             style={{
                 background: APP.bgCard,
                 border: `1px solid ${APP.border}`,
@@ -316,18 +318,6 @@ function openWhatsAppWeb(text: string) {
     window.open(u.toString(), '_blank', 'noopener,noreferrer')
 }
 
-async function dataUrlToQrFile(qrCode: string, visit: Visit): Promise<File | null> {
-    if (!qrCode) return null
-    try {
-        const res = await fetch(qrCode)
-        const blob = await res.blob()
-        const type = blob.type && blob.type.startsWith('image/') ? blob.type : 'image/png'
-        return new File([blob], `qr-visita-${visit.qr_token.slice(0, 8)}.png`, { type })
-    } catch {
-        return null
-    }
-}
-
 /**
  * Intenta compartir el PNG. En muchos Android, si va primero `text` con `files`, WhatsApp solo envía texto.
  */
@@ -394,175 +384,55 @@ function DesktopShareHintBanner({ text, onDismiss }: { text: string | null; onDi
 
 type ShareDropdownProps = {
     visit: Visit
-    qrCode: string
     buttonStyle?: React.CSSProperties
     /** Tras descargar el PNG para WhatsApp en escritorio (wa.me no envía la imagen). */
     onDesktopWhatsAppHint?: (message: string) => void
 }
 
-function ShareDropdown({ visit, qrCode, buttonStyle, onDesktopWhatsAppHint }: ShareDropdownProps) {
-    const [open, setOpen] = useState(false)
-    const wrapRef = useRef<HTMLDivElement>(null)
-
-    useEffect(() => {
-        if (!open) return
-        const onDoc = (e: MouseEvent) => {
-            if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false)
-        }
-        document.addEventListener('mousedown', onDoc)
-        return () => document.removeEventListener('mousedown', onDoc)
-    }, [open])
-
+function ShareDropdown({ visit, buttonStyle, onDesktopWhatsAppHint }: ShareDropdownProps) {
     const text = buildShareText(visit)
-
-    const shareNative = async () => {
-        try {
-            const file = await dataUrlToQrFile(qrCode, visit)
-            if (file && (await shareQrImageWithOptionalText(file, text))) {
-                setOpen(false)
-                return
-            }
-            if (navigator.share) {
-                const textOnly: ShareData = { text }
-                if (navigator.canShare?.(textOnly)) {
-                    await navigator.share(textOnly)
-                } else {
-                    await navigator.share({ text })
-                }
-                setOpen(false)
-            }
-        } catch (e) {
-            if (e instanceof Error && e.name === 'AbortError') return
-        }
-    }
 
     const onWhatsApp = async () => {
         try {
-            const file = await dataUrlToQrFile(qrCode, visit)
+            const el = document.getElementById('visit-card-container')
+            if (!el) return
+            
+            const reqWidth = el.offsetWidth
+            const reqHeight = el.offsetHeight
+
+            const dataUrl = await toPng(el, { 
+                cacheBust: true, 
+                pixelRatio: 2,
+                width: reqWidth,
+                height: reqHeight,
+                style: { margin: '0', transform: 'none' }
+            })
+            const res = await fetch(dataUrl)
+            const blob = await res.blob()
+            const file = new File([blob], `visita-${visit.qr_token.slice(0, 8)}.png`, { type: 'image/png' })
+
             if (file && (await shareQrImageWithOptionalText(file, text))) {
-                setOpen(false)
                 return
             }
         } catch (e) {
             if (e instanceof Error && e.name === 'AbortError') {
-                setOpen(false)
                 return
             }
         }
         onDesktopWhatsAppHint?.(DESKTOP_WHATSAPP_HINT)
         openWhatsAppWeb(buildWhatsAppShortText(visit))
-        setOpen(false)
     }
-
-    /** Solo la URL en el texto: a veces WhatsApp enlaza mejor; con HTTPS público suele verse en azul. */
-    const onWhatsAppLinkOnly = () => {
-        onDesktopWhatsAppHint?.(DESKTOP_WHATSAPP_HINT)
-        openWhatsAppWeb(getVisitorAccessUrl(visit.qr_token))
-        setOpen(false)
-    }
-
-    const hasNativeShare = typeof navigator !== 'undefined' && !!navigator.share
 
     return (
-        <div ref={wrapRef} style={{ position: 'relative', display: 'inline-block' }}>
-            <Button
-                type="button"
-                variant="secondary"
-                size="md"
-                onClick={() => setOpen((v) => !v)}
-                style={buttonStyle}
-            >
-                Compartir
-            </Button>
-            {open ? (
-                <div
-                    role="menu"
-                    style={{
-                        position: 'absolute',
-                        left: 0,
-                        right: 0,
-                        top: '100%',
-                        marginTop: 8,
-                        zIndex: 1100,
-                        minWidth: 200,
-                        padding: 6,
-                        borderRadius: 12,
-                        background: '#0f172a',
-                        border: '1px solid #334155',
-                        boxShadow: '0 16px 40px rgba(0,0,0,.45)',
-                        textAlign: 'left',
-                    }}
-                >
-                    <button
-                        type="button"
-                        role="menuitem"
-                        onClick={onWhatsApp}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            width: '100%',
-                            gap: 10,
-                            padding: '10px 12px',
-                            border: 'none',
-                            borderRadius: 8,
-                            background: '#25D366',
-                            color: '#fff',
-                            fontSize: 14,
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            fontFamily: "'DM Sans', sans-serif",
-                        }}
-                    >
-                        WhatsApp (mensaje)
-                    </button>
-                    <button
-                        type="button"
-                        role="menuitem"
-                        onClick={onWhatsAppLinkOnly}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            width: '100%',
-                            gap: 10,
-                            padding: '10px 12px',
-                            marginTop: 6,
-                            border: '1px solid #128C7E',
-                            borderRadius: 8,
-                            background: '#0f172a',
-                            color: '#86efac',
-                            fontSize: 13,
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            fontFamily: "'DM Sans', sans-serif",
-                        }}
-                    >
-                        WhatsApp (solo enlace)
-                    </button>
-                    {hasNativeShare ? (
-                        <button
-                            type="button"
-                            role="menuitem"
-                            onClick={() => void shareNative()}
-                            style={{
-                                display: 'block',
-                                width: '100%',
-                                marginTop: 6,
-                                padding: '10px 12px',
-                                border: '1px solid #334155',
-                                borderRadius: 8,
-                                background: '#1e293b',
-                                color: '#e2e8f0',
-                                fontSize: 13,
-                                cursor: 'pointer',
-                                fontFamily: "'DM Sans', sans-serif",
-                            }}
-                        >
-                            Más opciones…
-                        </button>
-                    ) : null}
-                </div>
-            ) : null}
-        </div>
+        <Button
+            type="button"
+            variant="secondary"
+            size="md"
+            onClick={onWhatsApp}
+            style={{ ...buttonStyle, display: 'flex', gap: '6px', alignItems: 'center' }}
+        >
+            Compartir
+        </Button>
     )
 }
 
@@ -624,13 +494,30 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
         generateQR()
     }, [visit.qr_token, mode])
 
-    const downloadQR = () => {
-        const link = document.createElement('a')
-        link.href = qrCode
-        link.download = `qr-visita-${visit.qr_token.slice(0, 8)}.png`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
+    const downloadQR = async () => {
+        try {
+            const el = document.getElementById('visit-card-container')
+            if (!el) return
+
+            const reqWidth = el.offsetWidth
+            const reqHeight = el.offsetHeight
+
+            const dataUrl = await toPng(el, { 
+                cacheBust: true, 
+                pixelRatio: 2,
+                width: reqWidth,
+                height: reqHeight,
+                style: { margin: '0', transform: 'none' }
+            })
+            const link = document.createElement('a')
+            link.href = dataUrl
+            link.download = `visita-${visit.qr_token.slice(0, 8)}.png`
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+        } catch (err) {
+            console.error('Error downloading QR:', err)
+        }
     }
 
     if (isLoading) {
@@ -731,7 +618,6 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
                         </Button>
                         <ShareDropdown
                             visit={visit}
-                            qrCode={qrCode}
                             buttonStyle={{ fontSize: 14 }}
                             onDesktopWhatsAppHint={setDesktopShareHint}
                         />
@@ -799,7 +685,6 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
                     </Button>
                     <ShareDropdown
                         visit={visit}
-                        qrCode={qrCode}
                         buttonStyle={{ borderRadius: 20, fontSize: 14 }}
                         onDesktopWhatsAppHint={setDesktopShareHint}
                     />
