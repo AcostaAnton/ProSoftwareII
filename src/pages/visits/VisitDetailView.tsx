@@ -312,18 +312,22 @@ function VisitDetailView({
                 )}
 
                 <Section title="Informacion del sistema">
-                    <DetailField label="ID de visita">
-                        <p className="visit-detail-mono">{detail.visitId}</p>
-                    </DetailField>
+                    {isAdmin && (
+                        <DetailField label="ID de visita">
+                            <p className="visit-detail-mono">{detail.visitId}</p>
+                        </DetailField>
+                    )}
                     <DetailField label="Autor / Residente">
                         <p>{detail.creatorName || 'Desconocido'}</p>
                     </DetailField>
                     <DetailField label="Fecha de creacion">
                         <p>{detail.createdAtLabel}</p>
                     </DetailField>
-                    <DetailField label="Token QR">
-                        <p className="visit-detail-mono visit-detail-mono--wrap">{detail.qrToken}</p>
-                    </DetailField>
+                    {isAdmin && (
+                        <DetailField label="Token QR">
+                            <p className="visit-detail-mono visit-detail-mono--wrap">{detail.qrToken}</p>
+                        </DetailField>
+                    )}
                 </Section>
 
                 <div className="visit-detail-actions">
