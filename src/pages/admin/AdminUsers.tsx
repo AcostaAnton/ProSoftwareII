@@ -33,15 +33,18 @@ export default function AdminUsers() {
     setError(null)
     try {
       const data = await getProfilesByCommunity(profile.community_id)
-      if (seq !== loadSeq.current) return
-      setProfiles(data)
+      if (seq === loadSeq.current) {
+        setProfiles(data)
+      }
     } catch (e) {
-      if (seq !== loadSeq.current) return
-      setError(e instanceof Error ? e.message : 'Error al cargar usuarios')
+      if (seq === loadSeq.current) {
+        setError(e instanceof Error ? e.message : 'Error al cargar usuarios')
+      }
     } finally {
       if (!opts?.silent) {
-        if (seq !== loadSeq.current) return
-        setLoading(false)
+        if (seq === loadSeq.current) {
+          setLoading(false)
+        }
       }
     }
   }, [profile?.community_id])
