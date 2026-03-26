@@ -70,31 +70,56 @@ type InvitationCardMetrics = {
     ruleLabelFontSize: number
 }
 
+const INVITATION_CARD_METRICS_REGULAR: InvitationCardMetrics = {
+    accentBarHeight: 4,
+    headlinePadding: '18px 18px 8px',
+    qrSectionPadding: '8px 16px 16px',
+    qrFramePadding: 8,
+    qrImgMax: QR_IMG_SIZE,
+    cardBorderRadius: 12,
+    cardMaxWidth: 400,
+    createdPadding: '0 18px 16px',
+    createdFontSize: 14,
+    unitBannerMargin: '0 14px 16px',
+    unitBannerPadding: '12px 14px',
+    unitBannerFontSize: 13,
+    rulesFooterPadding: '14px 10px 18px',
+    rulesTitleMargin: '0 0 12px',
+    rulesTitleFontSize: 12,
+    rulesTitleLetterSpacing: 1,
+    rulesGridGap: 8,
+    ruleIconSize: 40,
+    ruleIconMarginBottom: '0 auto 6px',
+    ruleIconFontSize: 20,
+    ruleLabelFontSize: 9,
+}
+
+const INVITATION_CARD_METRICS_COMPACT: InvitationCardMetrics = {
+    accentBarHeight: 3,
+    headlinePadding: '10px 12px 6px',
+    qrSectionPadding: '6px 10px 10px',
+    qrFramePadding: 6,
+    qrImgMax: QR_IMG_SIZE_MODAL,
+    cardBorderRadius: 10,
+    cardMaxWidth: 340,
+    createdPadding: '0 12px 10px',
+    createdFontSize: 12,
+    unitBannerMargin: '0 10px 10px',
+    unitBannerPadding: '8px 10px',
+    unitBannerFontSize: 11,
+    rulesFooterPadding: '8px 6px 10px',
+    rulesTitleMargin: '0 0 6px',
+    rulesTitleFontSize: 10,
+    rulesTitleLetterSpacing: 0.5,
+    rulesGridGap: 4,
+    ruleIconSize: 30,
+    ruleIconMarginBottom: '0 auto 4px',
+    ruleIconFontSize: 15,
+    ruleLabelFontSize: 7.5,
+}
+
 function getInvitationCardMetrics(compact: boolean): InvitationCardMetrics {
-    const c = compact
-    return {
-        accentBarHeight: c ? 3 : 4,
-        headlinePadding: c ? '10px 12px 6px' : '18px 18px 8px',
-        qrSectionPadding: c ? '6px 10px 10px' : '8px 16px 16px',
-        qrFramePadding: c ? 6 : 8,
-        qrImgMax: c ? QR_IMG_SIZE_MODAL : QR_IMG_SIZE,
-        cardBorderRadius: c ? 10 : 12,
-        cardMaxWidth: c ? 340 : 400,
-        createdPadding: c ? '0 12px 10px' : '0 18px 16px',
-        createdFontSize: c ? 12 : 14,
-        unitBannerMargin: c ? '0 10px 10px' : '0 14px 16px',
-        unitBannerPadding: c ? '8px 10px' : '12px 14px',
-        unitBannerFontSize: c ? 11 : 13,
-        rulesFooterPadding: c ? '8px 6px 10px' : '14px 10px 18px',
-        rulesTitleMargin: c ? '0 0 6px' : '0 0 12px',
-        rulesTitleFontSize: c ? 10 : 12,
-        rulesTitleLetterSpacing: c ? 0.5 : 1,
-        rulesGridGap: c ? 4 : 8,
-        ruleIconSize: c ? 30 : 40,
-        ruleIconMarginBottom: c ? '0 auto 4px' : '0 auto 6px',
-        ruleIconFontSize: c ? 15 : 20,
-        ruleLabelFontSize: c ? 7.5 : 9,
-    }
+    return compact ? INVITATION_CARD_METRICS_COMPACT : INVITATION_CARD_METRICS_REGULAR
 }
 
 function InvitationCardAccentBar({ height }: { height: number }) {

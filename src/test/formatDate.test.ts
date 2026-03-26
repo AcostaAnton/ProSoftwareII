@@ -30,8 +30,9 @@ describe('formatDate', () => {
 })
 
 describe('formatTime', () => {
-  it('devuelve el mismo string', () => {
-    expect(formatTime('14:30')).toBe('14:30')
+  it('formatea a 12h con AM/PM', () => {
+    expect(formatTime('14:30')).toBe('2:30 PM')
+    expect(formatTime('09:05')).toBe('9:05 AM')
   })
 })
 
@@ -45,7 +46,7 @@ describe('formatDateTime', () => {
       '1 de enero de 2025'
     )
     expect(formatDateTime('2025-01-01', '09:30')).toBe(
-      '1 de enero de 2025 a las 09:30'
+      '1 de enero de 2025 a las 9:30 AM'
     )
   })
 })

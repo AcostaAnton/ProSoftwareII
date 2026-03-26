@@ -1,6 +1,5 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
-import ScanPage from '../pages/scan/ScanPage'
+import { describe, expect, it, vi, beforeAll, beforeEach } from 'vitest'
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
 import type { Visit } from '../types/index'
 
 const mockVisit: Visit = {
@@ -63,6 +62,33 @@ vi.mock('../../services/logs.service', () => ({
 }))
 
 describe('ScanPage — captura / lectura de QR', () => {
+  let ScanPage: React.ComponentType
+
+  beforeAll(async () => {
+    const useAuthAbs = new URL('../hooks/useAuth.ts', import.meta.url).pathname
+    const useVisitsAbs = new URL('../hooks/useVisits.ts', import.meta.url).pathname
+    const useResponsiveAbs = new URL('../hooks/useResponsive.ts', import.meta.url).pathname
+
+    vi.doMock(useAuthAbs, () => ({
+      useAuth: () => ({
+        user: { id: 'guard-1', email: 'g@test.com' },
+        role: 'security' as const,
+      }),
+    }))
+    vi.doMock(useVisitsAbs, () => ({
+      useVisits: () => ({
+        visits: [mockVisit],
+        loading: false,
+        error: null,
+        changeStatus,
+        refresh,
+      }),
+    }))
+    vi.doMock(useResponsiveAbs, () => ({ default: () => false }))
+
+    ;({ default: ScanPage } = await import('../pages/scan/ScanPage'))
+  })
+
   beforeEach(() => {
     lastScanCallback = null
     vi.clearAllMocks()
@@ -78,9 +104,11 @@ describe('ScanPage — captura / lectura de QR', () => {
     })
 
     expect(lastScanCallback).toBeTypeOf('function')
-    lastScanCallback!({ data: mockVisit.qr_token })
+    act(() => {
+      lastScanCallback!({ data: mockVisit.qr_token })
+    })
 
-    expect(await screen.findByText('Visitante Encontrado')).toBeInTheDocument()
+    expect(await screen.findByText('Registro de Salida')).toBeInTheDocument()
     expect(screen.getByText('María López')).toBeInTheDocument()
     expect(screen.getByText(/entrega/i)).toBeInTheDocument()
   })
@@ -92,7 +120,7 @@ describe('ScanPage — captura / lectura de QR', () => {
     fireEvent.change(input, { target: { value: mockVisit.qr_token } })
     fireEvent.click(screen.getByRole('button', { name: /^buscar$/i }))
 
-    expect(await screen.findByText('Visitante Encontrado')).toBeInTheDocument()
+    expect(await screen.findByText('Registro de Salida')).toBeInTheDocument()
     expect(screen.getByText('María López')).toBeInTheDocument()
   })
 
@@ -119,6 +147,6 @@ describe('ScanPage — captura / lectura de QR', () => {
     fireEvent.change(input, { target: { value: `  ${mockVisit.qr_token}  ` } })
     fireEvent.click(screen.getByRole('button', { name: /^buscar$/i }))
 
-    expect(await screen.findByText('Visitante Encontrado')).toBeInTheDocument()
+    expect(await screen.findByText('Registro de Salida')).toBeInTheDocument()
   })
 })
