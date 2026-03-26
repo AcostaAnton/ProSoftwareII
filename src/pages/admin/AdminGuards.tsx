@@ -92,7 +92,7 @@ export const AdminGuards: React.FC = () => {
 
             <div className="filters-container">
                 <div className="filters-grid">
-                    <div>
+                    <div style={{ flex: 1 }}>
                         <label className="filter-label">Buscar guardia</label>
                         <input
                             type="text"
@@ -102,11 +102,23 @@ export const AdminGuards: React.FC = () => {
                             className="filter-input"
                         />
                     </div>
-                    <div className="flex items-end">
-                        <Button type="button" variant="primary" size="sm" onClick={() => setSearchTerm('')} className="filter-button">
+                    <div className="filter-buttons">
+                        <Button 
+                            type="button" 
+                            variant="primary" 
+                            size="sm" 
+                            onClick={() => setSearchTerm('')} 
+                            className="filter-button filter-button-secondary"
+                        >
                             Limpiar
                         </Button>
-                        <Button type="button" variant="primary" size="sm" onClick={loadData} className="filter-button" style={{ marginLeft: 8 }}>
+                        <Button 
+                            type="button" 
+                            variant="primary" 
+                            size="sm" 
+                            onClick={loadData} 
+                            className="filter-button"
+                        >
                             Actualizar
                         </Button>
                     </div>
