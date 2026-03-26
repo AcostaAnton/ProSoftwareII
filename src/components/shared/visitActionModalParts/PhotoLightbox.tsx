@@ -8,8 +8,10 @@ export function PhotoLightbox({
   onClose: () => void
 }) {
   return (
-    <div
+    <button
+      type="button"
       onClick={onClose}
+      aria-label="Cerrar foto expandida"
       style={{
         position: 'fixed',
         top: 0,
@@ -24,6 +26,10 @@ export function PhotoLightbox({
         zIndex: 2000,
         padding: '20px',
         cursor: 'zoom-out',
+        width: '100%',
+        border: 'none',
+        margin: 0,
+        textAlign: 'inherit',
       }}
     >
       <img
@@ -65,7 +71,7 @@ export function PhotoLightbox({
       <p style={{ color: '#64748b', marginTop: '15px', fontSize: '14px' }}>
         Toca en cualquier lugar para cerrar
       </p>
-    </div>
+    </button>
   )
 }
 
