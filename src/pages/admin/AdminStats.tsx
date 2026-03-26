@@ -6,30 +6,6 @@ import { useAuth } from '../../hooks/useAuth'
 import { Button } from '../../components/ui/Button'
 import './AdminStats.css'
 
-function BarChart({ data, height = 150 }: { data: { label: string, value: number, tooltip: string }[], height?: number }) {
-  const max = Math.max(...data.map(d => d.value)) || 1
-  return (
-    <div className="chart-container" style={{ height }}>
-      {data.map((d, i) => (
-        <div key={i} className="bar-column">
-          <div 
-            title={d.tooltip}
-            className="bar-fill"
-            style={{ 
-              height: `${(d.value / max) * 100}%`, 
-              backgroundColor: d.value > 0 ? "#22d3ee" : "#334155",
-              opacity: d.value > 0 ? 1 : 0.3
-            }} 
-          />
-          <span className="bar-label">
-            {d.label}
-          </span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 function KpiGrid({ items }: { items: { label: string, value: number, icon: string, border: string }[] }) {
   return (
     <div className="kpi-grid">
@@ -112,65 +88,73 @@ function IncidentsLog({ visits }: { visits: Visit[] }) {
 export default function AdminStats() {
   const { profile } = useAuth()
   
-  const [startDate] = useState(() => {
-    const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString().split('T')[0]
+  const [startDate, setStartDate] = useState(() => {
+    const date = new Date(); date.setDate(date.getDate() - 30); return date.toISOString().split('T')[0]
   })
   const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0])
 
-  const [visitas, setVisitas] = useState<Visit[]>([])
-  const [perfiles, setPerfiles] = useState<Record<string, Profile>>({})
-  const [cargando, setCargando] = useState(true)
+  const [visits, setVisits] = useState<Visit[]>([])
+  const [profiles, setProfiles] = useState<Record<string, Profile>>({})
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       try {
-        setCargando(true)
-        const [visitasData, perfilesData] = await Promise.all([
+        setLoading(true)
+        const [visitsData, profilesData] = await Promise.all([
           getAllVisits(),
           profile?.community_id ? getProfilesByCommunity(profile.community_id) : Promise.resolve([])
         ])
-        setVisitas(visitasData || [])
-        const pMap: Record<string, Profile> = {}; perfilesData.forEach(p => pMap[p.id] = p);
-        setPerfiles(pMap)
-      } catch (e) { console.error(e) } finally { setCargando(false) }
+        setVisits(visitsData || [])
+        const pMap: Record<string, Profile> = {}; profilesData.forEach(p => pMap[p.id] = p);
+        setProfiles(pMap)
+      } catch (error) { console.error(error) } finally { setLoading(false) }
     }
     load()
   }, [profile?.community_id])
 
-  const datosFiltrados = useMemo(() => {
-    return visitas.filter(v => {
-      const fecha = v.visit_date
-      return fecha >= startDate && fecha <= endDate
+function parseDMY(dateStr: string) {
+  const [day, month, year] = dateStr.split('/')
+  return new Date(`${year}-${month}-${day}`)
+}
+
+  const filteredData = useMemo(() => {
+    return visits.filter(v => {
+      const visitDate = parseDMY(v.visit_date)
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+
+    return visitDate >= start && visitDate <= end
     })
-  }, [visitas, startDate, endDate])
+  }, [visits, startDate, endDate])
 
   const stats = useMemo(() => {
-    const total = datosFiltrados.length
-    const completadas = datosFiltrados.filter(v => v.status === 'completed').length
-    const rechazadas = datosFiltrados.filter(v => ['rejected', 'denied'].includes(v.status)).length
-    const pendientes = datosFiltrados.filter(v => v.status === 'pending').length
+    const total = filteredData.length
+    const completed = filteredData.filter(v => v.status === 'completed').length
+    const rejected = filteredData.filter(v => ['rejected', 'denied'].includes(v.status)).length
+    const pending = filteredData.filter(v => v.status === 'pending').length
     
-    const horas = new Array(24).fill(0)
-    datosFiltrados.forEach(v => {
+    const hours = new Array(24).fill(0)
+    filteredData.forEach(v => {
       if (v.visit_time) {
         const h = parseInt(v.visit_time.split(':')[0])
-        if (!isNaN(h)) horas[h]++
+        if (!isNaN(h)) hours[h]++
       }
     })
-    const horasChart = horas.map((val, h) => ({
+    const hoursChart = hours.map((val, h) => ({
       label: h % 3 === 0 ? `${h}h` : '', 
       value: val, 
       tooltip: `${h}:00 - ${val} visitas`
     }))
 
-    const visitasPorResidente: Record<string, number> = {}
-    datosFiltrados.forEach(v => {
+    const visitsPerResident: Record<string, number> = {}
+    filteredData.forEach(v => {
       const key = v.resident_id || 'Desconocido'
-      visitasPorResidente[key] = (visitasPorResidente[key] || 0) + 1
+      visitsPerResident[key] = (visitsPerResident[key] || 0) + 1
     })
-    const topResidentes = Object.entries(visitasPorResidente)
+    const topResidents = Object.entries(visitsPerResident)
       .map(([id, count]) => {
-        const user = perfiles[id]
+        const user = profiles[id]
         return { 
           name: user ? user.name : `Usuario ...${id.slice(0,4)}`, 
           count, 
@@ -180,14 +164,14 @@ export default function AdminStats() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5)
 
-    return { total, completadas, rechazadas, pendientes, horasChart, topResidentes }
-  }, [datosFiltrados, perfiles])
+    return { total, completed, rejected, pending, hoursChart, topResidents }
+  }, [filteredData, profiles])
 
   const descargarCSV = () => {
     const headers = ['ID,Visitante,Residente,Fecha,Hora,Estado,Motivo']
-    const rows = datosFiltrados.map(v => {
-      const residente = perfiles[v.resident_id]?.name || v.resident_id
-      return `${v.id},"${v.visitor_name}","${residente}",${v.visit_date},${v.visit_time},${v.status},"${v.visit_purpose || ''}"`
+    const rows = filteredData.map(v => {
+      const resident = profiles[v.resident_id]?.name || v.resident_id
+      return `${v.id},"${v.visitor_name}","${resident}",${v.visit_date},${v.visit_time},${v.status},"${v.visit_purpose || ''}"`
     })
     const csvContent = "data:text/csv;charset=utf-8," + [headers, ...rows].join("\n")
     const link = document.createElement("a")
@@ -198,18 +182,18 @@ export default function AdminStats() {
     document.body.removeChild(link)
   }
 
-  const ResidentesActivos = useMemo(() => Object.values(perfiles).filter(p => p.role === 'resident' && p.status === 'active').length, [perfiles])
-  const GuardiasActivos = useMemo(() => Object.values(perfiles).filter(p => (p.role as string) === 'guard' && p.status === 'active').length, [perfiles])
+  const activeResidents = useMemo(() => Object.values(profiles).filter(p => p.role === 'resident' && p.status === 'active').length, [profiles])
+  const activeGuards = useMemo(() => Object.values(profiles).filter(p => (p.role as string) === 'guard' && p.status === 'active').length, [profiles])
 
-  if (cargando) {
+  if (loading) {
     return <div style={{ padding: 20, color: '#94a3b8' }}>Cargando estadísticas...</div>
   }
 
-  const EstadisticasPrincipales = [
+  const mainStats = [
     { label: "Visitas totales", value: stats.total, icon: "📋", border: "#164e63" },
-    { label: "Accesos registrados", value: stats.completadas, icon: "✅", border: "#14532d" },
-    { label: "Residentes activos", value: ResidentesActivos, icon: "🏠", border: "#593d0b" },
-    { label: "Guardias activos", value: GuardiasActivos, icon: "🔒", border: "#594e10" }
+    { label: "Accesos registrados", value: stats.completed, icon: "✅", border: "#14532d" },
+    { label: "Residentes activos", value: activeResidents, icon: "🏠", border: "#593d0b" },
+    { label: "Guardias activos", value: activeGuards, icon: "🔒", border: "#594e10" }
   ]
 
 return (
@@ -223,6 +207,13 @@ return (
       </p>
       <div className="admin-stats-filters">
         <div className="filter-group">
+          <label className="filter-label">Desde</label>
+          <input 
+            type="date" value={startDate} onChange={e => setStartDate(e.target.value)} 
+            className="date-input"
+          />
+        </div>
+        <div className="filter-group">
           <label className="filter-label">Hasta</label>
           <input 
             type="date" value={endDate} onChange={e => setEndDate(e.target.value)} 
@@ -230,24 +221,35 @@ return (
           />
         </div>
         <div className="export-actions">
+          <Button variant="primary" size="sm"
+          className="clear-button"
+          onClick={() => {
+          const today = new Date().toISOString().split('T')[0]
+
+          const date = new Date()
+          date.setDate(date.getDate() - 30)
+          const defaultStart = date.toISOString().split('T')[0]
+
+          setStartDate(defaultStart)
+          setEndDate(today)
+          }}
+          >
+          🧹 Limpiar Filtros
+          </Button>
           <Button variant="primary" size="sm" onClick={descargarCSV} className="export-btn">
             📥 Exportar CSV
           </Button>
         </div>
+        
       </div>
 
-      <KpiGrid items={EstadisticasPrincipales} />
+      <KpiGrid items={mainStats} />
 
       <div className="charts-grid">
-        <div className="chart-card">
-          <h3 className="chart-title">Actividad por Hora</h3>
-          <BarChart data={stats.horasChart} />
-        </div>
-
-        <TopResidentsList residents={stats.topResidentes} />
+        <TopResidentsList residents={stats.topResidents} />
+        <IncidentsLog visits={filteredData} />
       </div>
 
-      <IncidentsLog visits={datosFiltrados} />
     </div>
   </main>
   )
