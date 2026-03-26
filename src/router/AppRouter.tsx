@@ -1,6 +1,3 @@
-// Todas la rutas de la app
-// Cada pantalla es un archivo distinto; cada quien puede trabajar en la suya sin tocar el Login.
-
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from './ProtectedRoute.tsx'
 import AuthGuard, { FORCE_CHANGE_PASSWORD_PATH } from './AuthGuard.tsx'
@@ -8,7 +5,6 @@ import { useAuth } from '../context/AuthContext'
 import MainLayout from '../components/layout/MainLayout'
 import DashboardPage from '../pages/dashboard/Dashboard'
 
-// - Pages (cada compañero agrega el import de su página aquí)
 import LoginPage from '../pages/auth/Login'
 import ForceChangePasswordPage from '../pages/auth/ForceChangePassword'
 import NewVisit from '../pages/visits/NewVisit'
@@ -20,7 +16,6 @@ import AdminGuards from '../pages/admin/AdminGuards'
 import AdminStats from '../pages/admin/AdminStats'
 import VisitorAccessPage from '../pages/visits/VisitorAccessPage'
 import ResidentVisitList from '../pages/visits/ResidentVisitList'
-// import RegisterPage from '../pages/auth/Register'
 
 export default function AppRoutes() {
     const { user } = useAuth()
@@ -29,18 +24,14 @@ export default function AppRoutes() {
     return (
         <BrowserRouter>
             <Routes>
-                {/* Raíz: redirigir a login o dashboard según sesión */}
                 <Route path="/" element={<Navigate to={user ? homeWhenLoggedIn : '/login'} replace />} />
 
-                {/* Rutas públicas */}
                 <Route path="/acceso/:token" element={<VisitorAccessPage />} />
                 <Route
                     path="/login"
                     element={user ? <Navigate to={homeWhenLoggedIn} replace /> : <LoginPage />}
                 />
-                {/* <Route path="/register" element={<RegisterPage />} /> */}
 
-                {/* Autenticado: cambio de contraseña obligatorio o layout principal */}
                 <Route path="/" element={<AuthGuard />}>
                     <Route path="account/cambiar-contrasena" element={<ForceChangePasswordPage />} />
                     <Route element={<MainLayout />}>

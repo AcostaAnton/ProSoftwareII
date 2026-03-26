@@ -1,7 +1,3 @@
-// ============================================================
-// Servicios para gestionar visitas
-// ============================================================
-
 import type { CreateVisitInput, Visit } from '../types/index'
 import { supabase } from './supabase'
 
@@ -70,7 +66,6 @@ export function groupVisitsByResident(visits: VisitWithResidentSummary[]): Resid
   return Object.values(map)
 }
 
-// - Función auxiliar para generar token QR
 function generateQRToken(): string {
   const bytes = new Uint8Array(4)
   crypto.getRandomValues(bytes)
@@ -90,7 +85,6 @@ function isVisitFieldSchemaError(error: { code?: string; message?: string }): bo
   )
 }
 
-// - Crear una nueva visita
 export async function createVisit(
   visitData: CreateVisitInput
 ) {
@@ -103,8 +97,8 @@ export async function createVisit(
     visit_purpose: normalizeNullableText(visitData.visit_purpose),
     visit_destination: normalizeNullableText(visitData.visit_destination),
     qr_token,
-    status: 'pending', // Asegurar estado inicial
-    created_by: visitData.resident_id // Asumimos que el residente crea su propia visita
+    status: 'pending',
+    created_by: visitData.resident_id
   }
 
   const { data, error } = await supabase
@@ -122,7 +116,6 @@ export async function createVisit(
   return data as Visit
 }
 
-// - Obtener visitas del residente actual
 export async function getVisitsByResident(residentId: string): Promise<Visit[]> {
   const { data, error } = await supabase
     .from('visits')
@@ -135,7 +128,6 @@ export async function getVisitsByResident(residentId: string): Promise<Visit[]> 
   return data as Visit[]
 }
 
-// - Obtener todas las visitas (admin / guardia)
 export async function getAllVisits(): Promise<VisitWithResidentSummary[]> {
   const { data, error } = await supabase
     .from('visits')
@@ -190,7 +182,6 @@ export async function getVisitsPaginated(
   return { data: data ?? [], count: count ?? 0 }
 }
 
-// - Obtener todas las visitas por estado
 export async function getVisitsByStatus(
   status: Visit['status']
 ): Promise<Visit[]> {
@@ -205,9 +196,7 @@ export async function getVisitsByStatus(
   return data as Visit[]
 }
 
-// - Obtener una visita específica por ID
 export async function getVisitById(visitId: string): Promise<VisitDetailRecord> {
-  // 1. Intento principal: Traer visita con todas las relaciones (logs y historial)
   const { data, error } = await supabase
     .from('visits')
     .select(`
@@ -225,11 +214,8 @@ export async function getVisitById(visitId: string): Promise<VisitDetailRecord> 
     .eq('id', visitId)
     .single()
 
-  // Si funciona correctamente, devolvemos los datos completos
   if (!error) return data as VisitDetailRecord
 
-  // 2. Fallback: Si falla la carga combinada (JOIN), intentamos cargar por separado.
-  // Esto soluciona problemas donde Supabase no detecta automáticamente las relaciones FK.
   console.warn('⚠️ Error cargando detalles con JOIN. Intentando carga individual...', error.message)
 
   const { data: basicData, error: basicError } = await supabase
@@ -240,10 +226,8 @@ export async function getVisitById(visitId: string): Promise<VisitDetailRecord> 
 
   if (basicError) throw basicError
 
-  // Cargar logs y historial en consultas separadas
   const { data: logs } = await supabase.from('access_logs').select('*').eq('visit_id', visitId).order('created_at', { ascending: false })
-  
-  // Intentar cargar historial con el nombre del usuario si es posible, sino solo el historial
+
   const { data: history } = await supabase
     .from('visit_status_history')
     .select('*, profiles:changed_by_id(name, role)')
@@ -307,7 +291,6 @@ export async function getVisitWithQrDisplay(visitId: string): Promise<VisitQrDis
   }
 }
 
-// - Actualizar el estado de una visita (por ejemplo: pending → completed)
 export async function updateVisitStatus(
   visitId: string,
   status: Visit['status']
@@ -323,12 +306,10 @@ export async function updateVisitStatus(
   return data as Visit
 }
 
-// - Cancelar una visita (residente)
 export async function cancelVisit(visitId: string): Promise<Visit> {
   return updateVisitStatus(visitId, 'cancelled')
 }
 
-// Función auxiliar para subir fotos con tolerancia a fallos (por si falta el bucket)
 export async function uploadVisitPhoto(file: File): Promise<string | null> {
   const fileExt = file.name.split('.').pop()
   const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`
@@ -342,9 +323,6 @@ export async function uploadVisitPhoto(file: File): Promise<string | null> {
     if (error) throw error
     return data.path
   } catch (error) {
-    // Si falla (ej. bucket no existe 400/404), devolvemos una imagen simulada para no bloquear
-    console.error('❌ Error subiendo foto. Verifica en Supabase que el bucket se llame "visit-photos" y sea PÚBLICO.', error)
-    // Retorna una imagen genérica de vehículo para pruebas si falla
     return 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=300'
   }
 }

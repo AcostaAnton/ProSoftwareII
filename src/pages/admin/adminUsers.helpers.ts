@@ -30,12 +30,23 @@ export const STATUS_ACTIVE: Record<ProfileStatus, CSSProperties> = {
   suspended: { borderColor: '#f87171', color: '#f87171', background: 'rgba(248,113,113,.08)' },
 }
 
-/** Cierre del modal tras guardado exitoso (feedback verde). */
 export const ADMIN_USERS_MODAL_SUCCESS_MS = 1200
+
+const MAX_EMAIL_LEN = 254
+
 
 export function isValidEmail(value: string): boolean {
   const v = value.trim()
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+  if (v.length === 0 || v.length > MAX_EMAIL_LEN) return false
+  if (v.includes(' ')) return false
+  const at = v.indexOf('@')
+  if (at <= 0) return false
+  if (v.indexOf('@', at + 1) !== -1) return false
+  const local = v.slice(0, at)
+  const domain = v.slice(at + 1)
+  if (local.length > 64 || domain.length === 0) return false
+  if (!domain.includes('.')) return false
+  return true
 }
 
 function residentSlotsUsed(u: CommunityUnitRow): number {
@@ -52,10 +63,6 @@ function profileHasSlotInUnit(u: CommunityUnitRow, profileId: string): boolean {
   return u.owner_id === profileId || u.co_owner_id === profileId
 }
 
-/**
- * `disabled` y texto extra del <option>: en edición, si el usuario ya tiene cupo en esa vivienda,
- * no se bloquea aunque esté 2/2 (muestra " (2/2)" en vez de " (completa)").
- */
 export function getHousingSelectOptionState(
   u: CommunityUnitRow,
   currentProfileId?: string

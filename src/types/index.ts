@@ -1,7 +1,4 @@
-// Todos los tipos TypeScript de la aplicación
-// Espejo exacto de las tablas de Supabase
 
-// - Enums
 
 export type UserRole = 'admin' |'resident' | 'security'
 
@@ -24,7 +21,6 @@ export interface Unit {
     community_id: string
     number: string
     owner_id: string | null
-    /** Segundo residente de la misma vivienda (requiere migración 003_units_co_owner.sql). */
     co_owner_id?: string | null
     created_at: string
 }
@@ -71,7 +67,7 @@ export interface Profile {
     community_id: string
     created_at: string
     email?: string | null
-    unit_number?: string | null    /** Estado del perfil: active, inactive, suspended */
+    unit_number?: string | null
     status?: ProfileStatus
 }
 
@@ -124,6 +120,5 @@ export interface AuthUser {
     id: string
     email: string
     profile: Profile | null
-    /** true si user_metadata.must_change_password (p. ej. usuario creado por admin con contraseña temporal). */
     mustChangePassword?: boolean
 }

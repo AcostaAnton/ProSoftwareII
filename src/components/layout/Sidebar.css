@@ -18,9 +18,16 @@
   left: 0;
   width: 100%;
   height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(2px);
   z-index: 999;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  appearance: none;
 }
 
 @media (max-width: 767px) {

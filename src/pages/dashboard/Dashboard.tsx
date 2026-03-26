@@ -1,15 +1,9 @@
-// ============================================================
-// PÁGINA: Dashboard
-// ------------------------------------------------------------
-// Esta página renderiza la pantalla principal después del login.
-// Toda la lógica de datos está centralizada en useDashboard.
-// ============================================================
 
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import EncabezadoDashboard from '../../components/dashboard/EncabezadoDashboard'
-import PanelEstadisticasDashboard from '../../components/dashboard/PanelEstadisticasDashboard'
-import TablaVisitasRecientes from '../../components/dashboard/TablaVisitasRecientes'
+import DashboardHeader from '../../components/dashboard/DashboardHeader'
+import DashboardStatsPanel from '../../components/dashboard/DashboardStatsPanel'
+import RecentVisitsTable from '../../components/dashboard/RecentVisitsTable'
 import QRGenerator from '../../components/shared/QRGenerator'
 import { useDashboard } from '../../hooks/useDashboard'
 import {
@@ -22,22 +16,22 @@ export default function Dashboard() {
   const navigate = useNavigate()
 
   const {
-    cargando,
+    loading,
     error,
-    nombreUsuario,
-    textoSecundario,
-    mostrarBotonNuevaVisita,
-    estadisticas,
-    visitasRecientes,
+    userName,
+    secondaryText,
+    showNewVisitButton,
+    stats,
+    recentVisits,
   } = useDashboard()
 
   const [selectedVisit, setSelectedVisit] = useState<Visit | null>(null)
   const [qrDisplay, setQrDisplay] = useState<VisitQrDisplayData | null>(null)
   const [showQRModal, setShowQRModal] = useState(false)
 
-  const handleVerQR = async (visitaId: string) => {
+  const handleViewQr = async (visitId: string) => {
     try {
-      const data = await getVisitWithQrDisplay(visitaId)
+      const data = await getVisitWithQrDisplay(visitId)
       setSelectedVisit(data.visit)
       setQrDisplay(data)
       setShowQRModal(true)
@@ -46,11 +40,11 @@ export default function Dashboard() {
     }
   }
 
-  const handleNuevaVisita = () => {
+  const handleNewVisit = () => {
     navigate('/visits/new')
   }
 
-  if (cargando) {
+  if (loading) {
     return (
       <div style={{ paddingTop: 8 }}>
         <p style={{ color: '#94a3b8', fontSize: 14 }}>Cargando dashboard...</p>
@@ -70,22 +64,21 @@ export default function Dashboard() {
 
   return (
     <div style={{ paddingTop: 8 }}>
-      <EncabezadoDashboard
-        nombreUsuario={nombreUsuario}
-        textoSecundario={textoSecundario}
+      <DashboardHeader
+        userName={userName}
+        secondaryText={secondaryText}
       />
 
-      <PanelEstadisticasDashboard estadisticas={estadisticas} />
+      <DashboardStatsPanel stats={stats} />
 
-      <TablaVisitasRecientes
-        titulo="Visitas recientes"
-        visitas={visitasRecientes}
-        mostrarBotonNuevaVisita={mostrarBotonNuevaVisita}
-        onNuevaVisita={handleNuevaVisita}
-        onVerQR={handleVerQR}
+      <RecentVisitsTable
+        title="Visitas recientes"
+        visits={recentVisits}
+        showNewVisitButton={showNewVisitButton}
+        onNewVisit={handleNewVisit}
+        onViewQr={handleViewQr}
       />
 
-      {/* Modal QR */}
       {showQRModal && selectedVisit && (
         <QRGenerator
           visit={selectedVisit}
