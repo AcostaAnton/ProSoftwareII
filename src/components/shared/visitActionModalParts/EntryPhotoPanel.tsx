@@ -18,14 +18,21 @@ export function EntryPhotoPanel({
         Fotografía de Ingreso
       </label>
       {photoPreview ? (
-        <div
+        <button
+          type="button"
           onClick={onExpandPhoto}
+          aria-label="Ampliar foto"
           style={{
             marginTop: '10px',
             marginBottom: '10px',
             textAlign: 'center',
             cursor: 'zoom-in',
             position: 'relative',
+            width: '100%',
+            padding: 0,
+            border: 'none',
+            background: 'transparent',
+            display: 'block',
           }}
         >
           <img
@@ -53,7 +60,7 @@ export function EntryPhotoPanel({
           >
             🔍 Ampliar
           </div>
-        </div>
+        </button>
       ) : (
         <div
           style={{
