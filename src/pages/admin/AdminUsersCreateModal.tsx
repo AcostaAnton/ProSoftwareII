@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from 'react'
 import {
   createCommunityUser,
+  getCommunityNameById,
   getUnitsByCommunityForSelect,
   type CommunityUnitRow,
 } from '../../services/users.service'
@@ -43,6 +44,7 @@ export function AdminUsersCreateModal({ open, communityId, onClose, onCreated }:
   const [communityUnits, setCommunityUnits] = useState<CommunityUnitRow[]>([])
   const [loadingUnits, setLoadingUnits] = useState(false)
   const [unitsLoadError, setUnitsLoadError] = useState<string | null>(null)
+  const [communityName, setCommunityName] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open || !communityId) return
@@ -59,6 +61,8 @@ export function AdminUsersCreateModal({ open, communityId, onClose, onCreated }:
     setCreateModalError(null)
     setCommunityUnits([])
     setUnitsLoadError(null)
+    setCommunityName(null)
+    void getCommunityNameById(communityId).then(setCommunityName)
     setLoadingUnits(true)
     void getUnitsByCommunityForSelect(communityId)
       .then(setCommunityUnits)
@@ -113,7 +117,13 @@ export function AdminUsersCreateModal({ open, communityId, onClose, onCreated }:
         <div style={s.accent} />
         <div style={s.body}>
           <div style={s.modalHeader}>
-            <p style={s.title}>Nuevo usuario</p>
+            <div>
+              <p style={s.title}>Nuevo usuario</p>
+              <p style={{ ...s.fieldHint, marginTop: 6, marginBottom: 0 }}>
+                <strong style={{ color: '#e2e8f0' }}>Residencial:</strong>{' '}
+                {communityName ?? 'Cargando…'}
+              </p>
+            </div>
             <Button
               type="button"
               variant="ghost"
