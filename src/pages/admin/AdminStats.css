@@ -19,8 +19,8 @@
 
 .admin-stats-filters {
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: 36px;
   margin-bottom: 24px;
 }
 
@@ -47,6 +47,7 @@
 .export-actions {
   display: flex;
   align-items: flex-end;
+  gap: 18px;
 }
 
 .kpi-grid {
@@ -164,7 +165,6 @@
 }
 
 .incidents-section {
-  margin-top: 24px;
   background: #0f172a;
   border-radius: 16px;
   padding: 24px;
@@ -241,5 +241,9 @@
 }
 
 .export-btn {
+  height: 38px;
+}
+
+.clear-button {
   height: 38px;
 }
