@@ -1,5 +1,3 @@
-// Punto de entrada de la app
-// Envuelve todo en el AuthProvider
 
 
 
@@ -16,3 +14,4 @@ function App() {
 }
 
 export default App
+

@@ -2,12 +2,11 @@
 
 export type UserRole = 'admin' |'resident' | 'security'
 
-/** Estado del perfil de usuario (columna status en profiles) */
+
 export type ProfileStatus = 'active' | 'inactive' | 'suspended'
 
 export type VisitStatus = 'pending' | 'approved' | 'rejected' | 'completed' | 'cancelled'
 
-// - Interfaces
 
 export interface Community {
     id: string
@@ -71,7 +70,6 @@ export interface Profile {
     status?: ProfileStatus
 }
 
-// ── Vistas enriquecidas (JOINs de Supabase) ──────────────────
 export interface VisitWithResident extends Visit {
     resident_name: string
     resident_phone: string | null
@@ -90,7 +88,6 @@ export interface AccessLogDetail extends AccessLog {
     guard_phone: string | null
 }
 
-// - Forms
 
 export interface LoginForm {
     email: string
@@ -122,3 +119,4 @@ export interface AuthUser {
     profile: Profile | null
     mustChangePassword?: boolean
 }
+

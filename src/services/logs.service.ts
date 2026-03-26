@@ -1,11 +1,7 @@
-// ============================================================
-// Servicios para los registros de acceso (access_logs)
-// ============================================================
 
 import { supabase } from './supabase'
 import type { AccessLog } from '../types/index'
 
-// - Crear un registro de entrada (guardia escanea QR)
 export async function createAccessLog(
   visitId: string,
   guardId: string
@@ -20,7 +16,6 @@ export async function createAccessLog(
   return data as AccessLog
 }
 
-// - Obtener logs filtrados (opcional) -- ejemplo de helper
 export async function getLogsByGuard(guardId: string): Promise<AccessLog[]> {
   const { data, error } = await supabase
     .from('access_logs')
@@ -42,3 +37,4 @@ export async function getLogsByVisit(visitId: string): Promise<AccessLog[]> {
   if (error) throw error
   return (data ?? []) as AccessLog[]
 }
+

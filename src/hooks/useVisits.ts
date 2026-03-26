@@ -1,9 +1,3 @@
-// ============================================================
-// HOOK: useVisits
-// ------------------------------------------------------------
-// Centraliza la lógica para cargar y actualizar visitas.
-// Se utiliza en varias pantallas (dashboard, listas, escaneo, etc.)
-// ============================================================
 
 import { useEffect, useState, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
@@ -74,3 +68,4 @@ export function useVisits(): UseVisitsResult {
 
   return { visits, loading, error, refresh, changeStatus }
 }
+

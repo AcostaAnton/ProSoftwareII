@@ -43,15 +43,12 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onClose }) => 
     const video = videoRef.current
     const canvas = canvasRef.current
 
-    // Set canvas dimensions to match video
     canvas.width = video.videoWidth
     canvas.height = video.videoHeight
 
-    // Draw the current video frame onto the canvas
     const context = canvas.getContext('2d')
     context?.drawImage(video, 0, 0, video.videoWidth, video.videoHeight)
 
-    // Convert canvas content to a Blob, then to a File
     canvas.toBlob(blob => {
       if (blob) {
         const fileName = `capture_${Date.now()}.jpg`
@@ -101,3 +98,4 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onClose }) => 
 }
 
 export default CameraCapture
+

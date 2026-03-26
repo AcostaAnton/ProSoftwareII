@@ -1,4 +1,3 @@
-// Obliga a definir una nueva contraseña (usuarios creados por admin con temporal).
 
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -223,3 +222,4 @@ const styles: Record<string, CSSProperties> = {
     fontFamily: "'DM Sans', sans-serif",
   },
 }
+

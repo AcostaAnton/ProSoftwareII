@@ -4,10 +4,10 @@ import { getPublicSiteUrl } from '../utils/publicSiteUrl'
 import type { Profile } from '../types'
 import type { UserRole, ProfileStatus } from '../types'
 
-/** Máximo de cuentas residente por unidad (vivienda). Requiere columna `co_owner_id` en `units` (migración 003). */
+
 export const MAX_RESIDENTS_PER_UNIT = 2
 
-/** Lista de todos los perfiles de la comunidad, con unit_number cuando son titular o co-titular de una unidad */
+
 export async function getProfilesByCommunity(communityId: string): Promise<Profile[]> {
   const { data: profilesData, error: profilesError } = await supabase
     .from('profiles')
@@ -60,7 +60,7 @@ export async function getProfilesByCommunity(communityId: string): Promise<Profi
   }))
 }
 
-/** Fila mínima de `units` para listas desplegables (p. ej. alta/edición de usuario). */
+
 export type CommunityUnitRow = {
   id: string
   number: string
@@ -68,7 +68,7 @@ export type CommunityUnitRow = {
   co_owner_id: string | null
 }
 
-/** Todas las unidades de la comunidad, ordenadas por número. */
+
 export async function getUnitsByCommunityForSelect(communityId: string): Promise<CommunityUnitRow[]> {
   const full = await supabase
     .from('units')
@@ -104,7 +104,7 @@ export async function getProfilesByStatus(
   return data as Profile[]
 }
 
-/** Actualiza el rol de un perfil */
+
 export async function updateProfileRole(profileId: string, role: UserRole): Promise<Profile> {
   const { data, error } = await supabase
     .from('profiles')
@@ -117,7 +117,7 @@ export async function updateProfileRole(profileId: string, role: UserRole): Prom
   return data as Profile
 }
 
-/** Actualiza rol y/o estado de un perfil */
+
 export async function updateProfileRoleAndStatus(
   profileId: string,
   payload: { role: UserRole; status: ProfileStatus }
@@ -135,7 +135,7 @@ export async function updateProfileRoleAndStatus(
 
 export type CommunityOption = { id: string; name: string }
 
-/** Lista comunidades para selects de administración (requiere RLS adecuado). */
+
 export async function getCommunitiesForSelect(): Promise<CommunityOption[]> {
   const { data, error } = await supabase
     .from('communities')
@@ -146,7 +146,7 @@ export async function getCommunitiesForSelect(): Promise<CommunityOption[]> {
   return (data ?? []) as CommunityOption[]
 }
 
-/** Obtiene el nombre de una comunidad por su ID. */
+
 export async function getCommunityNameById(communityId: string): Promise<string | null> {
   const { data, error } = await supabase
     .from('communities')
@@ -163,7 +163,7 @@ export async function getCommunityNameById(communityId: string): Promise<string 
 
 
 
-/** Quita al perfil de owner_id / co_owner_id en todas las unidades donde aparezca. */
+
 export async function clearProfileFromAllUnits(profileId: string): Promise<void> {
   const { error: eOwner } = await supabase
     .from('units')
@@ -182,14 +182,11 @@ export type UpdateProfileCommunityRoleUnitInput = {
   role: UserRole
   status: ProfileStatus
   communityId: string
-  /** Número de vivienda (texto) o vacío para residente sin unidad asignada. */
+  
   unitNumber: string | null
 }
 
-/**
- * Actualiza comunidad, rol y estado; reasigna vivienda si es residente.
- * Limpia primero cualquier vínculo previo del usuario en `units`.
- */
+
 export async function updateProfileCommunityRoleStatusAndUnit(
   profileId: string,
   payload: UpdateProfileCommunityRoleUnitInput
@@ -315,11 +312,7 @@ async function assignUnitIfSpecified(
   )
 }
 
-/**
- * Crea cuenta en Auth + actualiza perfil en la comunidad.
- * Recomendación en Supabase: activar "Confirm email" para que no se devuelva sesión al nuevo usuario
- * y no se cierre la sesión del administrador.
- */
+
 export async function createCommunityUser(input: CreateCommunityUserInput): Promise<void> {
   const email = input.email.trim().toLowerCase()
   const name = input.name.trim()
@@ -353,8 +346,6 @@ export async function createCommunityUser(input: CreateCommunityUserInput): Prom
     )
   }
 
-  // Usar upsert: un .update() solo no crea fila. Si no hay trigger en auth.users → profiles,
-  // el update afecta 0 filas y PostgREST no siempre devuelve error (parece que “guardó” y no).
   const row = {
     id: userId,
     name,

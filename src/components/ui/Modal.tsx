@@ -5,9 +5,9 @@ interface ModalProps {
     isOpen: boolean
     onClose: () => void
     children: React.ReactNode
-    /** Si false, no se muestra el botón "Cerrar" por defecto (útil cuando el contenido tiene sus propios botones). */
+    
     showCloseButton?: boolean
-    /** Si true, un clic fuera del panel (fondo oscuro) ejecuta onClose. */
+    
     closeOnBackdropClick?: boolean
 }
 
@@ -60,3 +60,4 @@ export const Modal: React.FC<ModalProps> = ({
         </div>
     )
 }
+

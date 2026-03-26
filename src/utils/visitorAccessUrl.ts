@@ -1,11 +1,4 @@
-/**
- * URL pública para que el visitante abra el QR en el navegador (compartir por WhatsApp, etc.).
- *
- * - Opcional: `VITE_PUBLIC_APP_URL` (ej. https://tu-dominio.com o http://192.168.1.10:5173 en red local).
- * - En desarrollo, algunos clientes (WhatsApp → Safari) reescriben `http://localhost:5173` como
- *   `https://localhost` sin puerto → ERR_SSL_PROTOCOL_ERROR. Por eso en DEV usamos `http://`
- *   explícito y `127.0.0.1` en lugar de `localhost` cuando la página corre en local.
- */
+
 export function getVisitorAccessUrl(qrToken: string): string {
     const path = `/acceso/${encodeURIComponent(qrToken)}`
 
@@ -39,3 +32,4 @@ export function getVisitorAccessUrl(qrToken: string): string {
 
     return `${protocol}//${host}${path}`
 }
+

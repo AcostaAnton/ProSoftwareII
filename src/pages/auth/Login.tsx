@@ -1,4 +1,3 @@
-// Página de Login — validación: ingresar correo/contraseña, redirigir al dashboard
 
 import { useState, type CSSProperties, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -245,3 +244,4 @@ const styles: Record<string, CSSProperties> = {
     fontFamily: "'DM Sans', sans-serif",
   },
 }
+

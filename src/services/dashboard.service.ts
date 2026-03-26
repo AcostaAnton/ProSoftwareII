@@ -1,12 +1,8 @@
-// ============================================================
-// Servicios auxiliares para construir el dashboard
-// ============================================================
 
 import type { Profile, Unit } from '../types/index'
 import { supabase } from './supabase'
 import { isUnitsCoOwnerColumnError } from './units.schema'
 
-// - Obtener perfiles por una lista de IDs
 export async function getProfilesByIds(profileIds: string[]): Promise<Profile[]> {
   if (profileIds.length === 0) return []
 
@@ -19,7 +15,6 @@ export async function getProfilesByIds(profileIds: string[]): Promise<Profile[]>
   return (data ?? []) as Profile[]
 }
 
-// - Obtener unidades donde alguno de los IDs es titular (owner o co_owner)
 export async function getUnitsByOwnerIds(ownerIds: string[]): Promise<Unit[]> {
   if (ownerIds.length === 0) return []
 

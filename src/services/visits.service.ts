@@ -145,10 +145,7 @@ export async function getAllVisits(): Promise<VisitWithResidentSummary[]> {
   return (data ?? []) as VisitWithResidentSummary[]
 }
 
-/**
- * Obtiene visitas con paginación y filtros opcionales.
- * Esta función está optimizada para cargar solo lo necesario.
- */
+
 export async function getVisitsPaginated(
   page: number,
   pageSize: number,
@@ -241,7 +238,7 @@ export async function getVisitById(visitId: string): Promise<VisitDetailRecord> 
   } as VisitDetailRecord
 }
 
-/** Datos extra para la tarjeta de invitación (residente, comunidad, unidad). */
+
 export type VisitQrDisplayData = {
   visit: VisitDetailRecord
   residentName: string | null
@@ -326,3 +323,4 @@ export async function uploadVisitPhoto(file: File): Promise<string | null> {
     return 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=300'
   }
 }
+

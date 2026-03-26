@@ -28,7 +28,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanResult }) => {
         videoRef.current,
         (result) => onScanResult(result.data),
         {
-          onDecodeError: () => { /* Silencioso mientras busca */ },
+          onDecodeError: () => {  },
           highlightScanRegion: true,
           highlightCodeOutline: true,
           preferredCamera: 'environment'

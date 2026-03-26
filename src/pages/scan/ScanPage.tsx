@@ -53,10 +53,10 @@ const ScanPage: React.FC = () => {
           <p style={{ color: '#94a3b8', fontSize: '14px' }}>Escanea el código QR del visitante para validar su entrada.</p>
         </header>
 
-        {/* Sección de Cámara */}
+        {}
         <QRScanner onScanResult={handleScanResult} />
 
-        {/* Búsqueda Manual */}
+        {}
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
           <input 
             placeholder="O escribe el token aquí..."
@@ -83,14 +83,14 @@ const ScanPage: React.FC = () => {
           </Button>
         </div>
 
-        {/* Mensajes de Error */}
+        {}
         {scanError && (
           <div style={{ padding: '12px', backgroundColor: '#450a0a', border: '1px solid #dc2626', borderRadius: '8px', color: '#fca5a5', fontSize: '14px' }}>
             {scanError}
           </div>
         )}
 
-        {/* MODAL DE ACCIÓN */}
+        {}
         {isModalOpen && scannedVisit && (
           <VisitActionModal
             visit={scannedVisit}

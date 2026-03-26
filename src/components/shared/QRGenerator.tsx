@@ -319,7 +319,7 @@ function InviteHeadline({
 
     const { primary, secondary } = getQrInvitationLines(visit, qrDisplay ?? null)
 
-    /** Destaca «Visitante» al inicio cuando el mensaje sigue el formato «X, Y te ha invitado a:» */
+    
     const visitorName = visit.visitor_name?.trim() || 'Visitante'
     const primaryWithEmphasis =
         primary.startsWith(`${visitorName},`) ? (
@@ -397,7 +397,7 @@ function VisitInvitationCard({
     )
 }
 
-/** Texto para compartir (sin emojis: en wa.me a veces se ven mal). */
+
 function buildShareText(visit: Visit) {
     const name = visit.visitor_name?.trim()
     const link = getVisitorAccessUrl(visit.qr_token)
@@ -413,10 +413,7 @@ function buildShareText(visit: Visit) {
         .join('\n')
 }
 
-/**
- * Mensaje para wa.me: la URL en líneas propias ayuda a que WhatsApp la detecte.
- * Nota: muchas versiones NO convierten en enlace 127.0.0.1/localhost; con HTTPS público sí.
- */
+
 function buildWhatsAppShortText(visit: Visit) {
     const name = visit.visitor_name?.trim()
     const link = getVisitorAccessUrl(visit.qr_token)
@@ -439,9 +436,7 @@ function openWhatsAppWeb(text: string) {
     window.open(u.toString(), '_blank', 'noopener,noreferrer')
 }
 
-/**
- * Intenta compartir el PNG. En muchos Android, si va primero `text` con `files`, WhatsApp solo envía texto.
- */
+
 async function shareQrImageWithOptionalText(
     file: File,
     text: string,
@@ -506,7 +501,7 @@ function DesktopShareHintBanner({ text, onDismiss }: { text: string | null; onDi
 type ShareDropdownProps = {
     visit: Visit
     buttonStyle?: React.CSSProperties
-    /** Tras descargar el PNG para WhatsApp en escritorio (wa.me no envía la imagen). */
+    
     onDesktopWhatsAppHint?: (message: string) => void
 }
 
@@ -562,7 +557,7 @@ interface QRGeneratorProps {
     onCreateAnother?: () => void
     onClose?: () => void
     mode?: 'fullscreen' | 'modal'
-    /** Residente, comunidad y unidad cuando se conocen (p. ej. al crear o vía getVisitWithQrDisplay). */
+    
     qrDisplay?: QrDisplayContext
 }
 
@@ -820,3 +815,4 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
 }
 
 export default QRGenerator
+

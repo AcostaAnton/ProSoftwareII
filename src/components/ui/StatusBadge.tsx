@@ -37,7 +37,7 @@ const LABELS: Record<ProfileStatus, string> = {
 }
 
 export interface StatusBadgeProps {
-  /** Valor del estado del perfil. Por defecto 'active'. */
+  
   status?: ProfileStatus | null
 }
 
@@ -45,3 +45,4 @@ export function StatusBadge({ status = 'active' }: StatusBadgeProps) {
   const key = status === 'inactive' || status === 'suspended' ? status : 'active'
   return <span style={STATUS_STYLES[key]}>{LABELS[key]}</span>
 }
+

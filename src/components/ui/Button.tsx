@@ -11,7 +11,7 @@ export type ButtonVariant =
   | 'success'
   | 'panel'
   | 'accent'
-  /** Solo reset mínimo; el aspecto lo define `className` (nav, pills CSS, etc.) */
+  
   | 'unstyled'
 
 export type ButtonSize = 'sm' | 'md' | 'lg'
@@ -148,3 +148,4 @@ export function Button({
     </button>
   )
 }
+

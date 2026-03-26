@@ -1,4 +1,3 @@
-// Sesión obligatoria y redirección a cambio de contraseña si aplica
 
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
@@ -52,3 +51,4 @@ export default function AuthGuard() {
 
   return <Outlet />
 }
+
