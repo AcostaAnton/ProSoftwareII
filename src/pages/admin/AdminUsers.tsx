@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { getProfilesByCommunity, MAX_RESIDENTS_PER_UNIT } from '../../services/users.service'
 import type { Profile, UserRole } from '../../types'
@@ -19,7 +19,10 @@ export default function AdminUsers() {
   const [editingUser, setEditingUser] = useState<Profile | null>(null)
   const [creatingUser, setCreatingUser] = useState(false)
 
+  const loadSeq = useRef(0)
+
   const load = useCallback(async (opts?: { silent?: boolean }) => {
+    const seq = ++loadSeq.current
     if (!profile?.community_id) {
       setLoading(false)
       return
@@ -30,11 +33,14 @@ export default function AdminUsers() {
     setError(null)
     try {
       const data = await getProfilesByCommunity(profile.community_id)
+      if (seq !== loadSeq.current) return
       setProfiles(data)
     } catch (e) {
+      if (seq !== loadSeq.current) return
       setError(e instanceof Error ? e.message : 'Error al cargar usuarios')
     } finally {
       if (!opts?.silent) {
+        if (seq !== loadSeq.current) return
         setLoading(false)
       }
     }

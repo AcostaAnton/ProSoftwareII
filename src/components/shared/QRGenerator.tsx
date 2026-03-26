@@ -8,10 +8,10 @@ import { formatQrCreatedAt } from '../../utils/formatDate'
 import { getQrInvitationLines } from '../../utils/qrInvitationMessage'
 
 const QR_IMG_SIZE = 280
-/** Tamaño generado cuando el QR va en modal (móvil); se ve completo sin ocupar toda la pantalla. */
+
 const QR_IMG_SIZE_MODAL = 200
 
-/** Paleta alineada con el resto de la app (dashboard, formularios). */
+
 const APP = {
     bgCard: '#0f172a',
     bgDeep: '#020617',
@@ -25,7 +25,7 @@ const APP = {
     qrLight: '#ffffff',
 } as const
 
-/** Datos opcionales para el encabezado tipo invitación (residente / comunidad / unidad). */
+
 export type QrDisplayContext = {
     residentName?: string | null
     communityName?: string | null
@@ -40,10 +40,228 @@ const VISITOR_RULES: { icon: string; text: string }[] = [
     { icon: '🏁', text: 'Velocidad máx. 20 km/h' },
 ]
 
-function greyBarText(unitNumber?: string | null): string | null {
+function formatUnitBannerText(unitNumber?: string | null): string | null {
     const u = unitNumber?.trim()
     if (u) return `Unidad: ${u}`
     return null
+}
+
+type InvitationCardMetrics = {
+    accentBarHeight: number
+    headlinePadding: string
+    qrSectionPadding: string
+    qrFramePadding: number
+    qrImgMax: number
+    cardBorderRadius: number
+    cardMaxWidth: number
+    createdPadding: string
+    createdFontSize: number
+    unitBannerMargin: string
+    unitBannerPadding: string
+    unitBannerFontSize: number
+    rulesFooterPadding: string
+    rulesTitleMargin: string
+    rulesTitleFontSize: number
+    rulesTitleLetterSpacing: number
+    rulesGridGap: number
+    ruleIconSize: number
+    ruleIconMarginBottom: string
+    ruleIconFontSize: number
+    ruleLabelFontSize: number
+}
+
+function getInvitationCardMetrics(compact: boolean): InvitationCardMetrics {
+    const c = compact
+    return {
+        accentBarHeight: c ? 3 : 4,
+        headlinePadding: c ? '10px 12px 6px' : '18px 18px 8px',
+        qrSectionPadding: c ? '6px 10px 10px' : '8px 16px 16px',
+        qrFramePadding: c ? 6 : 8,
+        qrImgMax: c ? QR_IMG_SIZE_MODAL : QR_IMG_SIZE,
+        cardBorderRadius: c ? 10 : 12,
+        cardMaxWidth: c ? 340 : 400,
+        createdPadding: c ? '0 12px 10px' : '0 18px 16px',
+        createdFontSize: c ? 12 : 14,
+        unitBannerMargin: c ? '0 10px 10px' : '0 14px 16px',
+        unitBannerPadding: c ? '8px 10px' : '12px 14px',
+        unitBannerFontSize: c ? 11 : 13,
+        rulesFooterPadding: c ? '8px 6px 10px' : '14px 10px 18px',
+        rulesTitleMargin: c ? '0 0 6px' : '0 0 12px',
+        rulesTitleFontSize: c ? 10 : 12,
+        rulesTitleLetterSpacing: c ? 0.5 : 1,
+        rulesGridGap: c ? 4 : 8,
+        ruleIconSize: c ? 30 : 40,
+        ruleIconMarginBottom: c ? '0 auto 4px' : '0 auto 6px',
+        ruleIconFontSize: c ? 15 : 20,
+        ruleLabelFontSize: c ? 7.5 : 9,
+    }
+}
+
+function InvitationCardAccentBar({ height }: { height: number }) {
+    return <div style={{ height, background: APP.accent }} />
+}
+
+function InvitationQrSection({
+    qrCode,
+    metrics: m,
+}: {
+    qrCode: string
+    metrics: InvitationCardMetrics
+}) {
+    return (
+        <div
+            style={{
+                display: 'flex',
+                justifyContent: 'center',
+                padding: m.qrSectionPadding,
+            }}
+        >
+            <div
+                style={{
+                    border: `2px solid ${APP.borderLight}`,
+                    borderRadius: 4,
+                    padding: m.qrFramePadding,
+                    background: APP.qrLight,
+                    lineHeight: 0,
+                }}
+            >
+                <img
+                    src={qrCode}
+                    alt="Código QR de acceso"
+                    style={{
+                        display: 'block',
+                        width: '100%',
+                        maxWidth: m.qrImgMax,
+                        height: 'auto',
+                    }}
+                />
+            </div>
+        </div>
+    )
+}
+
+function InvitationCreatedTimestamp({
+    createdAtLabel,
+    metrics: m,
+}: {
+    createdAtLabel: string
+    metrics: InvitationCardMetrics
+}) {
+    return (
+        <div
+            style={{
+                padding: m.createdPadding,
+                fontFamily: "'DM Sans', system-ui, sans-serif",
+            }}
+        >
+            <p style={{ margin: 0, fontSize: m.createdFontSize, color: APP.textMuted }}>
+                Se creó:{' '}
+                <strong style={{ color: APP.textBright }}>{createdAtLabel}</strong>
+            </p>
+        </div>
+    )
+}
+
+function InvitationUnitBanner({
+    text,
+    metrics: m,
+}: {
+    text: string
+    metrics: InvitationCardMetrics
+}) {
+    return (
+        <div
+            style={{
+                margin: m.unitBannerMargin,
+                padding: m.unitBannerPadding,
+                borderRadius: 8,
+                background: APP.bgMuted,
+                border: `1px solid ${APP.borderLight}`,
+                color: APP.text,
+                fontSize: m.unitBannerFontSize,
+                fontWeight: 600,
+                lineHeight: 1.4,
+                fontFamily: "'DM Sans', system-ui, sans-serif",
+            }}
+        >
+            {text}
+        </div>
+    )
+}
+
+function InvitationVisitorRulesFooter({ metrics: m }: { metrics: InvitationCardMetrics }) {
+    return (
+        <div
+            style={{
+                background: APP.bgDeep,
+                borderTop: `1px solid ${APP.border}`,
+                padding: m.rulesFooterPadding,
+                color: APP.text,
+            }}
+        >
+            <p
+                style={{
+                    margin: m.rulesTitleMargin,
+                    textAlign: 'center',
+                    fontWeight: 800,
+                    fontSize: m.rulesTitleFontSize,
+                    letterSpacing: m.rulesTitleLetterSpacing,
+                    textTransform: 'uppercase',
+                    fontFamily: "'DM Sans', system-ui, sans-serif",
+                    color: APP.accent,
+                }}
+            >
+                Reglas de visitante
+            </p>
+            <div
+                style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+                    gap: m.rulesGridGap,
+                    alignItems: 'start',
+                    width: '100%',
+                }}
+            >
+                {VISITOR_RULES.map((rule) => (
+                    <div
+                        key={rule.text}
+                        style={{
+                            textAlign: 'center',
+                            minWidth: 0,
+                        }}
+                    >
+                        <div
+                            style={{
+                                width: m.ruleIconSize,
+                                height: m.ruleIconSize,
+                                margin: m.ruleIconMarginBottom,
+                                borderRadius: '50%',
+                                background: APP.bgMuted,
+                                border: `1px solid ${APP.borderLight}`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: m.ruleIconFontSize,
+                            }}
+                        >
+                            {rule.icon}
+                        </div>
+                        <span
+                            style={{
+                                fontSize: m.ruleLabelFontSize,
+                                lineHeight: 1.25,
+                                display: 'block',
+                                fontWeight: 600,
+                                color: APP.textMuted,
+                            }}
+                        >
+                            {rule.text}
+                        </span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
 }
 
 function InviteHeadline({
@@ -106,21 +324,22 @@ function InviteHeadline({
     )
 }
 
+type VisitInvitationCardProps = {
+    visit: Visit
+    qrCode: string
+    qrDisplay?: QrDisplayContext
+    compact?: boolean
+}
+
 function VisitInvitationCard({
     visit,
     qrCode,
     qrDisplay,
     compact = false,
-}: {
-    visit: Visit
-    qrCode: string
-    qrDisplay?: QrDisplayContext
-    /** Modal móvil: menos padding, QR y reglas más pequeños. */
-    compact?: boolean
-}) {
-    const created = formatQrCreatedAt(visit.created_at)
-    const grey = greyBarText(qrDisplay?.unitNumber)
-    const qrMax = compact ? QR_IMG_SIZE_MODAL : QR_IMG_SIZE
+}: VisitInvitationCardProps) {
+    const m = getInvitationCardMetrics(compact)
+    const createdAtLabel = formatQrCreatedAt(visit.created_at)
+    const unitInfoText = formatUnitBannerText(qrDisplay?.unitNumber)
 
     return (
         <div
@@ -128,150 +347,27 @@ function VisitInvitationCard({
             style={{
                 background: APP.bgCard,
                 border: `1px solid ${APP.border}`,
-                borderRadius: compact ? 10 : 12,
+                borderRadius: m.cardBorderRadius,
                 overflow: 'hidden',
                 boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
-                maxWidth: compact ? 340 : 400,
+                maxWidth: m.cardMaxWidth,
                 margin: '0 auto',
                 width: '100%',
             }}
         >
-            <div style={{ height: compact ? 3 : 4, background: APP.accent }} />
+            <InvitationCardAccentBar height={m.accentBarHeight} />
 
-            <div style={{ padding: compact ? '10px 12px 6px' : '18px 18px 8px' }}>
+            <div style={{ padding: m.headlinePadding }}>
                 <InviteHeadline visit={visit} qrDisplay={qrDisplay} compact={compact} />
             </div>
 
-            <div
-                style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    padding: compact ? '6px 10px 10px' : '8px 16px 16px',
-                }}
-            >
-                <div
-                    style={{
-                        border: `2px solid ${APP.borderLight}`,
-                        borderRadius: 4,
-                        padding: compact ? 6 : 8,
-                        background: APP.qrLight,
-                        lineHeight: 0,
-                    }}
-                >
-                    <img
-                        src={qrCode}
-                        alt="Código QR de acceso"
-                        style={{
-                            display: 'block',
-                            width: '100%',
-                            maxWidth: qrMax,
-                            height: 'auto',
-                        }}
-                    />
-                </div>
-            </div>
+            <InvitationQrSection qrCode={qrCode} metrics={m} />
 
-            <div
-                style={{
-                    padding: compact ? '0 12px 10px' : '0 18px 16px',
-                    fontFamily: "'DM Sans', system-ui, sans-serif",
-                }}
-            >
-                <p style={{ margin: 0, fontSize: compact ? 12 : 14, color: APP.textMuted }}>
-                    Se creó:{' '}
-                    <strong style={{ color: APP.textBright }}>{created}</strong>
-                </p>
-            </div>
+            <InvitationCreatedTimestamp createdAtLabel={createdAtLabel} metrics={m} />
 
-            {grey ? (
-                <div
-                    style={{
-                        margin: compact ? '0 10px 10px' : '0 14px 16px',
-                        padding: compact ? '8px 10px' : '12px 14px',
-                        borderRadius: 8,
-                        background: APP.bgMuted,
-                        border: `1px solid ${APP.borderLight}`,
-                        color: APP.text,
-                        fontSize: compact ? 11 : 13,
-                        fontWeight: 600,
-                        lineHeight: 1.4,
-                        fontFamily: "'DM Sans', system-ui, sans-serif",
-                    }}
-                >
-                    {grey}
-                </div>
-            ) : null}
+            {unitInfoText ? <InvitationUnitBanner text={unitInfoText} metrics={m} /> : null}
 
-            <div
-                style={{
-                    background: APP.bgDeep,
-                    borderTop: `1px solid ${APP.border}`,
-                    padding: compact ? '8px 6px 10px' : '14px 10px 18px',
-                    color: APP.text,
-                }}
-            >
-                <p
-                    style={{
-                        margin: compact ? '0 0 6px' : '0 0 12px',
-                        textAlign: 'center',
-                        fontWeight: 800,
-                        fontSize: compact ? 10 : 12,
-                        letterSpacing: compact ? 0.5 : 1,
-                        textTransform: 'uppercase',
-                        fontFamily: "'DM Sans', system-ui, sans-serif",
-                        color: APP.accent,
-                    }}
-                >
-                    Reglas de visitante
-                </p>
-                <div
-                    style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
-                        gap: compact ? 4 : 8,
-                        alignItems: 'start',
-                        width: '100%',
-                    }}
-                >
-                    {VISITOR_RULES.map((rule) => (
-                        <div
-                            key={rule.text}
-                            style={{
-                                textAlign: 'center',
-                                minWidth: 0,
-                            }}
-                        >
-                            <div
-                                style={{
-                                    width: compact ? 30 : 40,
-                                    height: compact ? 30 : 40,
-                                    margin: compact ? '0 auto 4px' : '0 auto 6px',
-                                    borderRadius: '50%',
-                                    background: APP.bgMuted,
-                                    border: `1px solid ${APP.borderLight}`,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: compact ? 15 : 20,
-                                }}
-                            >
-                                {rule.icon}
-                            </div>
-                            <span
-                                style={{
-                                    fontSize: compact ? 7.5 : 9,
-                                    lineHeight: 1.25,
-                                    display: 'block',
-                                    fontWeight: 600,
-                                    color: APP.textMuted,
-                                }}
-                            >
-                                {rule.text}
-                            </span>
-                        </div>
-                    ))}
-                </div>
-            </div>
+            <InvitationVisitorRulesFooter metrics={m} />
         </div>
     )
 }
