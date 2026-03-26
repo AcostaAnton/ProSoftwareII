@@ -75,7 +75,6 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
-
 /* ===== ESTILOS PARA ACTIVIDAD DE GUARDIAS ===== */
 .guards-container {
   padding: 24px;
@@ -136,7 +135,7 @@ button:focus-visible {
   font-size: 24px;
 }
 
-/* Filtros */
+/* Filtros - VERSIÓN CORREGIDA */
 .filters-container {
   background: #0f172a;
   border: 1px solid #1e293b;
@@ -146,9 +145,10 @@ button:focus-visible {
 }
 
 .filters-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 16px;
+  align-items: flex-end;
 }
 
 .filter-label {
@@ -158,36 +158,63 @@ button:focus-visible {
   color: #475569;
   text-transform: uppercase;
   margin-bottom: 6px;
+  letter-spacing: 0.05em;
 }
 
 .filter-input {
   width: 100%;
+  min-width: 200px;
   background: #1e293b;
   border: 1px solid #334155;
-  border-radius: 8px;
-  padding: 8px 12px;
+  border-radius: 12px;
+  padding: 10px 14px;
   color: white;
   font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
 }
 
 .filter-input:focus {
-  outline: none;
   border-color: #22d3ee;
+}
+
+.filter-input::placeholder {
+  color: #64748b;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .filter-button {
   background: #22d3ee;
   color: #0f172a;
   border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
+  border-radius: 12px;
+  padding: 10px 20px;
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
 }
 
 .filter-button:hover {
   background: #67e8f9;
+}
+
+.filter-button-secondary {
+  background: #1e293b;
+  color: #94a3b8;
+  border: 1px solid #334155;
+}
+
+.filter-button-secondary:hover {
+  background: #334155;
+  color: white;
 }
 
 /* Grid de guardias */
@@ -334,6 +361,29 @@ button:focus-visible {
   animation: spin 0.8s linear infinite;
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error message */
+.error-message {
+  background: #450a0a;
+  border: 1px solid #991b1b;
+  color: #f87171;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+/* Empty state */
+.empty-state {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 48px;
+  text-align: center;
+  color: #64748b;
+}
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -529,6 +579,39 @@ button:focus-visible {
   .admin-users-table-wrap .admin-users-table td {
     padding-left: 12px !important;
     padding-right: 12px !important;
+  }
+
+   /* Estilos responsivos para Actividad de Guardias */
+  .filters-grid {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .filter-input {
+    min-width: 100%;
+  }
+
+  .filter-buttons {
+    width: 100%;
+  }
+
+  .filter-button {
+    flex: 1;
+    text-align: center;
+  }
+
+  .guards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .guards-container {
+    padding: 16px;
   }
 }
 

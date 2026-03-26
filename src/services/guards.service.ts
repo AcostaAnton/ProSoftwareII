@@ -149,8 +149,9 @@ export const guardsService = {
     return MOCK_LOGS.filter(log => log.guard_id === guardId)
   },
 
-  async toggleGuardStatus(_guardId: string, _active: boolean) {
-    // Mock: sin backend aún; evitar side effects en consola
-    return Promise.resolve()
-  }
+  async toggleGuardStatus(guardId: string, active: boolean) {
+    // Mock: sin backend aún
+    console.log(`[Mock] Toggle guard ${guardId} to ${active ? 'active' : 'inactive'}`);
+    return Promise.resolve();
+}
 }
