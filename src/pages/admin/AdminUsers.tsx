@@ -19,12 +19,14 @@ export default function AdminUsers() {
   const [editingUser, setEditingUser] = useState<Profile | null>(null)
   const [creatingUser, setCreatingUser] = useState(false)
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
     if (!profile?.community_id) {
       setLoading(false)
       return
     }
-    setLoading(true)
+    if (!opts?.silent) {
+      setLoading(true)
+    }
     setError(null)
     try {
       const data = await getProfilesByCommunity(profile.community_id)
@@ -32,7 +34,9 @@ export default function AdminUsers() {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al cargar usuarios')
     } finally {
-      setLoading(false)
+      if (!opts?.silent) {
+        setLoading(false)
+      }
     }
   }, [profile?.community_id])
 
@@ -170,14 +174,14 @@ export default function AdminUsers() {
           user={editingUser}
           open={editingUser != null}
           onClose={() => setEditingUser(null)}
-          onSaved={load}
+          onSaved={() => load({ silent: true })}
         />
 
         <AdminUsersCreateModal
           open={creatingUser}
           communityId={communityId}
           onClose={() => setCreatingUser(false)}
-          onCreated={load}
+          onCreated={() => load({ silent: true })}
         />
       </div>
     </main>

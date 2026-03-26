@@ -201,7 +201,7 @@ export async function updateProfileCommunityRoleStatusAndUnit(
 ): Promise<void> {
   await clearProfileFromAllUnits(profileId)
 
-  const { error: upProf } = await supabase
+  const { data: updatedProfile, error: upProf } = await supabase
     .from('profiles')
     .update({
       role: payload.role,
@@ -209,8 +209,15 @@ export async function updateProfileCommunityRoleStatusAndUnit(
       community_id: payload.communityId,
     })
     .eq('id', profileId)
+    .select('id')
+    .maybeSingle()
 
   if (upProf) throw upProf
+  if (!updatedProfile?.id) {
+    throw new Error(
+      'No se actualizó ningún perfil. Revisa que exista el usuario y que RLS permita a tu admin actualizar perfiles de esa comunidad.',
+    )
+  }
 
   const unit = payload.unitNumber?.trim()
   if (payload.role === 'resident' && unit) {
@@ -351,19 +358,30 @@ export async function createCommunityUser(input: CreateCommunityUserInput): Prom
     )
   }
 
-  const { error: profileError } = await supabase
+  // Usar upsert: un .update() solo no crea fila. Si no hay trigger en auth.users → profiles,
+  // el update afecta 0 filas y PostgREST no siempre devuelve error (parece que “guardó” y no).
+  const row = {
+    id: userId,
+    name,
+    phone: input.phone?.trim() || '',
+    role: input.role,
+    status: input.status,
+    community_id: input.communityId,
+    email,
+  }
+
+  const { data: savedProfile, error: profileError } = await supabase
     .from('profiles')
-    .update({
-      name,
-      phone: input.phone?.trim() || '',
-      role: input.role,
-      status: input.status,
-      community_id: input.communityId,
-      email,
-    })
-    .eq('id', userId)
+    .upsert(row, { onConflict: 'id' })
+    .select('id')
+    .maybeSingle()
 
   if (profileError) throw profileError
+  if (!savedProfile?.id) {
+    throw new Error(
+      'No se pudo guardar el perfil del usuario. Revisa políticas RLS en `profiles` (admin debe poder insertar/actualizar perfiles de su comunidad) o que exista la fila tras el registro.',
+    )
+  }
 
   if (input.role === 'resident' && input.unitNumber?.trim()) {
     await assignUnitIfSpecified(input.communityId, input.unitNumber, userId)
