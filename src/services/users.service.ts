@@ -4,6 +4,7 @@
 
 import { supabase } from './supabase'
 import { isUnitsCoOwnerColumnError } from './units.schema'
+import { getPublicSiteUrl } from '../utils/publicSiteUrl'
 import type { Profile } from '../types'
 import type { UserRole, ProfileStatus } from '../types'
 
@@ -322,7 +323,7 @@ export async function createCommunityUser(input: CreateCommunityUserInput): Prom
   const name = input.name.trim()
   if (!email || !name) throw new Error('Correo y nombre son obligatorios.')
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : undefined
+  const base = getPublicSiteUrl()
   const password = generateTempPassword()
 
   const { data, error } = await supabase.auth.signUp({
@@ -330,7 +331,7 @@ export async function createCommunityUser(input: CreateCommunityUserInput): Prom
     password,
     options: {
       data: { name, role: input.role, must_change_password: true },
-      emailRedirectTo: origin ? `${origin}/login` : undefined,
+      emailRedirectTo: base ? `${base}/login` : undefined,
     },
   })
 

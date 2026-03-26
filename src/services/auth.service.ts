@@ -3,6 +3,7 @@
 // ============================================================
 
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
+import { getPublicSiteUrl } from '../utils/publicSiteUrl'
 import { supabase } from './supabase'
 import type { LoginForm, RegisterForm } from '../types/index'
 
@@ -23,11 +24,13 @@ export async function registerUser({
   role,
   community_id,
 }: RegisterForm) {
+  const base = getPublicSiteUrl()
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: { name, role },
+      emailRedirectTo: base ? `${base}/login` : undefined,
     },
   })
   if (error) throw error
