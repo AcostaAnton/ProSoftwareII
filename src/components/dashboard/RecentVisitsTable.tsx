@@ -1,84 +1,76 @@
 import { Button } from '../ui/Button'
+import type { VisitStatus } from '../../types'
 
-
-export type EstadoVisualVisita =
-  | 'pendiente'
-  | 'aprobada'
-  | 'completada'
-  | 'rechazada'
-  | 'cancelada'
-
-export type VisitaReciente = {
+export type RecentVisit = {
   id: string
-  nombreVisitante: string
-  telefonoVisitante: string
-  nombreResidente: string
-  unidadResidencia: string
-  fechaVisita: string
-  horaVisita: string
-  estado: EstadoVisualVisita
-  mostrarAccionQr?: boolean
+  visitorName: string
+  visitorPhone: string
+  residentName: string
+  unitLabel: string
+  visitDate: string
+  visitTime: string
+  status: VisitStatus
+  showQrAction?: boolean
 }
 
-type PropiedadesTablaVisitasRecientes = {
-  titulo: string
-  visitas: VisitaReciente[]
-  mostrarBotonNuevaVisita?: boolean
-  textoBotonNuevaVisita?: string
-  onNuevaVisita?: () => void
-  onVerQR?: (visitaId: string) => void
+type RecentVisitsTableProps = {
+  title: string
+  visits: RecentVisit[]
+  showNewVisitButton?: boolean
+  newVisitButtonText?: string
+  onNewVisit?: () => void
+  onViewQr?: (visitId: string) => void
 }
 
-function obtenerEstiloEstado(estado: EstadoVisualVisita) {
-  switch (estado) {
-    case 'pendiente':
+function getVisitStatusStyle(status: VisitStatus) {
+  switch (status) {
+    case 'pending':
       return {
-        fondo: '#fef3c7',
-        colorTexto: '#92400e',
-        colorPunto: '#f59e0b',
-        etiqueta: 'Pendiente',
+        background: '#fef3c7',
+        textColor: '#92400e',
+        dotColor: '#f59e0b',
+        label: 'Pendiente',
       }
-    case 'aprobada':
+    case 'approved':
       return {
-        fondo: '#dbeafe',
-        colorTexto: '#1d4ed8',
-        colorPunto: '#3b82f6',
-        etiqueta: 'Aprobada',
+        background: '#dbeafe',
+        textColor: '#1d4ed8',
+        dotColor: '#3b82f6',
+        label: 'Aprobada',
       }
-    case 'completada':
+    case 'completed':
       return {
-        fondo: '#d1fae5',
-        colorTexto: '#065f46',
-        colorPunto: '#10b981',
-        etiqueta: 'Completada',
+        background: '#d1fae5',
+        textColor: '#065f46',
+        dotColor: '#10b981',
+        label: 'Completada',
       }
-    case 'rechazada':
+    case 'rejected':
       return {
-        fondo: '#fee2e2',
-        colorTexto: '#991b1b',
-        colorPunto: '#ef4444',
-        etiqueta: 'Rechazada',
+        background: '#fee2e2',
+        textColor: '#991b1b',
+        dotColor: '#ef4444',
+        label: 'Rechazada',
       }
-    case 'cancelada':
+    case 'cancelled':
       return {
-        fondo: '#fce7f3',
-        colorTexto: '#9d174d',
-        colorPunto: '#ec4899',
-        etiqueta: 'Cancelada',
+        background: '#fce7f3',
+        textColor: '#9d174d',
+        dotColor: '#ec4899',
+        label: 'Cancelada',
       }
     default:
       return {
-        fondo: '#fef3c7',
-        colorTexto: '#92400e',
-        colorPunto: '#f59e0b',
-        etiqueta: 'Pendiente',
+        background: '#fef3c7',
+        textColor: '#92400e',
+        dotColor: '#f59e0b',
+        label: 'Pendiente',
       }
   }
 }
 
-// Componente visual que muestra el estado de la visita
-function InsigniaEstadoVisita({ estado }: { estado: EstadoVisualVisita }) {
-  const estilo = obtenerEstiloEstado(estado)
+function VisitStatusBadge({ status }: { status: VisitStatus }) {
+  const style = getVisitStatusStyle(status)
 
   return (
     <span
@@ -90,8 +82,8 @@ function InsigniaEstadoVisita({ estado }: { estado: EstadoVisualVisita }) {
         borderRadius: 999,
         fontSize: 12,
         fontWeight: 500,
-        background: estilo.fondo,
-        color: estilo.colorTexto,
+        background: style.background,
+        color: style.textColor,
       }}
     >
       <span
@@ -99,26 +91,25 @@ function InsigniaEstadoVisita({ estado }: { estado: EstadoVisualVisita }) {
           width: 6,
           height: 6,
           borderRadius: '50%',
-          background: estilo.colorPunto,
+          background: style.dotColor,
           display: 'inline-block',
         }}
       />
-      {estilo.etiqueta}
+      {style.label}
     </span>
   )
 }
 
-export default function TablaVisitasRecientes({
-  titulo,
-  visitas,
-  mostrarBotonNuevaVisita = false,
-  textoBotonNuevaVisita = '+ Nueva visita',
-  onNuevaVisita,
-  onVerQR,
-}: PropiedadesTablaVisitasRecientes) {
+export default function RecentVisitsTable({
+  title,
+  visits,
+  showNewVisitButton = false,
+  newVisitButtonText = '+ Nueva visita',
+  onNewVisit,
+  onViewQr,
+}: RecentVisitsTableProps) {
   return (
     <section>
-      {/* Encabezado de la sección */}
       <div
         className="dashboard-section-header"
         style={{
@@ -138,25 +129,23 @@ export default function TablaVisitasRecientes({
             margin: 0,
           }}
         >
-          {titulo}
+          {title}
         </h2>
 
-        {/* Botón visible para residente y admin */}
-        {mostrarBotonNuevaVisita && (
+        {showNewVisitButton && (
           <Button
             type="button"
             variant="primary"
             size="md"
-            onClick={onNuevaVisita}
+            onClick={onNewVisit}
             className="dashboard-nueva-visita-btn"
             style={{ borderRadius: 16, padding: '14px 28px', fontSize: 14 }}
           >
-            {textoBotonNuevaVisita}
+            {newVisitButtonText}
           </Button>
         )}
       </div>
 
-      {/* Tabla principal */}
       <div
         className="dashboard-table-scroll"
         style={{
@@ -167,7 +156,7 @@ export default function TablaVisitasRecientes({
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        {visitas.length === 0 ? (
+        {visits.length === 0 ? (
           <div
             style={{
               padding: 40,
@@ -182,9 +171,9 @@ export default function TablaVisitasRecientes({
           <table className="dashboard-visits-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                {['VISITANTE', 'RESIDENTE', 'FECHA', 'ESTADO', ''].map((columna) => (
+                {['VISITANTE', 'RESIDENTE', 'FECHA', 'ESTADO', ''].map((columnHeader) => (
                   <th
-                    key={columna}
+                    key={columnHeader}
                     style={{
                       textAlign: 'left',
                       padding: '14px 22px',
@@ -194,15 +183,15 @@ export default function TablaVisitasRecientes({
                       borderBottom: '1px solid #1e293b',
                     }}
                   >
-                    {columna}
+                    {columnHeader}
                   </th>
                 ))}
               </tr>
             </thead>
 
             <tbody>
-              {visitas.map((visita) => (
-                <tr key={visita.id}>
+              {visits.map((visit) => (
+                <tr key={visit.id}>
                   <td
                     style={{
                       padding: '16px 22px',
@@ -218,7 +207,7 @@ export default function TablaVisitasRecientes({
                           fontWeight: 600,
                         }}
                       >
-                        {visita.nombreVisitante}
+                        {visit.visitorName}
                       </p>
                       <p
                         style={{
@@ -227,7 +216,7 @@ export default function TablaVisitasRecientes({
                           fontSize: 12,
                         }}
                       >
-                        {visita.telefonoVisitante || 'Sin teléfono'}
+                        {visit.visitorPhone || 'Sin teléfono'}
                       </p>
                     </div>
                   </td>
@@ -241,7 +230,7 @@ export default function TablaVisitasRecientes({
                     }}
                   >
                     <div>
-                      <p style={{ margin: 0 }}>{visita.nombreResidente}</p>
+                      <p style={{ margin: 0 }}>{visit.residentName}</p>
                       <p
                         style={{
                           margin: '6px 0 0 0',
@@ -249,7 +238,7 @@ export default function TablaVisitasRecientes({
                           fontSize: 12,
                         }}
                       >
-                        {visita.unidadResidencia || 'Sin unidad'}
+                        {visit.unitLabel || 'Sin unidad'}
                       </p>
                     </div>
                   </td>
@@ -263,8 +252,8 @@ export default function TablaVisitasRecientes({
                     }}
                   >
                     <div>
-                      <p style={{ margin: 0 }}>{visita.fechaVisita}</p>
-                      <p style={{ margin: '6px 0 0 0' }}>{visita.horaVisita}</p>
+                      <p style={{ margin: 0 }}>{visit.visitDate}</p>
+                      <p style={{ margin: '6px 0 0 0' }}>{visit.visitTime}</p>
                     </div>
                   </td>
 
@@ -274,7 +263,7 @@ export default function TablaVisitasRecientes({
                       borderBottom: '1px solid #1e293b',
                     }}
                   >
-                    <InsigniaEstadoVisita estado={visita.estado} />
+                    <VisitStatusBadge status={visit.status} />
                   </td>
 
                   <td
@@ -283,8 +272,8 @@ export default function TablaVisitasRecientes({
                       borderBottom: '1px solid #1e293b',
                     }}
                   >
-                    {visita.mostrarAccionQr ? (
-                      <Button type="button" variant="link" size="sm" onClick={() => onVerQR?.(visita.id)}>
+                    {visit.showQrAction ? (
+                      <Button type="button" variant="link" size="sm" onClick={() => onViewQr?.(visit.id)}>
                         Ver QR →
                       </Button>
                     ) : null}

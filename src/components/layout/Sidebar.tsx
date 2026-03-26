@@ -2,7 +2,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Avatar } from '../ui/Avatar';
 import type { UserRole } from '../../types';
-import { useEffect } from 'react';
 import useResponsive from '../../hooks/useResponsive';
 import './Sidebar.css';
 
@@ -17,7 +16,24 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'admin-users', label: 'Usuarios', icon: '👥', roles: ['admin'], path: '/admin/users' },
   { id: 'admin-guards', label: 'Actividad Guardias', icon: '🔒', roles: ['admin'], path: '/admin/guards' },
   { id: 'admin-stats', label: 'Estadísticas', icon: '📊', roles: ['admin'], path: '/admin/stats' },
-]
+];
+
+const ROLE_LABEL_SIDEBAR: Record<UserRole, string> = {
+  admin: 'Admin',
+  resident: 'Resident',
+  security: 'Guardia',
+}
+
+function sidebarRoleLabel(role: UserRole | null | undefined): string {
+  if (role == null) return 'Usuario';
+  return ROLE_LABEL_SIDEBAR[role];
+}
+
+function isNavItemActive(pathname: string, itemPath: string): boolean {
+  if (pathname === itemPath) return true;
+  if (itemPath === '/dashboard') return false;
+  return pathname.startsWith(itemPath);
+}
 
 interface SidebarProps {
   isOpen: boolean;
@@ -45,19 +61,6 @@ export default function Sidebar({ isOpen, toggle }: SidebarProps) {
     navigate('/login');
   }
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768 && !isOpen) {
-        // setShowSidebar(true);
-      } else if (window.innerWidth < 768 && isOpen) {
-        // setShowSidebar(false);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isOpen]);
-
   const sidebarStyle = {
     position: 'fixed' as const,
     left: isOpen ? 0 : (isMobile ? '-100%' : '-220px'),
@@ -67,7 +70,14 @@ export default function Sidebar({ isOpen, toggle }: SidebarProps) {
 
   return (
     <>
-      {isMobile && isOpen && <div className="backdrop" onClick={toggle} />}
+      {isMobile && isOpen && (
+        <button
+          type="button"
+          className="backdrop"
+          aria-label="Cerrar menú de navegación"
+          onClick={toggle}
+        />
+      )}
       <aside className="sidebar" style={sidebarStyle}>
         <div className="logo-wrapper">
           <div className="logo-icon">P</div>
@@ -81,7 +91,7 @@ export default function Sidebar({ isOpen, toggle }: SidebarProps) {
               {all
                 .filter((n) => (sec.ids as string[]).includes(n.id))
                 .map((n) => {
-                  const isActive = location.pathname === n.path || (n.path !== '/dashboard' && location.pathname.startsWith(n.path));
+                  const isActive = isNavItemActive(location.pathname, n.path);
                   return (
                     <button
                       key={n.id}
@@ -107,9 +117,7 @@ export default function Sidebar({ isOpen, toggle }: SidebarProps) {
             <Avatar name={displayName} size={32} />
             <div className="user-text">
               <p className="user-name">{displayName}</p>
-              <p className="user-role">
-                {role === 'admin' ? 'Admin' : role === 'security' ? 'Guardia' : role === 'resident' ? 'Resident' : 'Usuario'}
-              </p>
+              <p className="user-role">{sidebarRoleLabel(role)}</p>
             </div>
           </div>
           <button

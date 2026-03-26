@@ -1,4 +1,3 @@
-// src/pages/admin/AdminGuards.tsx
 import React, { useState, useEffect } from 'react'
 import { Button } from '../../components/ui/Button'
 import { guardsService } from '../../services/guards.service'
@@ -27,12 +26,10 @@ export const AdminGuards: React.FC = () => {
     const loadData = async () => {
         try {
             setLoading(true)
-            console.log('Cargando datos...')
             const [activitiesData, statsData] = await Promise.all([
                 guardsService.getGuardsActivity(),
                 guardsService.getStats()
             ])
-            console.log('Datos cargados:', activitiesData, statsData)
             setActivities(activitiesData)
             setStats(statsData)
             setError(null)
@@ -155,7 +152,6 @@ export const AdminGuards: React.FC = () => {
     )
 }
 
-// StatCard component con estilos personalizados
 const StatCard: React.FC<{ title: string; value: number; icon: string; color: string }> = 
     ({ title, value, icon, color }) => {
         return (
@@ -171,7 +167,6 @@ const StatCard: React.FC<{ title: string; value: number; icon: string; color: st
         )
     }
 
-// GuardCard component con estilos personalizados
 const GuardCard: React.FC<{
     activity: GuardActivity
     isAdmin: boolean

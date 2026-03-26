@@ -1,7 +1,3 @@
-// ============================================================
-// Servicio de gestión de usuarios (perfiles por comunidad)
-// ============================================================
-
 import { supabase } from './supabase'
 import { isUnitsCoOwnerColumnError } from './units.schema'
 import { getPublicSiteUrl } from '../utils/publicSiteUrl'
@@ -95,7 +91,6 @@ export async function getUnitsByCommunityForSelect(communityId: string): Promise
   return (full.data ?? []) as CommunityUnitRow[]
 }
 
-// - Obtener todos los perfiles por estado
 export async function getProfilesByStatus(
   status: Profile['status'], role: Profile['role']
 ): Promise<Profile[]> {

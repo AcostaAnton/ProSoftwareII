@@ -1,206 +1,157 @@
-// ============================================================
-// HOOK: useDashboard
-// ------------------------------------------------------------
-// Centraliza la lógica del dashboard:
-// - carga de visitas
-// - carga de perfiles relacionados
-// - carga de unidades
-// - armado de estadísticas
-// - transformación de datos para la tabla
-// ============================================================
+
 
 import { useEffect, useState } from 'react'
-import type { EstadoVisualVisita, VisitaReciente } from '../components/dashboard/TablaVisitasRecientes'
+import type { DashboardStat } from '../components/dashboard/DashboardStatsPanel'
+import type { RecentVisit } from '../components/dashboard/RecentVisitsTable'
 import { useAuth } from '../context/AuthContext'
 import { getProfilesByIds, getUnitsByOwnerIds } from '../services/dashboard.service'
 import { getAllVisits, getVisitsByResident } from '../services/visits.service'
 import type { Profile, Unit, Visit } from '../types/index'
 
-type EstadisticaDashboard = {
-  titulo: string
-  valor: number
-  colorLinea: string
-}
-
-type ResultadoUseDashboard = {
-  cargando: boolean
+type UseDashboardResult = {
+  loading: boolean
   error: string | null
-  nombreUsuario: string
-  textoSecundario: string
-  mostrarBotonNuevaVisita: boolean
-  estadisticas: EstadisticaDashboard[]
-  visitasRecientes: VisitaReciente[]
+  userName: string
+  secondaryText: string
+  showNewVisitButton: boolean
+  stats: DashboardStat[]
+  recentVisits: RecentVisit[]
 }
 
-function mapearEstadoVisual(estado: Visit['status']): EstadoVisualVisita {
-  switch (estado) {
-    case 'pending':
-      return 'pendiente'
-    case 'approved':
-      return 'aprobada'
-    case 'completed':
-      return 'completada'
-    case 'rejected':
-      return 'rechazada'
-    case 'cancelled':
-      return 'cancelada'
-    default:
-      return 'pendiente'
-  }
-}
-
-function ordenarVisitasPorFechaDesc(visitas: Visit[]) {
-  return [...visitas].sort((a, b) => {
-    const fechaA = new Date(`${a.visit_date}T${a.visit_time || '00:00'}`).getTime()
-    const fechaB = new Date(`${b.visit_date}T${b.visit_time || '00:00'}`).getTime()
-    return fechaB - fechaA
+function sortVisitsByDateDesc(visits: Visit[]) {
+  return [...visits].sort((a, b) => {
+    const timeA = new Date(`${a.visit_date}T${a.visit_time || '00:00'}`).getTime()
+    const timeB = new Date(`${b.visit_date}T${b.visit_time || '00:00'}`).getTime()
+    return timeB - timeA
   })
 }
 
-export function useDashboard(): ResultadoUseDashboard {
+export function useDashboard(): UseDashboardResult {
   const { user, profile, role } = useAuth()
 
-  const [cargando, setCargando] = useState(true)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [nombreUsuario, setNombreUsuario] = useState('Usuario')
-  const [textoSecundario, setTextoSecundario] = useState('')
-  const [estadisticas, setEstadisticas] = useState<EstadisticaDashboard[]>([])
-  const [visitasRecientes, setVisitasRecientes] = useState<VisitaReciente[]>([])
+  const [userName, setUserName] = useState('Usuario')
+  const [secondaryText, setSecondaryText] = useState('')
+  const [stats, setStats] = useState<DashboardStat[]>([])
+  const [recentVisits, setRecentVisits] = useState<RecentVisit[]>([])
 
   useEffect(() => {
-    async function cargarDashboard() {
+    async function loadDashboard() {
       if (!user || !profile || !role) {
-        setCargando(false)
+        setLoading(false)
         return
       }
 
       try {
-        setCargando(true)
+        setLoading(true)
         setError(null)
 
-        // ------------------------------------------------------------
-        // 1. Datos básicos del usuario autenticado
-        // ------------------------------------------------------------
-        setNombreUsuario(profile.name || user.email || 'Usuario')
+        setUserName(profile.name || user.email || 'Usuario')
 
-        // ------------------------------------------------------------
-        // 2. Texto secundario del encabezado
-        // ------------------------------------------------------------
         if (role === 'resident') {
-          const unidadesDelUsuario = await getUnitsByOwnerIds([profile.id])
-          const unidadActual = unidadesDelUsuario[0]
+          const userUnits = await getUnitsByOwnerIds([profile.id])
+          const currentUnit = userUnits[0]
 
-          setTextoSecundario(
-            unidadActual?.number
-              ? `Unidad ${unidadActual.number}`
+          setSecondaryText(
+            currentUnit?.number
+              ? `Unidad ${currentUnit.number}`
               : 'Unidad no asignada'
           )
         } else {
-          setTextoSecundario(`Rol: ${role}`)
+          setSecondaryText(`Rol: ${role}`)
         }
 
-        // ------------------------------------------------------------
-        // 3. Cargar visitas según el rol
-        // ------------------------------------------------------------
-        let visitas: Visit[] = []
+        let visits: Visit[] = []
 
         if (role === 'resident') {
-          visitas = await getVisitsByResident(user.id)
+          visits = await getVisitsByResident(user.id)
         } else {
-          visitas = await getAllVisits()
+          visits = await getAllVisits()
         }
 
-        const visitasOrdenadas = ordenarVisitasPorFechaDesc(visitas)
+        const sortedVisits = sortVisitsByDateDesc(visits)
 
-        // ------------------------------------------------------------
-        // 4. Obtener perfiles y unidades de los residentes involucrados
-        // ------------------------------------------------------------
-        const residentIds = [...new Set(visitasOrdenadas.map((visita) => visita.resident_id))]
+        const residentIds = [...new Set(sortedVisits.map((v) => v.resident_id))]
 
-        const perfilesRelacionados: Profile[] = await getProfilesByIds(residentIds)
-        const unidadesRelacionadas: Unit[] = await getUnitsByOwnerIds(residentIds)
+        const relatedProfiles: Profile[] = await getProfilesByIds(residentIds)
+        const relatedUnits: Unit[] = await getUnitsByOwnerIds(residentIds)
 
-        const mapaPerfiles = new Map<string, Profile>()
-        const mapaUnidades = new Map<string, Unit>()
+        const profileById = new Map<string, Profile>()
+        const unitByOwnerId = new Map<string, Unit>()
 
-        perfilesRelacionados.forEach((perfil) => {
-          mapaPerfiles.set(perfil.id, perfil)
+        relatedProfiles.forEach((p) => {
+          profileById.set(p.id, p)
         })
 
-        unidadesRelacionadas.forEach((unidad) => {
-          if (unidad.owner_id) mapaUnidades.set(unidad.owner_id, unidad)
-          if (unidad.co_owner_id) mapaUnidades.set(unidad.co_owner_id, unidad)
+        relatedUnits.forEach((unit) => {
+          if (unit.owner_id) unitByOwnerId.set(unit.owner_id, unit)
+          if (unit.co_owner_id) unitByOwnerId.set(unit.co_owner_id, unit)
         })
 
-        // ------------------------------------------------------------
-        // 5. Preparar estadísticas para las tarjetas
-        // ------------------------------------------------------------
-        const nuevasEstadisticas: EstadisticaDashboard[] = [
+        const nextStats: DashboardStat[] = [
           {
-            titulo: 'Total',
-            valor: visitasOrdenadas.length,
-            colorLinea: '#22d3ee',
+            title: 'Total',
+            value: sortedVisits.length,
+            accentColor: '#22d3ee',
           },
           {
-            titulo: 'Pendientes',
-            valor: visitasOrdenadas.filter((visita) => visita.status === 'pending').length,
-            colorLinea: '#f59e0b',
+            title: 'Pendientes',
+            value: sortedVisits.filter((v) => v.status === 'pending').length,
+            accentColor: '#f59e0b',
           },
           {
-            titulo: 'Aprobadas',
-            valor: visitasOrdenadas.filter((visita) => visita.status === 'approved').length,
-            colorLinea: '#3b82f6',
+            title: 'Aprobadas',
+            value: sortedVisits.filter((v) => v.status === 'approved').length,
+            accentColor: '#3b82f6',
           },
           {
-            titulo: 'Completadas',
-            valor: visitasOrdenadas.filter((visita) => visita.status === 'completed').length,
-            colorLinea: '#10b981',
+            title: 'Completadas',
+            value: sortedVisits.filter((v) => v.status === 'completed').length,
+            accentColor: '#10b981',
           },
         ]
 
-        setEstadisticas(nuevasEstadisticas)
+        setStats(nextStats)
 
-        // ------------------------------------------------------------
-        // 6. Preparar visitas recientes para la tabla
-        // ------------------------------------------------------------
-        const visitasTabla: VisitaReciente[] = visitasOrdenadas.slice(0, 6).map((visita) => {
-          const perfilResidente = mapaPerfiles.get(visita.resident_id)
-          const unidadResidente = mapaUnidades.get(visita.resident_id)
+        const tableRows: RecentVisit[] = sortedVisits.slice(0, 6).map((visit) => {
+          const residentProfile = profileById.get(visit.resident_id)
+          const residentUnit = unitByOwnerId.get(visit.resident_id)
 
           return {
-            id: visita.id,
-            nombreVisitante: visita.visitor_name,
-            telefonoVisitante: visita.visitor_phone || '',
-            nombreResidente: perfilResidente?.name || 'Residente',
-            unidadResidencia: unidadResidente?.number || '',
-            fechaVisita: visita.visit_date,
-            horaVisita: visita.visit_time || '',
-            estado: mapearEstadoVisual(visita.status),
-            mostrarAccionQr: visita.status === 'pending',
+            id: visit.id,
+            visitorName: visit.visitor_name,
+            visitorPhone: visit.visitor_phone || '',
+            residentName: residentProfile?.name || 'Residente',
+            unitLabel: residentUnit?.number || '',
+            visitDate: visit.visit_date,
+            visitTime: visit.visit_time || '',
+            status: visit.status,
+            showQrAction: visit.status === 'pending',
           }
         })
 
-        setVisitasRecientes(visitasTabla)
+        setRecentVisits(tableRows)
       } catch (err) {
         console.error(err)
         setError(err instanceof Error ? err.message : 'Error al cargar el dashboard')
       } finally {
-        setCargando(false)
+        setLoading(false)
       }
     }
 
-    void cargarDashboard()
+    void loadDashboard()
   }, [user, profile, role])
 
-  const mostrarBotonNuevaVisita = role === 'resident' || role === 'admin'
+  const showNewVisitButton = role === 'resident' || role === 'admin'
 
   return {
-    cargando,
+    loading,
     error,
-    nombreUsuario,
-    textoSecundario,
-    mostrarBotonNuevaVisita,
-    estadisticas,
-    visitasRecientes,
+    userName,
+    secondaryText,
+    showNewVisitButton,
+    stats,
+    recentVisits,
   }
 }

@@ -1,5 +1,3 @@
-// src/services/guards.service.ts
-
 export type Guard = {
   id: string
   name: string
@@ -32,7 +30,6 @@ export type GuardActivity = {
   logs: AccessLog[]
 }
 
-// 📌 DATOS DE PRUEBA (MOCK)
 const MOCK_GUARDS: Guard[] = [
   {
     id: '1',
@@ -110,7 +107,6 @@ const MOCK_LOGS: AccessLog[] = [
 
 export const guardsService = {
   async getGuards(): Promise<Guard[]> {
-    // Devolver datos de prueba
     return MOCK_GUARDS
   },
 
@@ -149,9 +145,7 @@ export const guardsService = {
     return MOCK_LOGS.filter(log => log.guard_id === guardId)
   },
 
-  async toggleGuardStatus(guardId: string, active: boolean) {
-    // Mock: sin backend aún
-    console.log(`[Mock] Toggle guard ${guardId} to ${active ? 'active' : 'inactive'}`);
-    return Promise.resolve();
-}
+  async toggleGuardStatus(_guardId: string, _active: boolean) {
+    return Promise.resolve()
+  },
 }

@@ -1,7 +1,3 @@
-// ============================================================
-// Todas las funciones de autenticación con Supabase Auth
-// ============================================================
-
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { getPublicSiteUrl } from '../utils/publicSiteUrl'
 import { supabase } from './supabase'
