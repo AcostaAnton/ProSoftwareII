@@ -48,7 +48,7 @@ export function PhotoLightbox({
           style={{
             marginTop: '20px',
             padding: '15px',
-            backgroundColor: '#1e293b',
+            backgroundColor: 'var(--surface2)',
             borderRadius: '10px',
             maxWidth: '90%',
             border: '1px solid #334155',
@@ -56,7 +56,7 @@ export function PhotoLightbox({
         >
           <p
             style={{
-              color: '#94a3b8',
+              color: 'var(--muted)',
               fontSize: '11px',
               textTransform: 'uppercase',
               marginBottom: '5px',
@@ -68,7 +68,7 @@ export function PhotoLightbox({
           <p style={{ color: 'white', margin: 0, fontSize: '16px' }}>{photoNotes}</p>
         </div>
       )}
-      <p style={{ color: '#64748b', marginTop: '15px', fontSize: '14px' }}>
+      <p style={{ color: 'var(--muted)', marginTop: '15px', fontSize: '14px' }}>
         Toca en cualquier lugar para cerrar
       </p>
     </button>

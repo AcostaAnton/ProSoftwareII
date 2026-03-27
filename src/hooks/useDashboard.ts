@@ -49,17 +49,25 @@ export function useDashboard(): UseDashboardResult {
 
         setUserName(profile.name || user.email || 'Usuario')
 
+        const now = new Date()
+        const dateStr = now.toLocaleDateString('es-HN', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+
         if (role === 'resident') {
           const userUnits = await getUnitsByOwnerIds([profile.id])
           const currentUnit = userUnits[0]
 
           setSecondaryText(
             currentUnit?.number
-              ? `Unidad ${currentUnit.number}`
-              : 'Unidad no asignada'
+              ? `Resumen de actividad · Unidad ${currentUnit.number} · ${dateStr}`
+              : `Unidad no asignada · ${dateStr}`
           )
         } else {
-          setSecondaryText(`Rol: ${role}`)
+          setSecondaryText(`Resumen de actividad del día · ${dateStr}`)
         }
 
         let visits: Visit[] = []
@@ -91,24 +99,24 @@ export function useDashboard(): UseDashboardResult {
 
         const nextStats: DashboardStat[] = [
           {
-            title: 'Total',
+            title: 'Total de visitas',
             value: sortedVisits.length,
-            accentColor: '#22d3ee',
+            variant: 'total',
           },
           {
             title: 'Pendientes',
             value: sortedVisits.filter((v) => v.status === 'pending').length,
-            accentColor: '#f59e0b',
+            variant: 'pending',
           },
           {
             title: 'Aprobadas',
             value: sortedVisits.filter((v) => v.status === 'approved').length,
-            accentColor: '#3b82f6',
+            variant: 'approved',
           },
           {
             title: 'Completadas',
             value: sortedVisits.filter((v) => v.status === 'completed').length,
-            accentColor: '#10b981',
+            variant: 'done',
           },
         ]
 

@@ -12,7 +12,7 @@ export function EntryNotesPanel({
   return (
     <>
       <div>
-        <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>
+        <label style={{ color: 'var(--muted)', fontSize: '12px', textTransform: 'uppercase' }}>
           Notas de la Fotografía
         </label>
         <textarea
@@ -24,7 +24,7 @@ export function EntryNotesPanel({
             padding: '10px',
             marginTop: '5px',
             borderRadius: '8px',
-            backgroundColor: '#0f172a',
+            backgroundColor: 'var(--surface)',
             color: 'white',
             border: '1px solid #334155',
             minHeight: '70px',
@@ -33,7 +33,7 @@ export function EntryNotesPanel({
         />
       </div>
       <div>
-        <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Notas de Entrada</label>
+        <label style={{ color: 'var(--muted)', fontSize: '12px', textTransform: 'uppercase' }}>Notas de Entrada</label>
         <textarea
           value={entryNotes}
           onChange={(e) => onChangeEntryNotes(e.target.value)}
@@ -43,7 +43,7 @@ export function EntryNotesPanel({
             padding: '10px',
             marginTop: '5px',
             borderRadius: '8px',
-            backgroundColor: '#0f172a',
+            backgroundColor: 'var(--surface)',
             color: 'white',
             border: '1px solid #334155',
             minHeight: '70px',

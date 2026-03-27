@@ -23,19 +23,19 @@ const styles = {
         flexWrap: 'wrap'
     } as CSSProperties,
     pageInfo: {
-        color: '#94a3b8',
+        color: 'var(--muted)',
         fontSize: '13px'
     } as CSSProperties,
     currentPage: {
-        background: 'linear-gradient(135deg, #22d3ee, #38bdf8)',
-        color: '#082f49',
+        background: 'linear-gradient(135deg, var(--accent-cyan), #00c4ad)',
+        color: '#08130f',
         border: 'none'
     } as CSSProperties,
     pageButton: {
         minWidth: '42px'
     } as CSSProperties,
     ellipsis: {
-        color: '#64748b',
+        color: 'var(--muted)',
         fontSize: '13px',
         padding: '0 2px'
     } as CSSProperties

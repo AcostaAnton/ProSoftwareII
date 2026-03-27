@@ -307,20 +307,16 @@ export async function cancelVisit(visitId: string): Promise<Visit> {
   return updateVisitStatus(visitId, 'cancelled')
 }
 
-export async function uploadVisitPhoto(file: File): Promise<string | null> {
+export async function uploadVisitPhoto(file: File): Promise<string> {
   const fileExt = file.name.split('.').pop()
   const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`
   const filePath = `${fileName}`
 
-  try {
-    const { data, error } = await supabase.storage
-      .from('visit-photos')
-      .upload(filePath, file)
+  const { data, error } = await supabase.storage
+    .from('visit-photos')
+    .upload(filePath, file)
 
-    if (error) throw error
-    return data.path
-  } catch (error) {
-    return 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=300'
-  }
+  if (error) throw error
+  return data.path
 }
 

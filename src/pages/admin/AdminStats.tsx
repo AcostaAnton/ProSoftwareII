@@ -1,19 +1,36 @@
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState, useMemo, type ReactNode } from "react"
 import { getAllVisits } from '../../services/visits.service'
 import { getProfilesByCommunity } from '../../services/users.service'
 import type { Visit, Profile } from '../../types/index'
 import { useAuth } from '../../hooks/useAuth'
 import { Button } from '../../components/ui/Button'
+import { getVisitStatusLabel } from '../visits/visitStatus.helpers'
+import {
+  IconKpiVisits,
+  IconKpiCompleted,
+  IconKpiResidents,
+  IconKpiGuards,
+  type KpiAccent,
+} from './AdminStatsIcons'
 import './AdminStats.css'
 
-function KpiGrid({ items }: { items: { label: string, value: number, icon: string, border: string }[] }) {
+type KpiItem = {
+  label: string
+  value: number
+  icon: ReactNode
+  accent: KpiAccent
+}
+
+function KpiGrid({ items }: { items: KpiItem[] }) {
   return (
     <div className="kpi-grid">
       {items.map((item, i) => (
-        <div key={i} className="kpi-card" style={{ borderColor: item.border }}>
+        <div key={i} className={`kpi-card kpi-card--${item.accent}`}>
           <div className="kpi-content">
-            <div className="kpi-icon">{item.icon}</div>
-            <div>
+            <div className={`kpi-icon-wrap kpi-icon-wrap--${item.accent}`} aria-hidden>
+              {item.icon}
+            </div>
+            <div className="kpi-text">
               <p className="kpi-value">{item.value}</p>
               <p className="kpi-label">{item.label}</p>
             </div>
@@ -47,12 +64,42 @@ function TopResidentsList({ residents }: { residents: { name: string, role: stri
   )
 }
 
+function compactIncidentWhen(v: Visit): string {
+  const { visit_date: rawDate, visit_time: rawTime } = v
+  const timePart = rawTime ? rawTime.slice(0, 5) : ''
+  try {
+    let d: Date
+    if (/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
+      d = new Date(`${rawDate}T12:00:00`)
+    } else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(rawDate)) {
+      const [a, b, c] = rawDate.split('/').map(Number)
+      d = new Date(c, b - 1, a)
+    } else {
+      d = new Date(rawDate)
+    }
+    if (Number.isNaN(d.getTime())) {
+      return timePart ? `${rawDate} · ${timePart}` : rawDate
+    }
+    const datePart = d.toLocaleDateString('es-ES', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+    return timePart ? `${datePart} · ${timePart}` : datePart
+  } catch {
+    return timePart ? `${rawDate} · ${timePart}` : rawDate
+  }
+}
+
 function IncidentsLog({ visits }: { visits: Visit[] }) {
   const incidents = visits.filter(v => ['rejected', 'denied'].includes(v.status))
 
   return (
     <div className="incidents-section">
-      <h3 className="section-title incidents-title">⚠️ Registro de Incidentes (Visitas Rechazadas/Denegadas)</h3>
+      <div className="incidents-header">
+        <h3 className="section-title incidents-title-text">Registro de incidentes</h3>
+        <p className="incidents-sub">Visitas rechazadas o denegadas</p>
+      </div>
       {incidents.length === 0 ? (
         <p className="empty-state">No hay incidentes registrados en este periodo. ¡Buen trabajo!</p>
       ) : (
@@ -69,11 +116,11 @@ function IncidentsLog({ visits }: { visits: Visit[] }) {
             <tbody>
               {incidents.slice(0, 10).map(v => (
                 <tr key={v.id}>
-                  <td className="text-white">{v.visit_date} {v.visit_time}</td>
+                  <td className="incidents-datetime">{compactIncidentWhen(v)}</td>
                   <td className="text-white">{v.visitor_name}</td>
-                  <td className="text-gray">{v.visit_purpose}</td>
+                  <td className="incidents-purpose">{v.visit_purpose || '—'}</td>
                   <td>
-                    <span className="status-rejected">{v.status.toUpperCase()}</span>
+                    <span className="status-rejected">{getVisitStatusLabel(v.status)}</span>
                   </td>
                 </tr>
               ))}
@@ -186,19 +233,39 @@ function parseDMY(dateStr: string) {
   const activeGuards = useMemo(() => Object.values(profiles).filter(p => (p.role as string) === 'guard' && p.status === 'active').length, [profiles])
 
   if (loading) {
-    return <div style={{ padding: 20, color: '#94a3b8' }}>Cargando estadísticas...</div>
+    return <div style={{ padding: 20, color: 'var(--muted)' }}>Cargando estadísticas...</div>
   }
 
-  const mainStats = [
-    { label: "Visitas totales", value: stats.total, icon: "📋", border: "#164e63" },
-    { label: "Accesos registrados", value: stats.completed, icon: "✅", border: "#14532d" },
-    { label: "Residentes activos", value: activeResidents, icon: "🏠", border: "#593d0b" },
-    { label: "Guardias activos", value: activeGuards, icon: "🔒", border: "#594e10" }
+  const mainStats: KpiItem[] = [
+    {
+      label: 'Visitas totales',
+      value: stats.total,
+      icon: <IconKpiVisits />,
+      accent: 'cyan',
+    },
+    {
+      label: 'Accesos registrados',
+      value: stats.completed,
+      icon: <IconKpiCompleted />,
+      accent: 'green',
+    },
+    {
+      label: 'Residentes activos',
+      value: activeResidents,
+      icon: <IconKpiResidents />,
+      accent: 'amber',
+    },
+    {
+      label: 'Guardias activos',
+      value: activeGuards,
+      icon: <IconKpiGuards />,
+      accent: 'violet',
+    },
   ]
 
 return (
-  <main>
-    <div className="admin-stats-container">
+  <main className="admin-stats-main">
+    <div className="admin-stats-container admin-stats-minimal">
       <h2 className="admin-stats-title">
         Estadísticas
       </h2>
@@ -221,23 +288,29 @@ return (
           />
         </div>
         <div className="export-actions">
-          <Button variant="primary" size="sm"
-          className="clear-button"
-          onClick={() => {
-          const today = new Date().toISOString().split('T')[0]
-
-          const date = new Date()
-          date.setDate(date.getDate() - 30)
-          const defaultStart = date.toISOString().split('T')[0]
-
-          setStartDate(defaultStart)
-          setEndDate(today)
-          }}
+          <Button
+            variant="outline"
+            size="sm"
+            className="clear-button"
+            onClick={() => {
+              const today = new Date().toISOString().split('T')[0]
+              const date = new Date()
+              date.setDate(date.getDate() - 30)
+              const defaultStart = date.toISOString().split('T')[0]
+              setStartDate(defaultStart)
+              setEndDate(today)
+            }}
           >
-          🧹 Limpiar Filtros
+            Limpiar filtros
           </Button>
-          <Button variant="primary" size="sm" onClick={descargarCSV} className="export-btn">
-            📥 Exportar CSV
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={descargarCSV}
+            className="export-btn"
+            style={{ boxShadow: 'none' }}
+          >
+            Exportar CSV
           </Button>
         </div>
         

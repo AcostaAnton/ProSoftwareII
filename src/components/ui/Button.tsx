@@ -43,38 +43,39 @@ const sizeStyles: Record<ButtonSize, CSSProperties> = {
 
 const variantStyles: Record<ButtonVariant, CSSProperties> = {
   primary: {
-    background: '#22d3ee',
-    color: '#0f172a',
+    background: 'linear-gradient(135deg, #00e5c8, #00c4ad)',
+    color: '#08130f',
     border: 'none',
+    boxShadow: '0 4px 20px rgba(0, 229, 200, 0.3)',
   },
   secondary: {
-    background: '#2a3034',
-    color: '#ffffff',
+    background: 'var(--surface2)',
+    color: 'var(--text)',
     border: 'none',
   },
   outline: {
     background: 'transparent',
-    border: '1px solid #1e293b',
-    color: '#64748b',
+    border: '1px solid var(--border-bright)',
+    color: 'var(--muted)',
     fontWeight: 600,
   },
   ghost: {
     background: 'transparent',
     border: 'none',
-    color: '#ffffff',
+    color: 'var(--text)',
   },
   link: {
     background: 'none',
     border: 'none',
-    color: '#22d3ee',
+    color: 'var(--accent-cyan)',
     fontWeight: 700,
     padding: 0,
     fontSize: 13,
     whiteSpace: 'nowrap',
   },
   muted: {
-    background: '#2a3034',
-    color: '#ffffff',
+    background: 'var(--surface2)',
+    color: 'var(--text)',
     border: 'none',
     fontWeight: 600,
   },
@@ -91,10 +92,10 @@ const variantStyles: Record<ButtonVariant, CSSProperties> = {
     fontWeight: 700,
   },
   panel: {
-    backgroundColor: '#1a2024',
-    border: '1px solid #334155',
+    backgroundColor: 'var(--surface2)',
+    border: '1px solid var(--border-bright)',
     borderRadius: 8,
-    color: '#ffffff',
+    color: 'var(--text)',
     fontWeight: 600,
   },
   accent: {

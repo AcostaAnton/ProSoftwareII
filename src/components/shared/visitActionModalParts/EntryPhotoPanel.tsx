@@ -14,7 +14,7 @@ export function EntryPhotoPanel({
 }) {
   return (
     <div>
-      <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>
+      <label style={{ color: 'var(--muted)', fontSize: '12px', textTransform: 'uppercase' }}>
         Fotografía de Ingreso
       </label>
       {photoPreview ? (

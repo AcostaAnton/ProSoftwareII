@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, type ReactElement } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { getProfilesByCommunity, MAX_RESIDENTS_PER_UNIT } from '../../services/users.service'
 import type { Profile, UserRole } from '../../types'
@@ -7,9 +7,16 @@ import { RoleBadge } from '../../components/ui/Badge'
 import { StatusBadge } from '../../components/ui/StatusBadge'
 import { Button } from '../../components/ui/Button'
 import { ROLES } from './adminUsers.helpers'
+import { IconStatAdmin, IconStatResident, IconStatSecurity } from './AdminSectionIcons'
 import { adminUsersPageStyles as styles } from './adminUsers.styles'
 import { AdminUsersCreateModal } from './AdminUsersCreateModal'
 import { AdminUsersEditModal } from './AdminUsersEditModal'
+
+const ROLE_STAT_ICON: Record<UserRole, ReactElement> = {
+  admin: <IconStatAdmin />,
+  resident: <IconStatResident />,
+  security: <IconStatSecurity />,
+}
 
 export default function AdminUsers() {
   const { profile } = useAuth()
@@ -85,7 +92,7 @@ export default function AdminUsers() {
             <p className="admin-users-subtitle" style={styles.subtitle}>
               Solo los administradores pueden crear usuarios y gestionar roles. Cada vivienda admite
               hasta {MAX_RESIDENTS_PER_UNIT} cuentas residente. Al dar de alta un{' '}
-              <strong style={{ color: '#e2e8f0' }}>residente</strong>, podrás asignarle una vivienda.
+              <strong style={{ color: 'var(--text)' }}>residente</strong>, podrás asignarle una vivienda.
             </p>
           </div>
           <Button
@@ -109,10 +116,17 @@ export default function AdminUsers() {
         <div className="admin-users-stats" style={styles.statsGrid}>
           {ROLES.map((role) => (
             <div key={role} className="admin-users-stat-card" style={styles.statCard}>
-              <p className="admin-users-stat-value" style={styles.statValue}>
-                {byRole[role]}
-              </p>
-              <RoleBadge role={role} />
+              <div className="admin-users-stat-inner">
+                <div className={`admin-users-stat-icon-wrap admin-users-stat-icon-wrap--${role}`}>
+                  {ROLE_STAT_ICON[role]}
+                </div>
+                <div className="admin-users-stat-body">
+                  <p className="admin-users-stat-value" style={styles.statValue}>
+                    {byRole[role]}
+                  </p>
+                  <RoleBadge role={role} />
+                </div>
+              </div>
             </div>
           ))}
         </div>

@@ -19,9 +19,9 @@ export const STATUS_LABELS: Record<ProfileStatus, string> = {
 }
 
 export const ROLE_ACTIVE: Record<UserRole, CSSProperties> = {
-  admin: { borderColor: '#22d3ee', color: '#22d3ee', background: 'rgba(34,211,238,.1)' },
-  resident: { borderColor: '#818cf8', color: '#818cf8', background: 'rgba(129,140,248,.1)' },
-  security: { borderColor: '#fb923c', color: '#fb923c', background: 'rgba(251,146,60,.1)' },
+  admin: { borderColor: 'var(--accent-cyan)', color: 'var(--accent-cyan)', background: 'rgba(0, 229, 200, 0.1)' },
+  resident: { borderColor: 'var(--accent-violet)', color: 'var(--accent-violet)', background: 'rgba(139, 92, 246, 0.1)' },
+  security: { borderColor: 'var(--accent-amber)', color: 'var(--accent-amber)', background: 'rgba(245, 166, 35, 0.1)' },
 }
 
 export const STATUS_ACTIVE: Record<ProfileStatus, CSSProperties> = {

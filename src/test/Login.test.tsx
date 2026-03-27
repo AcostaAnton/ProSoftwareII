@@ -3,6 +3,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import LoginPage from '../pages/auth/Login'
+import { ThemeProvider } from '../context/ThemeContext'
 import { loginWithEmail } from '../services/auth.service'
 
 const mockNavigate = vi.fn()
@@ -24,7 +25,9 @@ const loginWithEmailMock = vi.mocked(loginWithEmail)
 function renderLogin() {
   return render(
     <MemoryRouter>
-      <LoginPage />
+      <ThemeProvider>
+        <LoginPage />
+      </ThemeProvider>
     </MemoryRouter>,
   )
 }

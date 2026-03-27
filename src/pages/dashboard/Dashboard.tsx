@@ -46,27 +46,25 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div style={{ paddingTop: 8 }}>
-        <p style={{ color: '#94a3b8', fontSize: 14 }}>Cargando dashboard...</p>
-      </div>
+      <div className="pt-2 text-sm text-[var(--muted)]">Cargando dashboard...</div>
     )
   }
 
   if (error) {
     return (
-      <div style={{ paddingTop: 8 }}>
-        <p style={{ color: '#f87171', fontSize: 14 }}>
-          Error al cargar el dashboard: {error}
-        </p>
+      <div className="pt-2 text-sm text-[var(--accent-rose)]">
+        Error al cargar el dashboard: {error}
       </div>
     )
   }
 
   return (
-    <div style={{ paddingTop: 8 }}>
+    <div>
       <DashboardHeader
         userName={userName}
         secondaryText={secondaryText}
+        showNewVisitButton={showNewVisitButton}
+        onNewVisit={handleNewVisit}
       />
 
       <DashboardStatsPanel stats={stats} />
@@ -74,8 +72,6 @@ export default function Dashboard() {
       <RecentVisitsTable
         title="Visitas recientes"
         visits={recentVisits}
-        showNewVisitButton={showNewVisitButton}
-        onNewVisit={handleNewVisit}
         onViewQr={handleViewQr}
       />
 

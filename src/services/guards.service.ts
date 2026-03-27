@@ -1,3 +1,5 @@
+import { supabase } from './supabase'
+
 export type Guard = {
   id: string
   name: string
@@ -30,89 +32,96 @@ export type GuardActivity = {
   logs: AccessLog[]
 }
 
-const MOCK_GUARDS: Guard[] = [
-  {
-    id: '1',
-    name: 'Carlos Guardia',
-    email: 'carlos@seguridad.com',
-    phone: '9999-0001',
-    role: 'security',
-    active: true,
-    created_at: '2024-01-01'
-  },
-  {
-    id: '2',
-    name: 'María López',
-    email: 'maria@seguridad.com',
-    phone: '9999-0002',
-    role: 'security',
-    active: true,
-    created_at: '2024-01-01'
-  },
-  {
-    id: '3',
-    name: 'Juan Pérez',
-    email: 'juan@seguridad.com',
-    phone: '9999-0003',
-    role: 'security',
-    active: false,
-    created_at: '2024-01-01'
-  }
-]
+type GuardProfileRow = {
+  id: string
+  name: string
+  email?: string | null
+  phone: string | null
+  role: 'security'
+  status?: 'active' | 'inactive' | 'suspended' | null
+  created_at: string
+}
 
-const MOCK_LOGS: AccessLog[] = [
-  {
-    id: 'l1',
-    guard_id: '1',
-    visit_id: 'v1',
-    entry_time: '14:30',
-    date: '2024-03-18',
-    created_at: '2024-03-18',
-    visits: {
-      visitor_name: 'Ana García',
-      visitor_phone: '8888-0001',
-      qr_token: 'TKN-123',
-      resident_id: 'r1'
-    }
-  },
-  {
-    id: 'l2',
-    guard_id: '1',
-    visit_id: 'v2',
-    entry_time: '09:15',
-    date: '2024-03-18',
-    created_at: '2024-03-18',
-    visits: {
-      visitor_name: 'Pedro Martínez',
-      visitor_phone: '8888-0002',
-      qr_token: 'TKN-456',
-      resident_id: 'r2'
-    }
-  },
-  {
-    id: 'l3',
-    guard_id: '2',
-    visit_id: 'v3',
-    entry_time: '11:00',
-    date: '2024-03-17',
-    created_at: '2024-03-17',
-    visits: {
-      visitor_name: 'Laura Torres',
-      visitor_phone: '8888-0003',
-      qr_token: 'TKN-789',
-      resident_id: 'r3'
-    }
+type AccessLogRow = {
+  id: string
+  guard_id: string
+  visit_id: string
+  entry_time: string | null
+  created_at: string
+  visits?: {
+    visitor_name: string
+    visitor_phone: string
+    qr_token: string
+    resident_id: string
+  }[] | null
+}
+
+function toGuard(row: GuardProfileRow): Guard {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email ?? '',
+    phone: row.phone ?? '',
+    role: 'security',
+    active: row.status !== 'inactive' && row.status !== 'suspended',
+    created_at: row.created_at,
   }
-]
+}
+
+function toAccessLog(row: AccessLogRow): AccessLog {
+  const date = row.created_at?.split('T')[0] ?? ''
+  const timeFromCreatedAt = row.created_at?.split('T')[1]?.slice(0, 5) ?? ''
+  return {
+    id: row.id,
+    guard_id: row.guard_id,
+    visit_id: row.visit_id,
+    entry_time: row.entry_time ?? timeFromCreatedAt,
+    date,
+    created_at: row.created_at,
+    visits: row.visits?.[0] ?? undefined,
+  }
+}
 
 export const guardsService = {
   async getGuards(): Promise<Guard[]> {
-    return MOCK_GUARDS
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, name, email, phone, role, status, created_at')
+      .eq('role', 'security')
+      .order('name', { ascending: true })
+
+    if (error) throw error
+    return ((data ?? []) as GuardProfileRow[]).map(toGuard)
   },
 
   async getGuardsActivity(): Promise<GuardActivity[]> {
-    return MOCK_GUARDS.map((guard) => {
-      const guardLogs = MOCK_LOGS.filter((log) => log.guard_id === guard.id)
+    const [guards, logs] = await Promise.all([
+      guardsService.getGuards(),
+      (async (): Promise<AccessLog[]> => {
+        const { data, error } = await supabase
+          .from('access_logs')
+          .select(`
+            id,
+            guard_id,
+            visit_id,
+            entry_time,
+            created_at,
+            visits:visit_id (
+              visitor_name,
+              visitor_phone,
+              qr_token,
+              resident_id
+            )
+          `)
+          .order('created_at', { ascending: false })
+
+        if (error) throw error
+        return ((data ?? []) as AccessLogRow[]).map(toAccessLog)
+      })(),
+    ])
+
+    return guards.map((guard) => {
+      const guardLogs = logs.filter((log) => log.guard_id === guard.id)
       const sorted = [...guardLogs].sort(
         (a, b) =>
           `${b.date} ${b.entry_time}`.localeCompare(`${a.date} ${a.entry_time}`, undefined, {
@@ -132,20 +141,49 @@ export const guardsService = {
 
   async getStats() {
     const today = new Date().toISOString().split('T')[0]
+    const [guards, logs] = await Promise.all([guardsService.getGuards(), guardsService.getGuardLogs()])
     return {
-      total_guards: MOCK_GUARDS.length,
-      active_guards: MOCK_GUARDS.filter(g => g.active).length,
-      total_access: MOCK_LOGS.length,
-      today_access: MOCK_LOGS.filter(l => l.date === today).length,
-      avg_per_guard: Math.round(MOCK_LOGS.length / MOCK_GUARDS.length)
+      total_guards: guards.length,
+      active_guards: guards.filter((g) => g.active).length,
+      total_access: logs.length,
+      today_access: logs.filter((l) => l.date === today).length,
+      avg_per_guard: guards.length > 0 ? Math.round(logs.length / guards.length) : 0,
     }
   },
 
-  async getGuardLogs(guardId: string): Promise<AccessLog[]> {
-    return MOCK_LOGS.filter(log => log.guard_id === guardId)
+  async getGuardLogs(guardId?: string): Promise<AccessLog[]> {
+    let query = supabase
+      .from('access_logs')
+      .select(`
+        id,
+        guard_id,
+        visit_id,
+        entry_time,
+        created_at,
+        visits:visit_id (
+          visitor_name,
+          visitor_phone,
+          qr_token,
+          resident_id
+        )
+      `)
+      .order('created_at', { ascending: false })
+
+    if (guardId) query = query.eq('guard_id', guardId)
+
+    const { data, error } = await query
+    if (error) throw error
+    return ((data ?? []) as AccessLogRow[]).map(toAccessLog)
   },
 
-  async toggleGuardStatus(_guardId: string, _active: boolean) {
-    return Promise.resolve()
+  async toggleGuardStatus(guardId: string, active: boolean) {
+    const status = active ? 'active' : 'inactive'
+    const { error } = await supabase
+      .from('profiles')
+      .update({ status })
+      .eq('id', guardId)
+      .eq('role', 'security')
+
+    if (error) throw error
   },
 }

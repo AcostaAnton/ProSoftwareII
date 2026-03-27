@@ -1,209 +1,157 @@
-# 🏢 Sistema de Gestión de Visitas en Residencial
+# Sistema de gestión de visitas en residencial (PasaYa / ProSoftware)
 
-Documento de requerimientos funcionales y no funcionales, actualizado con el estado real de implementación del proyecto.
-
-> **Leyenda de estado:**
-> - ✅ Implementado
-> - ⚠️ Parcialmente implementado
-> - ❌ Pendiente / No implementado
+Documento de **requerimientos alineados con la implementación actual** del código (React + Supabase). Las reglas de persistencia y permisos finales dependen de **políticas RLS** y del esquema en Supabase.
 
 ---
 
-## 1️⃣ Objetivo del Sistema
+## 1. Objetivo del sistema
 
-Desarrollar una aplicación web que permita gestionar y controlar el ingreso y salida de visitantes en una residencial, garantizando **seguridad**, **trazabilidad** y **registro histórico** de accesos.
-
----
-
-## 2️⃣ Requerimientos Funcionales
+Permitir **registrar, autorizar y auditar** el acceso de visitantes a una comunidad cerrada: el **residente** (o administrador en nombre del conjunto) crea la visita y obtiene un **QR / enlace**; el **personal de seguridad** valida el código en garita y registra **entrada**, **denegación** o **salida**; el **administrador** gestiona **usuarios**, **unidades** (vía asignación) y **estadísticas** dentro de su comunidad.
 
 ---
 
-### 2.1 Gestión de Usuarios y Autenticación
+## 2. Actores y roles
 
-| Funcionalidad | Estado | Notas |
-|---|---|---|
-| Inicio de sesión con email y contraseña | ✅ | Autenticación via Supabase Auth (JWT) |
-| Cambio forzado de contraseña al primer login | ✅ | Flujo `must_change_password` con ruta protegida `/account/cambiar-contrasena` |
-| Roles del sistema: Admin, Guardia, Residente | ✅ | RBAC implementado con `AuthGuard` y `ProtectedRoute` |
-| Registro de residentes por el administrador | ✅ | Crear cuenta con contraseña temporal + asignación de unidad y comunidad |
-| Registro de guardias de seguridad por el administrador | ✅ | Misma lógica de creación que residentes, rol `security` |
-| Edición de residentes y guardias | ✅ | Editar nombre, teléfono, rol, estado y unidad asignada |
-| Desactivación / eliminación de usuarios | ✅ | Campo `status` en `profiles` (`active` / `inactive`) |
-| Recuperación de contraseña (flujo "olvidé mi clave") | ❌ | No hay pantalla de recuperación autónoma. Solo el admin puede gestionar accesos |
-| Límite de 2 residentes por unidad habitacional | ✅ | Validado en servicio mediante `owner_id` y `co_owner_id` en `units` |
+| Rol | Identificador en código | Alcance principal |
+|-----|-------------------------|-------------------|
+| Administrador | `admin` | Usuarios de la comunidad, estadísticas, lista global de visitas, escaneo, creación de visitas |
+| Residente | `resident` | Propias visitas, creación de visitas, “Mis visitas”, dashboard |
+| Guardia / seguridad | `security` | Lista de visitas y escaneo QR en garita |
 
-**Roles implementados:**
-
-| Rol | Descripción |
-|---|---|
-| `admin` | Gestión total del sistema: usuarios, guardias, estadísticas, visitas |
-| `security` | Control de ingreso/salida: escáner QR y registro de accesos |
-| `resident` | Crea y gestiona sus propias visitas, genera pases QR |
+El acceso a pantallas se controla con **rutas protegidas** (`AuthGuard` para sesión + `ProtectedRoute` por rol). La página de **actividad de guardias** (`/admin/guards`) usa **datos simulados** en el cliente; no persiste en Supabase.
 
 ---
 
-### 2.2 Registro de Visitas
+## 3. Autenticación y usuarios
 
-| Campo | Estado | Notas |
-|---|---|---|
-| Nombre completo del visitante | ✅ | Campo requerido |
-| Teléfono del visitante | ✅ | Opcional |
-| Fecha de visita | ✅ | Campo requerido |
-| Hora de visita | ✅ | Opcional |
-| Motivo / asunto de visita | ✅ | Opcional; con opciones predefinidas para residencias y áreas comunes |
-| Destino / unidad a visitar | ✅ | Opcional; selección de unidades de la comunidad |
-| Estado de la visita | ✅ | `pending`, `approved`, `rejected`, `completed`, `cancelled` |
-| Generación de token QR único (8 caracteres hex) | ✅ | Token generado con `crypto.getRandomValues()` |
-| Fotografía del visitante | ⚠️ | Componente `CameraCapture.tsx` y `uploadVisitPhoto()` implementados; integración en formulario pendiente de validar |
-| Identidad / DPI / Pasaporte | ❌ | Campo no incluido en la tabla `visits` |
-| Número de placa vehicular | ⚠️ | Campos `vehicle_photo_url` y `vehicle_notes` disponibles en `access_logs`; no en el formulario de visita |
+### 3.1 Implementado
 
----
+- **Inicio de sesión** con correo y contraseña (Supabase Auth).
+- **Cierre de sesión** desde la barra lateral.
+- **Cambio obligatorio de contraseña** tras alta por administrador: metadata `must_change_password`; redirección a `/account/cambiar-contrasena` hasta actualizar (mínimo 8 caracteres).
+- **Alta de usuarios por administrador** (`createCommunityUser`): contraseña temporal generada, `upsert` en tabla `profiles`, asignación opcional de **unidad** para residentes (hasta **2** residentes por unidad si existe columna `co_owner_id` en `units`).
+- **Edición de usuarios**: rol, estado (`active` | `inactive` | `suspended`), comunidad y unidad según reglas del servicio.
+- Perfiles con **comunidad** (`community_id`) y, en listados, **número de unidad** derivado de `units` (titular o co-titular).
 
-### 2.3 Pase QR del Visitante
+### 3.2 No implementado en esta app (pantalla)
 
-| Funcionalidad | Estado | Notas |
-|---|---|---|
-| Generación del pase QR | ✅ | Componente `QRGenerator.tsx` con tarjeta visual completa |
-| Página pública de acceso sin login (`/acceso/:token`) | ✅ | Página `VisitorAccessPage` accesible por cualquier persona con el enlace |
-| Descarga del pase como imagen | ✅ | Mediante `html-to-image` |
-| Compartir pase por mensaje (WhatsApp / SMS) | ✅ | Mensaje de invitación generado con `qrInvitationMessage.ts` |
+- **Autoregistro público** del visitante (no hay flujo de registro en UI; existe `registerUser` en servicio pero no se expone como pantalla principal).
+- **Recuperación de contraseña** (pantalla “olvidé mi contraseña”); el login contempla mensajes de correo no confirmado según Supabase.
 
 ---
 
-### 2.4 Control de Ingreso y Salida (Guardia)
+## 4. Estructura organizacional (datos)
 
-| Funcionalidad | Estado | Notas |
-|---|---|---|
-| Escáner QR en tiempo real (cámara del dispositivo) | ✅ | Componente `QRScanner.tsx` usando `qr-scanner` |
-| Registro de entrada (check-in) | ✅ | Se guarda en tabla `access_logs` con `entry_time` |
-| Registro de salida (check-out) | ✅ | Se actualiza `exit_time` en el registro de `access_logs` |
-| Registro automático de fecha y hora | ✅ | Timestamp del servidor Supabase |
-| Verificación del estado de la visita al escanear | ✅ | Visita debe estar en estado `pending` o `approved` |
-| Visualización de visitas activas dentro del residencial | ✅ | Dashboard del guardia muestra visitas del día |
-| Notas de entrada / salida | ⚠️ | Campos `entry_notes` y `exit_notes` en `access_logs`; UI no completamente expuesta |
+- **Comunidades** (`communities`): el administrador opera sobre la comunidad asociada a su perfil.
+- **Unidades / viviendas** (`units`): número de unidad, `owner_id` y opcionalmente `co_owner_id`. El código contempla **bases sin** `co_owner_id` (consultas alternativas).
+- **Perfiles** (`profiles`): nombre, teléfono, correo, rol, estado, comunidad.
 
 ---
 
-### 2.5 Gestión de Visitas (Residente y Admin)
+## 5. Visitas — reglas de negocio
 
-| Funcionalidad | Estado | Notas |
-|---|---|---|
-| Crear nueva visita | ✅ | Formulario en `/visits/new` |
-| Ver mis visitas (residente) | ✅ | Ruta `/visits/my-visits` exclusiva para rol `resident` |
-| Ver lista completa de visitas | ✅ | Ruta `/visits/list` con paginación y filtros por estado |
-| Ver detalle de una visita | ✅ | Ruta `/visits/:id` con logs de acceso e historial de estado |
-| Cancelar visita | ✅ | Acción disponible en el detalle de la visita |
-| Cambiar estado de visita manualmente | ✅ | `approve`, `reject`, etc. desde la vista de detalle |
-| Historial de cambios de estado | ✅ | Tabla `visit_status_history` con usuario y fecha de cada cambio |
-| Filtro de visitas por estado | ✅ | Filtros en `VisitList` |
-| Filtro por fecha | ⚠️ | Visitas ordenadas por fecha; filtro de rango de fecha no implementado |
-| Exportación de reportes (PDF / Excel) | ❌ | No implementado |
+### 5.1 Estados de visita
 
----
+Valores usados en tipos y servicios: `pending` | `approved` | `rejected` | `completed` | `cancelled`.
 
-### 2.6 Administración
+- **Creación**: la visita queda en **`pending`** y se genera un **`qr_token`** único.
+- **Garita — entrada**: pasa a **`approved`**, se registra log de acceso y línea en historial de estados.
+- **Garita — denegación**: **`rejected`**, con motivo obligatorio en notas.
+- **Garita — salida**: visita **`completed`** (asociada a actualización del log de acceso).
+- **Cancelación** (p. ej. desde detalle): puede usarse **`cancelled`** vía actualización de estado.
 
-| Funcionalidad | Estado | Notas |
-|---|---|---|
-| Panel de estadísticas globales | ✅ | Ruta `/admin/stats` — visitas totales, accesos, residentes más activos |
-| Gestión de residentes | ✅ | CRUD completo en `/admin/users` |
-| Gestión de guardias de seguridad | ✅ | CRUD completo en `/admin/guards` |
-| Gestión de comunidades | ⚠️ | Comunidades consultadas y asignadas; no hay pantalla CRUD de comunidades |
-| Gestión de unidades habitacionales | ⚠️ | Unidades asignadas al crear/editar usuarios; no hay pantalla CRUD de unidades |
+### 5.2 Datos al crear una visita (formulario)
+
+- **Obligatorios**: nombre del visitante, fecha de visita, hora (hora, minutos, AM/PM).
+- **Opcionales**: teléfono del visitante, asunto / motivo (`visit_purpose`).
+- En el modelo existe **`visit_destination`** en base y tipos; el formulario actual envía **`null`** (destino no capturado en UI).
+- **No** se capturan en el alta: DPI/pasaporte, foto del visitante, placa de vehículo como campos dedicados (la foto en garita es del **vehículo** vía flujo de escaneo, con fallback si falla el storage).
+
+### 5.3 QR y enlace de visitante
+
+- Tras crear la visita se muestra **QR** (contenido basado en el token) para compartir.
+- Ruta pública **`/acceso/:token`**: página para el visitante con QR y copia de enlace (sin login).
 
 ---
 
-### 2.7 Seguridad y Trazabilidad
+## 6. Funcionalidades por módulo (implementación)
 
-| Funcionalidad | Estado | Notas |
-|---|---|---|
-| Encriptación de contraseñas | ✅ | Manejada por Supabase Auth |
-| Autenticación con JWT | ✅ | Tokens gestionados por Supabase Auth |
-| Control de acceso por roles (RBAC) | ✅ | `AuthGuard` + `ProtectedRoute` en el frontend; RLS en el backend |
-| Row Level Security (RLS) en Supabase | ✅ | Políticas definidas para cada rol sobre cada tabla |
-| Bitácora de acciones críticas (audit logs) | ✅ | Tabla `audit_logs` con servicio `logs.service.ts` |
-| Historial de cambios de estado de visitas | ✅ | Tabla `visit_status_history` |
-| HTTPS | ✅ | Garantizado por el hosting (Vercel) |
-| Notificaciones en tiempo real (push/SMS) | ❌ | No implementado |
+### 6.1 Dashboard
 
----
+- KPIs: **total**, **pendientes**, **aprobadas**, **completadas** (según rol: residente solo sus visitas; otros roles según consulta global o por comunidad).
+- Tabla de **visitas recientes** con acción de ver QR si está pendiente (residente/admin).
+- Botón **nueva visita** para **residente** y **admin**.
 
-## 3️⃣ Requerimientos No Funcionales
+### 6.2 Listado de visitas
 
-### 3.1 Seguridad
+- **Residente**: solo sus visitas (`getVisitsByResident`).
+- **Admin y seguridad**: todas las visitas (`getAllVisits`).
+- **Filtros en cliente**: búsqueda por texto, rangos de fecha, atajos (hoy, semana, etc.), estados; **paginación** (tamaño de página fijo en código).
 
-| Requerimiento | Estado |
-|---|---|
-| Encriptación de contraseñas | ✅ |
-| JWT / Autenticación segura | ✅ |
-| Control de acceso por roles | ✅ |
-| HTTPS obligatorio | ✅ |
+### 6.3 Detalle de visita
 
----
+- Carga **perfil del residente**, **logs de acceso** e **historial de cambios de estado** (con joins o carga degradada si falla el join).
+- Actualización manual de **estado** de la visita según `useVisits` / pantalla.
 
-### 3.2 Rendimiento
+### 6.4 Garita — escaneo (`/scan`)
 
-| Requerimiento | Estado | Notas |
-|---|---|---|
-| Tiempo de respuesta < 2 segundos | ✅ | Consultas paginadas; React + Vite con SWC |
-| Soporte para 50–200 usuarios concurrentes | ✅ | Delegado a Supabase (PostgreSQL gestionado) |
+- Acceso **admin** y **security**.
+- **Cámara** para leer QR o **entrada manual del token**.
+- Coincidencia por `qr_token` contra la lista de visitas cargada en cliente.
+- Modal de acciones: **entrada** (foto opcional, notas), **denegar** (motivo obligatorio), **salida** (notas), persistiendo en `access_logs`, `visits` y `visit_status_history`.
+
+### 6.5 Administración
+
+- **Usuarios** (`/admin/users`, solo admin): listado por comunidad, crear y editar.
+- **Estadísticas** (`/admin/stats`, solo admin): rango de fechas, KPIs, top residentes por volumen, listado de incidentes (rechazadas), **exportación CSV** del periodo filtrado.
+- **Actividad guardias** (`/admin/guards`): **demo con datos mock**, no integrado a Supabase.
 
 ---
 
-### 3.3 Disponibilidad
+## 7. Trazabilidad y bitácora
 
-| Requerimiento | Estado | Notas |
-|---|---|---|
-| Sistema disponible 24/7 | ✅ | Supabase + Vercel garantizan alta disponibilidad |
-| Backup automático diario | ✅ | Incluido en los planes de Supabase |
-
----
-
-### 3.4 Usabilidad y Responsividad
-
-| Requerimiento | Estado | Notas |
-|---|---|---|
-| Interfaz adaptada para guardias (botones grandes y visibles) | ✅ | Diseño operativo en `/scan` |
-| Compatible con tablet y móvil | ✅ | Layout responsive + hook `useResponsive` |
-| Diseño moderno con Tailwind CSS v4 | ✅ | |
+- **Entrada / salida / denegación** en garita generan o actualizan registros en **`access_logs`** (timestamps ISO, notas, foto de vehículo opcional).
+- **`visit_status_history`** guarda transiciones con usuario que realizó el cambio (`changed_by_id`) y notas.
+- **Subida de fotos** al bucket `visit-photos` (con URL de respaldo si la subida falla).
 
 ---
 
-### 3.5 Calidad de Código
+## 8. Requerimientos no funcionales (alineados al stack)
 
-| Requerimiento | Estado | Notas |
-|---|---|---|
-| Pruebas unitarias | ✅ | Vitest + React Testing Library; 8 suites en `src/test/` |
-| Linting estático | ✅ | ESLint + TypeScript ESLint |
-| Reporte de cobertura de código | ✅ | `vitest run --coverage` con proveedor V8 |
-
----
-
-## 4️⃣ Modelo de Datos (Tablas Principales)
-
-| Tabla | Descripción |
-|---|---|
-| `communities` | Residenciales registrados en el sistema |
-| `profiles` | Perfiles de usuario extendidos (rol, comunidad, estado) |
-| `units` | Unidades habitacionales (casa/depto) con titular y co-titular |
-| `visits` | Visitas registradas por residentes con token QR único |
-| `access_logs` | Registro de entrada/salida por cada visita |
-| `visit_status_history` | Historial de cambios de estado de cada visita |
-| `audit_logs` | Bitácora de acciones críticas del sistema |
+| Área | Criterio / implementación |
+|------|---------------------------|
+| Autenticación | Supabase Auth (sesión, refresh); **HTTPS** en despliegue del sitio |
+| Autorización | Control por rol en frontend + **RLS** esperado en Supabase para datos reales |
+| Seguridad de contraseñas | Delegada a Supabase (hashing); no almacenar contraseñas en texto en el cliente |
+| Rendimiento | Listas con filtros locales; visitas paginadas en servicio donde aplica; `useDeferredValue` en búsqueda de lista |
+| Usabilidad | Layout con **sidebar** y **topbar**; **responsive** (sidebar colapsable, backdrop en móvil); flujos de garita con botones grandes en pantalla de escaneo |
+| Calidad | Tests unitarios (Vitest) en utilidades, helpers y pantallas puntuales |
+| Desarrollo | `?skipAuth=1` solo en **modo desarrollo** para omitir guards (no usar en producción) |
 
 ---
 
-## 5️⃣ Pendientes y Mejoras Futuras
+## 9. Brecha respecto a documentos históricos o deseos iniciales
 
-| Feature | Prioridad sugerida |
-|---|---|
-| Recuperación de contraseña autónoma (forgot password) | Alta |
-| Pantalla CRUD de comunidades y unidades para admin | Media |
-| Filtro de visitas por rango de fechas | Media |
-| Exportación de reportes en PDF / Excel | Media |
-| Notificaciones en tiempo real (Supabase Realtime / push) | Media |
-| Campo de identidad (DPI / pasaporte) en el formulario de visita | Baja |
-| Campo de placa vehicular en el formulario de visita | Baja |
-| Integración completa de captura de fotografía del visitante en formulario | Baja |
+Si se comparaba con un alcance “ideal”, lo siguiente **no está cubierto** o está **parcial** en la versión actual:
+
+- Notificaciones **push** o **tiempo real** a residentes cuando llega un visitante.
+- Exportación **PDF** o **Excel** nativa (solo **CSV** en estadísticas).
+- Registro de **DPI / documento**, **foto del visitante** en el alta, **placa** como campo propio.
+- **Recuperación de contraseña** desde la app.
+- **Gestión real de guardias** y métricas de guardias desde base de datos (pantalla mock).
+- **Disponibilidad 24/7**, **backups diarios** y **N usuarios concurrentes**: dependen del plan y configuración de Supabase/infra, no del código del cliente.
+
+---
+
+## 10. Variables de entorno
+
+La aplicación requiere al menos:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+Opcionalmente, URL pública del sitio para enlaces de correo/redirecciones (según `getPublicSiteUrl`).
+
+---
+
+*Última revisión según el código de la aplicación cliente; migraciones SQL y políticas RLS deben documentarse en el repositorio del backend o en Supabase.*

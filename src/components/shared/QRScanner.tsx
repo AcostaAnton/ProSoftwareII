@@ -58,7 +58,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanResult }) => {
   }, [])
 
   return (
-    <section style={{ background: '#1a2024', borderRadius: '16px', padding: '20px', border: '1px solid #334155', marginBottom: '20px' }}>
+    <section style={{ background: 'var(--surface2)', borderRadius: '16px', padding: '20px', border: '1px solid var(--border-bright)', marginBottom: '20px' }}>
       <div style={{
         position: 'relative',
         width: '100%',
@@ -70,10 +70,10 @@ const QRScanner: React.FC<QRScannerProps> = ({ onScanResult }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        border: cameraActive ? '2px solid #22d3ee' : '2px solid #334155'
+        border: cameraActive ? '2px solid var(--accent-cyan)' : '2px solid var(--border-bright)'
       }}>
         <video ref={videoRef} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        {!cameraActive && <p style={{ color: '#64748b', position: 'absolute' }}>Cámara inactiva</p>}
+        {!cameraActive && <p style={{ color: 'var(--muted)', position: 'absolute' }}>Cámara inactiva</p>}
       </div>
 
       <Button

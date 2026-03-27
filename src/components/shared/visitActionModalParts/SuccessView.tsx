@@ -5,7 +5,7 @@ export function SuccessView({ rejected }: { rejected: boolean }) {
       <h2 style={{ color: rejected ? '#ef4444' : '#10b981', margin: 0, fontSize: '24px' }}>
         {rejected ? 'Acceso Denegado' : '¡Registrado!'}
       </h2>
-      <p style={{ color: '#94a3b8', marginTop: '8px' }}>La operación se guardó correctamente.</p>
+      <p style={{ color: 'var(--muted)', marginTop: '8px' }}>La operación se guardó correctamente.</p>
     </div>
   )
 }

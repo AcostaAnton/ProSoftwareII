@@ -45,12 +45,12 @@ const ScanPage: React.FC = () => {
   }, [])
 
   return (
-    <div style={{ backgroundColor: '#080c0f', minHeight: '100vh', padding: isMobile ? '10px' : '20px', color: '#ffffff', fontFamily: 'sans-serif' }}>
+    <div style={{ backgroundColor: 'var(--bg)', minHeight: '100vh', padding: isMobile ? '10px' : '20px', color: 'var(--text)', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
       <div style={{ maxWidth: '600px', margin: '0 auto' }}>
         
         <header style={{ marginBottom: '30px' }}>
-          <h1 style={{ fontSize: '28px', fontWeight: 'bold', margin: '0 0 8px 0' }}>Control de Acceso</h1>
-          <p style={{ color: '#94a3b8', fontSize: '14px' }}>Escanea el código QR del visitante para validar su entrada.</p>
+          <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: '28px', fontWeight: 800, margin: '0 0 8px 0' }}>Control de Acceso</h1>
+          <p style={{ color: 'var(--muted)', fontSize: '14px' }}>Escanea el código QR del visitante para validar su entrada.</p>
         </header>
 
         {}
@@ -63,8 +63,8 @@ const ScanPage: React.FC = () => {
             value={token}
             onChange={(e) => setToken(e.target.value)}
             style={{ 
-              flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid #334155', 
-              backgroundColor: '#1a2024', color: 'white' 
+              flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid var(--border-bright)', 
+              backgroundColor: 'var(--surface2)', color: 'var(--text)' 
             }}
           />
           <Button
@@ -74,9 +74,7 @@ const ScanPage: React.FC = () => {
             onClick={handleManualSearch}
             style={{
               padding: '0 20px',
-              borderRadius: 8,
-              background: '#3b82f6',
-              color: 'white',
+              borderRadius: 10,
             }}
           >
             Buscar
