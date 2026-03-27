@@ -25,9 +25,10 @@ export async function authenticateUser(email: string, password: string): Promise
     })
 
     if (error || !data.user) {
+      console.error('Error en Supabase Auth:', error?.message || 'Usuario no encontrado')
       return {
         success: false,
-        error: 'Email o contraseña incorrectos. Intenta de nuevo.',
+        error: `Email o contraseña incorrectos (${error?.message || 'inválido'})`,
       }
     }
 

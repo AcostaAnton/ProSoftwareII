@@ -8,6 +8,7 @@ export interface CreateVisitParams {
   visit_time?: string | null
   visit_purpose?: string | null
   visit_destination?: string | null
+  created_by?: string | null
 }
 
 export interface VisitResponse {
@@ -47,6 +48,7 @@ export async function createVisit(params: CreateVisitParams): Promise<VisitRespo
       qr_token,
       status: 'pending',
       created_at: new Date().toISOString(),
+      created_by: params.created_by || params.resident_id,
     }
 
     const { data, error } = await supabase
@@ -112,7 +114,7 @@ export async function getResidentInfo(residentId: string) {
 
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, name, unit_number, community_id')
+      .select('id, name, community_id')
       .eq('id', residentId)
       .eq('role', 'resident')
       .single()

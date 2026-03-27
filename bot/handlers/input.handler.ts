@@ -21,12 +21,12 @@ export async function handleAuthFlow(ctx: Context) {
   // PASO 1: Solicitar Email
   if (step === 'email_input') {
     // Validar que sea un email
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text.trim())) {
       await ctx.reply('❌ Por favor, ingresa un email válido (ej: usuario@ejemplo.com):')
       return
     }
 
-    setUserData(userId, 'email', text)
+    setUserData(userId, 'email', text.trim())
     setUserStep(userId, 'password_input')
 
     await showPasswordPrompt(ctx)
@@ -46,7 +46,7 @@ export async function handleAuthFlow(ctx: Context) {
     await ctx.sendChatAction('typing')
 
     // Autenticar con email y contraseña
-    const authResult = await authenticateUser(email, text)
+    const authResult = await authenticateUser(email, text.trim())
 
     if (!authResult.success) {
       await ctx.reply(`❌ ${authResult.error}\n\nIntenta de nuevo con /start`)
@@ -66,7 +66,11 @@ export async function handleAuthFlow(ctx: Context) {
 
     if (residentInfo) {
       setUserData(userId, 'resident_id', residentInfo.id)
-      setUserData(userId, 'unit_number', residentInfo.unit_number || '')
+      setUserData(userId, 'user_name', residentInfo.name || authResult.userName || '')
+      setUserData(userId, 'community_id', residentInfo.community_id || '')
+    } else {
+      // Si no se encuentra perfil de residente, usar el ID de auth para poder continuar
+      setUserData(userId, 'resident_id', authResult.userId || '')
     }
 
     // Mostrar mensaje de bienvenida
@@ -100,7 +104,7 @@ export async function handleNewVisitFlow(ctx: Context) {
   const step = session.step
 
   if (step === 'visitor_name') {
-    setUserData(userId, 'visitor_name', text)
+    setUserData(userId, 'visitor_name', text.trim())
     setUserStep(userId, 'visitor_phone')
 
     await ctx.reply(
@@ -108,8 +112,9 @@ export async function handleNewVisitFlow(ctx: Context) {
       { parse_mode: 'Markdown' }
     )
   } else if (step === 'visitor_phone') {
-    if (text !== '/skip') {
-      setUserData(userId, 'visitor_phone', text)
+    const cleanText = text.trim().toLowerCase()
+    if (cleanText !== '/skip') {
+      setUserData(userId, 'visitor_phone', text.trim())
     }
 
     setUserStep(userId, 'visit_date')
@@ -122,9 +127,10 @@ export async function handleNewVisitFlow(ctx: Context) {
       { parse_mode: 'Markdown' }
     )
   } else if (step === 'visit_date') {
-    let visitDate = text
+    let visitDate = text.trim()
+    const cleanText = text.trim().toLowerCase()
 
-    if (text === '/today') {
+    if (cleanText === '/today') {
       visitDate = new Date().toISOString().split('T')[0]
     }
 
@@ -143,40 +149,29 @@ export async function handleNewVisitFlow(ctx: Context) {
       { parse_mode: 'Markdown' }
     )
   } else if (step === 'visit_time') {
-    if (text !== '/skip') {
+    const cleanText = text.trim().toLowerCase()
+    if (cleanText !== '/skip') {
       // Validar formato de hora
-      if (!/^\d{2}:\d{2}$/.test(text)) {
+      if (!/^\d{2}:\d{2}$/.test(text.trim())) {
         await ctx.reply('❌ Formato de hora inválido. Usa HH:MM')
         return
       }
 
-      setUserData(userId, 'visit_time', text)
+      setUserData(userId, 'visit_time', text.trim())
     }
 
     setUserStep(userId, 'visit_purpose')
 
     await ctx.reply(
-      '🎯 ¿Cuál es el propósito de la visita?\n\n' +
+      '🎯 ¿Cuál es el asunto de la visita?\n\n' +
       '(ej: Reparación, Entrega, Social, etc.)\n' +
       'Presiona /skip para omitir',
       { parse_mode: 'Markdown' }
     )
   } else if (step === 'visit_purpose') {
-    if (text !== '/skip') {
-      setUserData(userId, 'visit_purpose', text)
-    }
-
-    setUserStep(userId, 'visit_destination')
-
-    await ctx.reply(
-      '📍 ¿Cuál es destino o área de la visita?\n\n' +
-      '(ej: Departamento, Piscina, Área común, etc.)\n' +
-      'Presiona /skip para omitir',
-      { parse_mode: 'Markdown' }
-    )
-  } else if (step === 'visit_destination') {
-    if (text !== '/skip') {
-      setUserData(userId, 'visit_destination', text)
+    const cleanText = text.trim().toLowerCase()
+    if (cleanText !== '/skip') {
+      setUserData(userId, 'visit_purpose', text.trim())
     }
 
     setUserStep(userId, 'confirm_visit')
@@ -187,15 +182,13 @@ export async function handleNewVisitFlow(ctx: Context) {
     const visitDate = getUserDataValue(userId, 'visit_date')
     const visitTime = getUserDataValue(userId, 'visit_time')
     const visitPurpose = getUserDataValue(userId, 'visit_purpose')
-    const visitDestination = getUserDataValue(userId, 'visit_destination')
 
     let summary = '✅ *Resumen de la Visita*\n\n'
     summary += `👤 Visitante: ${visitorName}\n`
-    if (visitorPhone) summary += `📱 Teléfono: ${visitorPhone}\n`
+    if (visitorPhone && visitorPhone !== '(no mostrado)') summary += `📱 Teléfono: ${visitorPhone}\n`
     summary += `📅 Fecha: ${visitDate}\n`
-    if (visitTime) summary += `⏰ Hora: ${visitTime}\n`
-    if (visitPurpose) summary += `🎯 Propósito: ${visitPurpose}\n`
-    if (visitDestination) summary += `📍 Destino: ${visitDestination}\n`
+    if (visitTime && visitTime !== '(no mostrado)') summary += `⏰ Hora: ${visitTime}\n`
+    if (visitPurpose && visitPurpose !== '(no mostrado)') summary += `🎯 Asunto: ${visitPurpose}\n`
 
     summary += '\n¿Es correcta la información? Presiona\n'
     summary += '/confirmar para crear la visita\n'
