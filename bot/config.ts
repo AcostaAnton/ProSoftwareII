@@ -4,7 +4,7 @@ dotenv.config()
 
 export const config = {
   bot: {
-    token: process.env.BOT_TOKEN || '8765696885:AAHuiCYWsGFUuXnreJM31wQIH_gcJcxsEfU',
+    token: process.env.BOT_TOKEN || '',
     name: process.env.BOT_NAME || 'PasaYa',
   },
   supabase: {
@@ -14,6 +14,6 @@ export const config = {
   environment: process.env.NODE_ENV || 'development',
 }
 
-if (!config.supabase.url || !config.supabase.serviceRoleKey) {
-  console.warn('⚠️  Faltan credenciales de Supabase. Configura las variables de entorno.')
+if (!config.bot.token || !config.supabase.url || !config.supabase.serviceRoleKey) {
+  console.warn('⚠️  Faltan variables de entorno (BOT_TOKEN o Supabase). Configure el archivo .env.')
 }
