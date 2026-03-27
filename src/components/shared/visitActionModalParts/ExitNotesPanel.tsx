@@ -7,7 +7,7 @@ export function ExitNotesPanel({
 }) {
   return (
     <div>
-      <label style={{ color: '#94a3b8', fontSize: '12px', textTransform: 'uppercase' }}>Notas de Salida</label>
+      <label style={{ color: 'var(--muted)', fontSize: '12px', textTransform: 'uppercase' }}>Notas de Salida</label>
       <textarea
         value={exitNotes}
         onChange={(e) => onChangeExitNotes(e.target.value)}
@@ -17,7 +17,7 @@ export function ExitNotesPanel({
           padding: '10px',
           marginTop: '5px',
           borderRadius: '8px',
-          backgroundColor: '#0f172a',
+          backgroundColor: 'var(--surface)',
           color: 'white',
           border: '1px solid #334155',
           minHeight: '120px',

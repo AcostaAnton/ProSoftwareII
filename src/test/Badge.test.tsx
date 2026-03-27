@@ -18,26 +18,26 @@ describe('RoleBadge', () => {
     expect(screen.getByText('Guardia')).toBeInTheDocument()
   })
 
-  it('aplica colores de fondo y texto según el rol', () => {
+  it('aplica colores de fondo y texto según el rol (variables de tema)', () => {
     const { rerender, container } = render(<RoleBadge role="admin" />)
     let span = container.querySelector('span')
     expect(span).toHaveStyle({
-      background: 'rgba(126,34,206,.25)',
-      color: '#c084fc',
+      background: 'var(--badge-role-admin-bg)',
+      color: 'var(--badge-role-admin-text)',
     })
 
     rerender(<RoleBadge role="resident" />)
     span = container.querySelector('span')
     expect(span).toHaveStyle({
-      background: 'rgba(8,145,178,.2)',
-      color: '#22d3ee',
+      background: 'var(--badge-role-resident-bg)',
+      color: 'var(--badge-role-resident-text)',
     })
 
     rerender(<RoleBadge role="security" />)
     span = container.querySelector('span')
     expect(span).toHaveStyle({
-      background: 'rgba(217,119,6,.2)',
-      color: '#fbbf24',
+      background: 'var(--badge-role-security-bg)',
+      color: 'var(--badge-role-security-text)',
     })
   })
 
@@ -48,7 +48,7 @@ describe('RoleBadge', () => {
       display: 'inline-flex',
       alignItems: 'center',
       fontSize: '12px',
-      fontWeight: '500',
+      fontWeight: '600',
     })
   })
 })

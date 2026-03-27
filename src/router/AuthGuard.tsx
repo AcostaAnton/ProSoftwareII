@@ -21,7 +21,7 @@ export default function AuthGuard() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#020617',
+          background: 'var(--bg)',
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -29,14 +29,14 @@ export default function AuthGuard() {
             style={{
               width: 40,
               height: 40,
-              border: '3px solid #1e293b',
-              borderTop: '3px solid #22d3ee',
+              border: '3px solid var(--surface2)',
+              borderTop: '3px solid var(--accent-cyan)',
               borderRadius: '50%',
               animation: 'spin 0.8s linear infinite',
               margin: '0 auto 16px',
             }}
           />
-          <p style={{ color: '#64748b', fontSize: 13 }}>Cargando...</p>
+          <p style={{ color: 'var(--muted)', fontSize: 13 }}>Cargando...</p>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>

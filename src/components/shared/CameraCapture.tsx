@@ -65,7 +65,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onClose }) => 
       backgroundColor: 'rgba(0,0,0,0.9)', display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center', zIndex: 1100
     }}>
-      <div style={{ backgroundColor: '#1e293b', padding: '20px', borderRadius: '16px', width: '90%', maxWidth: '600px' }}>
+      <div style={{ backgroundColor: 'var(--surface2)', border: '1px solid var(--border-bright)', padding: '20px', borderRadius: '16px', width: '90%', maxWidth: '600px' }}>
         {error ? (
           <div style={{ color: '#ef4444', textAlign: 'center' }}>
             <p>{error}</p>
@@ -86,7 +86,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onClose }) => 
               <Button type="button" variant="success" size="lg" onClick={handleCapture} style={{ flex: 2, borderRadius: 8, background: '#10b981' }}>
                 Capturar Foto
               </Button>
-              <Button type="button" variant="secondary" size="lg" onClick={onClose} style={{ flex: 1, borderRadius: 8, backgroundColor: '#64748b' }}>
+              <Button type="button" variant="secondary" size="lg" onClick={onClose} style={{ flex: 1, borderRadius: 8 }}>
                 Cancelar
               </Button>
             </div>

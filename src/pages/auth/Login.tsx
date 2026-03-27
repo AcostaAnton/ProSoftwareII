@@ -3,6 +3,7 @@ import { useState, type CSSProperties, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { loginWithEmail } from '../../services/auth.service'
 import { Button } from '../../components/ui/Button'
+import { ThemeToggle } from '../../components/ui/ThemeToggle'
 
 const LOGIN_TIMEOUT_MS = 12_000
 
@@ -65,6 +66,9 @@ export default function LoginPage() {
 
   return (
     <div className="login-page" style={styles.wrapper}>
+      <div style={styles.themeToggleWrap}>
+        <ThemeToggle />
+      </div>
       <div style={styles.orb1} />
       <div style={styles.orb2} />
 
@@ -76,7 +80,7 @@ export default function LoginPage() {
               height="28"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#0f172a"
+              stroke="#08130f"
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -133,10 +137,16 @@ const styles: Record<string, CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#020617',
+    background: 'var(--login-page-bg)',
     padding: 16,
     position: 'relative',
     overflow: 'hidden',
+  },
+  themeToggleWrap: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    zIndex: 10,
   },
   orb1: {
     position: 'absolute',
@@ -145,7 +155,7 @@ const styles: Record<string, CSSProperties> = {
     transform: 'translateX(-50%)',
     width: 400,
     height: 400,
-    background: 'rgba(6,182,212,.08)',
+    background: 'var(--login-orb1)',
     borderRadius: '50%',
     filter: 'blur(60px)',
   },
@@ -155,7 +165,7 @@ const styles: Record<string, CSSProperties> = {
     left: '33%',
     width: 300,
     height: 300,
-    background: 'rgba(99,102,241,.08)',
+    background: 'var(--login-orb2)',
     borderRadius: '50%',
     filter: 'blur(60px)',
   },
@@ -174,29 +184,29 @@ const styles: Record<string, CSSProperties> = {
     justifyContent: 'center',
     width: 56,
     height: 56,
-    background: '#22d3ee',
+    background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-violet))',
     borderRadius: 16,
     marginBottom: 16,
-    boxShadow: '0 10px 30px rgba(34,211,238,.3)',
+    boxShadow: '0 10px 30px rgba(0, 229, 200, 0.25)',
   },
   title: {
     fontFamily: "'Syne', sans-serif",
     fontSize: 32,
     fontWeight: 800,
-    color: 'white',
+    color: 'var(--text)',
     margin: 0,
   },
   subtitle: {
-    color: '#94a3b8',
+    color: 'var(--muted)',
     fontSize: 14,
     marginTop: 4,
   },
   card: {
-    background: '#0f172a',
-    border: '1px solid #1e293b',
+    background: 'var(--surface)',
+    border: '1px solid var(--border-bright)',
     borderRadius: 20,
     padding: 24,
-    boxShadow: '0 25px 50px rgba(0,0,0,.5)',
+    boxShadow: 'var(--login-card-shadow)',
   },
   form: {
     display: 'flex',
@@ -210,33 +220,31 @@ const styles: Record<string, CSSProperties> = {
     display: 'block',
     fontSize: 12,
     fontWeight: 500,
-    color: '#94a3b8',
+    color: 'var(--muted)',
     marginBottom: 6,
   },
   input: {
     width: '100%',
-    background: '#1e293b',
-    border: '1px solid #334155',
+    background: 'var(--surface2)',
+    border: '1px solid var(--border-bright)',
     borderRadius: 12,
     padding: '11px 16px',
-    color: 'white',
+    color: 'var(--text)',
     fontSize: 13,
     outline: 'none',
     transition: 'border .15s',
     boxSizing: 'border-box',
   },
   error: {
-    color: '#f87171',
+    color: 'var(--accent-rose)',
     fontSize: 12,
     marginBottom: 10,
   },
   btnPrimary: {
     width: '100%',
-    background: '#22d3ee',
     border: 'none',
     borderRadius: 12,
     padding: '12px 20px',
-    color: '#0f172a',
     fontWeight: 700,
     fontSize: 13,
     cursor: 'pointer',

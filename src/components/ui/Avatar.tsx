@@ -5,7 +5,7 @@ export function avatarStyle(size: number): CSSProperties {
     width: size,
     height: size,
     borderRadius: '50%',
-    background: 'linear-gradient(135deg, #22d3ee 0%, #8b5cf6 100%)',
+    background: 'linear-gradient(135deg, var(--accent-violet), var(--accent-blue))',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

@@ -30,7 +30,7 @@ export function ModalCard({
   return (
     <div
       style={{
-        backgroundColor: '#1e293b',
+        backgroundColor: 'var(--surface2)',
         width: '100%',
         maxWidth,
         borderRadius: '16px',

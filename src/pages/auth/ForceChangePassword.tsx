@@ -56,7 +56,7 @@ export default function ForceChangePasswordPage() {
       <div style={styles.container}>
         <div style={styles.header}>
           <div style={styles.logoBox}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0f172a" strokeWidth="2">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#08130f" strokeWidth="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
           </div>
@@ -94,7 +94,7 @@ export default function ForceChangePasswordPage() {
                 style={styles.input}
               />
             </div>
-            <Button type="submit" disabled={loading} style={styles.btnPrimary}>
+            <Button type="submit" variant="primary" fullWidth disabled={loading} style={styles.btnPrimary}>
               {loading ? 'Guardando…' : 'Guardar y continuar'}
             </Button>
           </form>
@@ -110,7 +110,7 @@ const styles: Record<string, CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#020617',
+    background: 'var(--bg)',
     padding: 16,
     position: 'relative',
     overflow: 'hidden',
@@ -122,7 +122,7 @@ const styles: Record<string, CSSProperties> = {
     transform: 'translateX(-50%)',
     width: 400,
     height: 400,
-    background: 'rgba(6,182,212,.08)',
+    background: 'rgba(0, 229, 200, 0.08)',
     borderRadius: '50%',
     filter: 'blur(60px)',
   },
@@ -132,7 +132,7 @@ const styles: Record<string, CSSProperties> = {
     left: '33%',
     width: 300,
     height: 300,
-    background: 'rgba(99,102,241,.08)',
+    background: 'rgba(139, 92, 246, 0.08)',
     borderRadius: '50%',
     filter: 'blur(60px)',
   },
@@ -151,27 +151,27 @@ const styles: Record<string, CSSProperties> = {
     justifyContent: 'center',
     width: 56,
     height: 56,
-    background: '#22d3ee',
+    background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-violet))',
     borderRadius: 16,
     marginBottom: 16,
-    boxShadow: '0 10px 30px rgba(34,211,238,.3)',
+    boxShadow: '0 10px 30px rgba(0, 229, 200, 0.25)',
   },
   title: {
     fontFamily: "'Syne', sans-serif",
     fontSize: 28,
     fontWeight: 800,
-    color: 'white',
+    color: 'var(--text)',
     margin: 0,
   },
   subtitle: {
-    color: '#94a3b8',
+    color: 'var(--muted)',
     fontSize: 14,
     marginTop: 10,
     lineHeight: 1.5,
   },
   card: {
-    background: '#0f172a',
-    border: '1px solid #1e293b',
+    background: 'var(--surface)',
+    border: '1px solid var(--border-bright)',
     borderRadius: 20,
     padding: 24,
     boxShadow: '0 25px 50px rgba(0,0,0,.5)',
@@ -188,34 +188,32 @@ const styles: Record<string, CSSProperties> = {
     display: 'block',
     fontSize: 12,
     fontWeight: 500,
-    color: '#94a3b8',
+    color: 'var(--muted)',
     marginBottom: 6,
   },
   input: {
     width: '100%',
-    background: '#1e293b',
-    border: '1px solid #334155',
+    background: 'var(--surface2)',
+    border: '1px solid var(--border-bright)',
     borderRadius: 12,
     padding: '11px 16px',
-    color: 'white',
+    color: 'var(--text)',
     fontSize: 13,
     outline: 'none',
     transition: 'border .15s',
     boxSizing: 'border-box',
   },
   error: {
-    color: '#f87171',
+    color: 'var(--accent-rose)',
     fontSize: 12,
     marginBottom: 10,
   },
   btnPrimary: {
     width: '100%',
     marginTop: 8,
-    background: '#22d3ee',
     border: 'none',
     borderRadius: 12,
     padding: '12px 20px',
-    color: '#0f172a',
     fontWeight: 700,
     fontSize: 13,
     cursor: 'pointer',

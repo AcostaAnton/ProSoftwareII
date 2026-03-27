@@ -61,7 +61,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser({ id: userId, email, profile: profileData, mustChangePassword })
         } catch (error) {
             console.error('Error al cargar el perfil:', error)
-            // No borrar perfil aquí; el listener decide si conservar el anterior (p. ej. en TOKEN_REFRESHED)
             throw error
         }
     }
@@ -78,7 +77,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         setUser(null)
                         setProfile(null)
                     }
-                    // Sesión presente: carga inicial (INITIAL_SESSION) o login (SIGNED_IN) o refresh de token
                     else if (
                         sessionUser &&
                         (event === 'INITIAL_SESSION' ||

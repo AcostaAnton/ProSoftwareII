@@ -51,7 +51,7 @@ export default function VisitorAccessPage() {
             width: 280,
             margin: 2,
             color: {
-                dark: '#0f172a',
+                dark: '#0e1420',
                 light: '#ffffff'
             }
         })

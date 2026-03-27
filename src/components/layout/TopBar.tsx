@@ -1,65 +1,64 @@
-import React from 'react';
-import { useLocation } from 'react-router-dom';
-import useResponsive from '../../hooks/useResponsive';
-import { Button } from '../ui/Button';
+import { useLocation } from 'react-router-dom'
+import useResponsive from '../../hooks/useResponsive'
+import { Button } from '../ui/Button'
+import { ThemeToggle } from '../ui/ThemeToggle'
+import { NAV_ITEMS } from './navItems'
+import { cn } from '../../lib/cn'
 
-import { NAV_ITEMS } from './Sidebar';
-
-const getTitleForPath = (path: string) => {
-  const item = NAV_ITEMS.find((navItem) => navItem.path === path);
-  return item ? item.label : 'Dashboard';
-};
-
-interface TopBarProps {
-  toggleSidebar: () => void;
+function getNavTitle(pathname: string): string {
+  if (
+    pathname.startsWith('/visits/') &&
+    pathname !== '/visits/new' &&
+    pathname !== '/visits/list' &&
+    pathname !== '/visits/my-visits'
+  ) {
+    return 'Detalle de visita'
+  }
+  const sorted = [...NAV_ITEMS].sort((a, b) => b.path.length - a.path.length)
+  const item = sorted.find((n) => pathname === n.path || pathname.startsWith(`${n.path}/`))
+  return item?.label ?? 'PasaYa'
 }
 
-const TopBar: React.FC<TopBarProps> = ({ toggleSidebar }) => {
-  const isMobile = useResponsive();
-  const location = useLocation();
-  const title = getTitleForPath(location.pathname);
+interface TopBarProps {
+  toggleSidebar: () => void
+}
+
+export default function TopBar({ toggleSidebar }: TopBarProps) {
+  const isMobile = useResponsive()
+  const location = useLocation()
+  const title = getNavTitle(location.pathname)
 
   return (
-    <header
-      className="app-topbar"
-      style={{
-        background: '#0f172a',
-        color: 'white',
-        minHeight: 52,
-        padding: '10px 16px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        borderBottom: '1px solid #1e293b',
-        position: 'sticky',
-        top: 0,
-        zIndex: 40,
-      }}
-    >
-      <Button
-        type="button"
-        variant="ghost"
-        size="lg"
-        onClick={toggleSidebar}
-        style={{ fontSize: 22, padding: '6px 10px', flexShrink: 0, minWidth: 44 }}
-        aria-label="Abrir o cerrar menú"
-      >
-        ☰
-      </Button>
-      <div
-        style={{
-          flex: 1,
-          textAlign: isMobile ? 'center' : 'left',
-          fontFamily: "'Syne', sans-serif",
-          fontWeight: 700,
-          fontSize: isMobile ? 17 : 18,
-          paddingRight: isMobile ? 44 : 0,
-        }}
-      >
-        {title}
+    <header className="sticky top-0 z-50 flex h-[60px] shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--surface)] px-4 md:px-8">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="lg"
+          onClick={toggleSidebar}
+          style={{
+            fontSize: 18,
+            padding: '6px 10px',
+            flexShrink: 0,
+            minWidth: 44,
+            color: 'var(--muted)',
+          }}
+          aria-label="Abrir o cerrar menú"
+        >
+          ☰
+        </Button>
+        <div
+          className={cn('min-w-0 flex-1', isMobile ? 'pr-11 text-center' : 'text-left')}
+        >
+          <div className="font-syne text-[15px] font-bold text-[var(--text)] md:text-base">
+            {title}
+          </div>
+          <div className="text-xs text-[var(--muted)]">Inicio / {title}</div>
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-3">
+        <ThemeToggle />
       </div>
     </header>
-  );
-};
-
-export default TopBar;
+  )
+}

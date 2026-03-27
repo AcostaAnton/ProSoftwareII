@@ -2,6 +2,7 @@ import type {
     ChangeEvent,
     ReactNode
 } from 'react'
+import { useCountUp } from '../../hooks/useCountUp'
 import type { Visit } from '../../types/index'
 import { Button } from '../../components/ui/Button'
 import { Pagination } from '../../components/ui/Pagination'
@@ -93,9 +94,12 @@ function DropdownButton({ isOpen, label, onClick }: DropdownButtonProps) {
             onClick={onClick}
             className="visit-dropdown-button"
             aria-expanded={isOpen}
+            aria-label={isOpen ? 'Cerrar opciones' : 'Abrir opciones'}
         >
-            <span>{label}</span>
-            <span>{isOpen ? 'Cerrar' : 'Abrir'}</span>
+            <span className="visit-dropdown-button-label">{label}</span>
+            <span className="visit-dropdown-button-chevron" aria-hidden>
+                {isOpen ? '▴' : '▾'}
+            </span>
         </Button>
     )
 }
@@ -149,9 +153,7 @@ function VisitCard({ onVisitSelect, visit }: VisitCardProps) {
 
             <div className="visit-card-meta-group">
                 {visit.visitorPhone && (
-                    <p className="visit-card-meta">
-                        Telefono: {visit.visitorPhone}
-                    </p>
+                    <p className="visit-card-meta">{visit.visitorPhone}</p>
                 )}
 
                 {visit.visitPurpose && (
@@ -216,6 +218,8 @@ function VisitListView({
     onToggleStatusFilter,
     onVisitSelect
 }: VisitListViewProps) {
+    const displayFilteredCount = useCountUp(filteredCount)
+
     if (loading) {
         return <LoadingState />
     }
@@ -228,15 +232,15 @@ function VisitListView({
     const isSearching = filters.searchTerm.trim().length > 0
 
     return (
-        <div className="visit-workspace">
+        <div className="visit-workspace visit-list-page">
             <section className="visit-panel">
                 <div className="visit-panel-header visit-panel-header--split">
                     <div>
                         <h1 className="visit-panel-title">Lista de visitas</h1>
                         <p className="visit-panel-note">
                             {isSearching
-                                ? 'Estas buscando una visita especifica.'
-                                : 'Busca una visita especifica.'}
+                                ? 'Estás buscando una visita específica.'
+                                : 'Busca por nombre, motivo, teléfono o código QR.'}
                         </p>
                     </div>
 
@@ -256,7 +260,7 @@ function VisitListView({
                 <div className="visit-history-toolbar">
                     <input
                         type="search"
-                        placeholder="Buscar por nombre, proposito, telefono o token QR..."
+                        placeholder="Buscar…"
                         value={filters.searchTerm}
                         onChange={onSearchTermChange}
                         className="visit-search-input"
@@ -266,7 +270,6 @@ function VisitListView({
                 <div className="visit-filter-grid">
                     <article className="visit-filter-card">
                         <p className="visit-filter-kicker">Rango de fechas</p>
-                        <p className="visit-filter-value">Desde y hasta</p>
 
                         <div className="visit-date-range">
                             <label className="visit-filter-label">
@@ -292,7 +295,7 @@ function VisitListView({
                     </article>
 
                     <PanelSection>
-                        <p className="visit-filter-kicker">Fechas rapidas</p>
+                        <p className="visit-filter-kicker">Fechas rápidas</p>
                         <p className="visit-filter-value">
                             {getSelectedCountLabel(filters.quickDateFilters.size)}
                         </p>
@@ -382,7 +385,9 @@ function VisitListView({
                     <div>
                         <h2 className="visit-panel-title">Resultados</h2>
                         <p className="visit-panel-note">
-                            {filteredCount} resultado{filteredCount === 1 ? '' : 's'} disponible{filteredCount === 1 ? '' : 's'}.
+                            {displayFilteredCount === 1
+                                ? '1 resultado disponible.'
+                                : `${displayFilteredCount} resultados disponibles.`}
                         </p>
                     </div>
 

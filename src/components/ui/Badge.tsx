@@ -1,9 +1,9 @@
 import type { UserRole } from '../../types'
 
 const ROLE_COLORS: Record<UserRole, { bg: string; text: string }> = {
-  admin: { bg: 'rgba(126,34,206,.25)', text: '#c084fc' },
-  resident: { bg: 'rgba(8,145,178,.2)', text: '#22d3ee' },
-  security: { bg: 'rgba(217,119,6,.2)', text: '#fbbf24' },
+  admin: { bg: 'var(--badge-role-admin-bg)', text: 'var(--badge-role-admin-text)' },
+  resident: { bg: 'var(--badge-role-resident-bg)', text: 'var(--badge-role-resident-text)' },
+  security: { bg: 'var(--badge-role-security-bg)', text: 'var(--badge-role-security-text)' },
 }
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -27,7 +27,7 @@ export function RoleBadge({ role }: RoleBadgeProps) {
         padding: '3px 10px',
         borderRadius: 999,
         fontSize: 12,
-        fontWeight: 500,
+        fontWeight: 600,
         background: bg,
         color: text,
       }}

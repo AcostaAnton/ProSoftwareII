@@ -29,7 +29,7 @@ export const Modal: React.FC<ModalProps> = ({
                 left: 0,
                 right: 0,
                 bottom: 0,
-                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                backgroundColor: 'rgba(0, 0, 0, 0.65)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -41,12 +41,13 @@ export const Modal: React.FC<ModalProps> = ({
                 role="dialog"
                 aria-modal="true"
                 style={{
-                    backgroundColor: '#1a2024',
+                    backgroundColor: 'var(--surface)',
                     padding: '20px',
-                    borderRadius: '8px',
+                    borderRadius: '16px',
+                    border: '1px solid var(--border-bright)',
                     maxWidth: '500px',
                     width: '90%',
-                    color: '#ffffff',
+                    color: 'var(--text)',
                 }}
                 onClick={(e) => e.stopPropagation()}
             >

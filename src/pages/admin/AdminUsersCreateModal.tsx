@@ -120,7 +120,7 @@ export function AdminUsersCreateModal({ open, communityId, onClose, onCreated }:
             <div>
               <p style={s.title}>Nuevo usuario</p>
               <p style={{ ...s.fieldHint, marginTop: 6, marginBottom: 0 }}>
-                <strong style={{ color: '#e2e8f0' }}>Residencial:</strong>{' '}
+                <strong style={{ color: 'var(--text)' }}>Residencial:</strong>{' '}
                 {communityName ?? 'Cargando…'}
               </p>
             </div>
@@ -131,7 +131,7 @@ export function AdminUsersCreateModal({ open, communityId, onClose, onCreated }:
               onClick={handleClose}
               disabled={creating}
               aria-label="Cerrar"
-              style={{ color: '#94a3b8', fontSize: 22, lineHeight: 1, padding: '4px 8px' }}
+              style={{ color: 'var(--muted)', fontSize: 22, lineHeight: 1, padding: '4px 8px' }}
             >
               ✕
             </Button>
@@ -147,12 +147,12 @@ export function AdminUsersCreateModal({ open, communityId, onClose, onCreated }:
                     ...s.dot,
                     ...(createStep > n
                       ? {
-                          background: 'rgba(34,211,238,.15)',
-                          borderColor: '#22d3ee',
-                          color: '#22d3ee',
+                          background: 'rgba(0, 229, 200, 0.15)',
+                          borderColor: 'var(--accent-cyan)',
+                          color: 'var(--accent-cyan)',
                         }
                       : createStep === n
-                        ? { background: '#22d3ee', borderColor: '#22d3ee', color: '#0f172a' }
+                        ? { background: 'var(--accent-cyan)', borderColor: 'var(--accent-cyan)', color: '#08130f' }
                         : {}),
                   }}
                 >
@@ -162,7 +162,7 @@ export function AdminUsersCreateModal({ open, communityId, onClose, onCreated }:
                   <div
                     style={{
                       ...s.stepLine,
-                      ...(createStep > n ? { background: '#22d3ee' } : {}),
+                      ...(createStep > n ? { background: 'var(--accent-cyan)' } : {}),
                     }}
                   />
                 )}
@@ -323,13 +323,13 @@ export function AdminUsersCreateModal({ open, communityId, onClose, onCreated }:
                   aria-pressed={sendInvite}
                   style={{
                     ...s.toggle,
-                    ...(sendInvite ? { background: 'rgba(34,211,238,.3)', borderColor: '#22d3ee' } : {}),
+                    ...(sendInvite ? { background: 'rgba(0, 229, 200, 0.3)', borderColor: 'var(--accent-cyan)' } : {}),
                   }}
                 >
                   <span
                     style={{
                       ...s.toggleKnob,
-                      ...(sendInvite ? { background: '#22d3ee', left: 18 } : {}),
+                      ...(sendInvite ? { background: 'var(--accent-cyan)', left: 18 } : {}),
                     }}
                   />
                 </Button>
@@ -366,7 +366,7 @@ export function AdminUsersCreateModal({ open, communityId, onClose, onCreated }:
                   <span
                     style={{
                       ...s.summaryVal,
-                      color: sendInvite ? '#4ade80' : '#f87171',
+                      color: sendInvite ? 'var(--green)' : 'var(--accent-rose)',
                     }}
                   >
                     {sendInvite ? '✓ Preferencia: enviar correo' : '✗ Sin preferencia de correo'}
@@ -423,7 +423,7 @@ export function AdminUsersCreateModal({ open, communityId, onClose, onCreated }:
                   onClick={() => void handleCreateUser()}
                   style={{
                     ...s.btnSave,
-                    ...(createSaved ? { background: '#4ade80' } : {}),
+                    ...(createSaved ? { background: 'var(--green)' } : {}),
                   }}
                 >
                   {creating ? 'Creando...' : createSaved ? '✓ Creado' : '✓ Crear usuario'}

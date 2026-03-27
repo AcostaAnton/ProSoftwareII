@@ -13,15 +13,15 @@ const QR_IMG_SIZE_MODAL = 200
 
 
 const APP = {
-    bgCard: '#0f172a',
-    bgDeep: '#020617',
-    bgMuted: '#1e293b',
-    border: '#1e293b',
-    borderLight: '#334155',
-    accent: '#22d3ee',
-    text: '#e2e8f0',
-    textBright: '#ffffff',
-    textMuted: '#94a3b8',
+    bgCard: 'var(--surface)',
+    bgDeep: 'var(--bg)',
+    bgMuted: 'var(--surface2)',
+    border: 'var(--border-bright)',
+    borderLight: 'var(--border-bright)',
+    accent: 'var(--accent-cyan)',
+    text: 'var(--text)',
+    textBright: 'var(--text)',
+    textMuted: 'var(--muted)',
     qrLight: '#ffffff',
 } as const
 
@@ -470,9 +470,9 @@ function DesktopShareHintBanner({ text, onDismiss }: { text: string | null; onDi
                 marginTop: 16,
                 padding: 14,
                 borderRadius: 12,
-                background: 'rgba(34,211,238,.1)',
-                border: '1px solid rgba(34,211,238,.35)',
-                color: '#e2e8f0',
+                background: 'rgba(0, 229, 200, 0.1)',
+                border: '1px solid rgba(0, 229, 200, 0.35)',
+                color: 'var(--text)',
                 fontSize: 13,
                 lineHeight: 1.55,
                 textAlign: 'left',
@@ -485,9 +485,9 @@ function DesktopShareHintBanner({ text, onDismiss }: { text: string | null; onDi
                 style={{
                     padding: '6px 12px',
                     borderRadius: 8,
-                    border: '1px solid #334155',
-                    background: '#1e293b',
-                    color: '#94a3b8',
+                    border: '1px solid var(--border-bright)',
+                    background: 'var(--surface2)',
+                    color: 'var(--muted)',
                     fontSize: 12,
                     cursor: 'pointer',
                 }}
@@ -639,10 +639,10 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
     if (isLoading) {
         return (
             <div style={{ 
-                backgroundColor: mode === 'modal' ? 'transparent' : '#080c0f', 
+                backgroundColor: mode === 'modal' ? 'transparent' : 'var(--bg)', 
                 minHeight: mode === 'modal' ? 'auto' : '100vh', 
                 padding: '20px', 
-                color: '#ffffff' 
+                color: 'var(--text)' 
             }}>
                 <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'center' }}>
                     <p>Generando código QR...</p>
@@ -670,17 +670,18 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
             >
                 <div
                     style={{
-                        backgroundColor: '#1a2024',
+                        backgroundColor: 'var(--surface2)',
+                        border: '1px solid var(--border-bright)',
                         padding: '14px',
                         borderRadius: '12px',
                         maxWidth: 'min(440px, 100%)',
                         width: '100%',
                         margin: '16px auto',
                         textAlign: 'center',
-                        color: '#ffffff',
+                        color: 'var(--text)',
                     }}
                 >
-                    <h2 style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '10px', color: '#94a3b8' }}>
+                    <h2 style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '10px', color: 'var(--muted)' }}>
                         Código QR de la visita
                     </h2>
 
@@ -694,7 +695,7 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
                     </div>
 
                     <div style={{ marginBottom: '12px', textAlign: 'left' }}>
-                        <p style={{ margin: '0 0 6px 0', fontSize: 11, color: '#a0a0a0' }}>
+                        <p style={{ margin: '0 0 6px 0', fontSize: 11, color: 'var(--muted)' }}>
                             Token (para copiar / validar):
                         </p>
                         <div style={{
@@ -707,8 +708,8 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
                             <code style={{
                                 padding: '8px 10px',
                                 borderRadius: 10,
-                                backgroundColor: '#0f172a',
-                                color: '#e2e8f0',
+                                backgroundColor: 'var(--surface)',
+                                color: 'var(--text)',
                                 fontSize: 12,
                                 wordBreak: 'break-all',
                                 maxWidth: '100%',
@@ -721,7 +722,7 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
                                 variant="primary"
                                 size="sm"
                                 onClick={copyTokenToClipboard}
-                                style={{ borderRadius: 8, color: '#000000', whiteSpace: 'nowrap' }}
+                                style={{ borderRadius: 8, color: '#08130f', whiteSpace: 'nowrap' }}
                             >
                                 {copyStatus === 'copied' ? 'Copiado' : 'Copiar'}
                             </Button>
@@ -729,7 +730,7 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
                     </div>
 
                     <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-                        <Button type="button" variant="primary" size="md" onClick={downloadQR} style={{ color: '#000000', fontSize: 14 }}>
+                        <Button type="button" variant="primary" size="md" onClick={downloadQR} style={{ color: '#08130f', fontSize: 14 }}>
                             Descargar
                         </Button>
                         <ShareDropdown
@@ -748,12 +749,12 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
     }
 
     return (
-        <div style={{ backgroundColor: '#080c0f', minHeight: '100vh', padding: '20px 16px', color: '#ffffff' }}>
+        <div style={{ backgroundColor: 'var(--bg)', minHeight: '100vh', padding: '20px 16px', color: 'var(--text)' }}>
             <div style={{ maxWidth: '440px', margin: '0 auto', textAlign: 'center' }}>
-                <h2 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px', color: '#22d3ee' }}>
+                <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: '20px', fontWeight: 800, marginBottom: '8px', color: 'var(--accent-cyan)' }}>
                     ¡Visita creada!
                 </h2>
-                <p style={{ color: '#a0a0a0', marginBottom: '20px', fontSize: 14 }}>
+                <p style={{ color: 'var(--muted)', marginBottom: '20px', fontSize: 14 }}>
                     Comparte el código o la invitación con tu visitante.
                 </p>
 
@@ -762,7 +763,7 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
                 </div>
 
                 <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-                    <p style={{ margin: '0 0 6px 0', fontSize: 12, color: '#a0a0a0' }}>
+                    <p style={{ margin: '0 0 6px 0', fontSize: 12, color: 'var(--muted)' }}>
                         Token (para copiar / validar):
                     </p>
                     <div style={{
@@ -775,8 +776,8 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
                         <code style={{
                             padding: '8px 10px',
                             borderRadius: 10,
-                            backgroundColor: '#0f172a',
-                            color: '#e2e8f0',
+                            backgroundColor: 'var(--surface)',
+                            color: 'var(--text)',
                             fontSize: 13,
                             wordBreak: 'break-all',
                             maxWidth: '240px'
@@ -788,7 +789,7 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
                             variant="primary"
                             size="sm"
                             onClick={copyTokenToClipboard}
-                            style={{ borderRadius: 8, color: '#000000', whiteSpace: 'nowrap' }}
+                            style={{ borderRadius: 8, color: '#08130f', whiteSpace: 'nowrap' }}
                         >
                             {copyStatus === 'copied' ? 'Copiado' : 'Copiar'}
                         </Button>
@@ -796,7 +797,7 @@ const QRGenerator: React.FC<QRGeneratorProps> = ({
                 </div>
 
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-                    <Button type="button" variant="primary" size="md" onClick={downloadQR} style={{ borderRadius: 20, color: '#000000', fontSize: 14 }}>
+                    <Button type="button" variant="primary" size="md" onClick={downloadQR} style={{ borderRadius: 20, color: '#08130f', fontSize: 14 }}>
                         Descargar QR
                     </Button>
                     <ShareDropdown
