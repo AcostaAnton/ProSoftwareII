@@ -21,12 +21,12 @@ export async function handleAuthFlow(ctx: Context) {
   // PASO 1: Solicitar Email
   if (step === 'email_input') {
     // Validar que sea un email
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(message)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) {
       await ctx.reply('❌ Por favor, ingresa un email válido (ej: usuario@ejemplo.com):')
       return
     }
 
-    setUserData(userId, 'email', message)
+    setUserData(userId, 'email', text)
     setUserStep(userId, 'password_input')
 
     await showPasswordPrompt(ctx)
@@ -46,7 +46,7 @@ export async function handleAuthFlow(ctx: Context) {
     await ctx.sendChatAction('typing')
 
     // Autenticar con email y contraseña
-    const authResult = await authenticateUser(email, message)
+    const authResult = await authenticateUser(email, text)
 
     if (!authResult.success) {
       await ctx.reply(`❌ ${authResult.error}\n\nIntenta de nuevo con /start`)
@@ -100,7 +100,7 @@ export async function handleNewVisitFlow(ctx: Context) {
   const step = session.step
 
   if (step === 'visitor_name') {
-    setUserData(userId, 'visitor_name', message)
+    setUserData(userId, 'visitor_name', text)
     setUserStep(userId, 'visitor_phone')
 
     await ctx.reply(
@@ -108,8 +108,8 @@ export async function handleNewVisitFlow(ctx: Context) {
       { parse_mode: 'Markdown' }
     )
   } else if (step === 'visitor_phone') {
-    if (message !== '/skip') {
-      setUserData(userId, 'visitor_phone', message)
+    if (text !== '/skip') {
+      setUserData(userId, 'visitor_phone', text)
     }
 
     setUserStep(userId, 'visit_date')
@@ -122,9 +122,9 @@ export async function handleNewVisitFlow(ctx: Context) {
       { parse_mode: 'Markdown' }
     )
   } else if (step === 'visit_date') {
-    let visitDate = message
+    let visitDate = text
 
-    if (message === '/today') {
+    if (text === '/today') {
       visitDate = new Date().toISOString().split('T')[0]
     }
 
@@ -143,14 +143,14 @@ export async function handleNewVisitFlow(ctx: Context) {
       { parse_mode: 'Markdown' }
     )
   } else if (step === 'visit_time') {
-    if (message !== '/skip') {
+    if (text !== '/skip') {
       // Validar formato de hora
-      if (!/^\d{2}:\d{2}$/.test(message)) {
+      if (!/^\d{2}:\d{2}$/.test(text)) {
         await ctx.reply('❌ Formato de hora inválido. Usa HH:MM')
         return
       }
 
-      setUserData(userId, 'visit_time', message)
+      setUserData(userId, 'visit_time', text)
     }
 
     setUserStep(userId, 'visit_purpose')
@@ -162,8 +162,8 @@ export async function handleNewVisitFlow(ctx: Context) {
       { parse_mode: 'Markdown' }
     )
   } else if (step === 'visit_purpose') {
-    if (message !== '/skip') {
-      setUserData(userId, 'visit_purpose', message)
+    if (text !== '/skip') {
+      setUserData(userId, 'visit_purpose', text)
     }
 
     setUserStep(userId, 'visit_destination')
@@ -175,8 +175,8 @@ export async function handleNewVisitFlow(ctx: Context) {
       { parse_mode: 'Markdown' }
     )
   } else if (step === 'visit_destination') {
-    if (message !== '/skip') {
-      setUserData(userId, 'visit_destination', message)
+    if (text !== '/skip') {
+      setUserData(userId, 'visit_destination', text)
     }
 
     setUserStep(userId, 'confirm_visit')
