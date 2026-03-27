@@ -120,3 +120,17 @@ export interface AuthUser {
     mustChangePassword?: boolean
 }
 
+// Bot Types
+export interface TelegramUser {
+    id: string
+    telegram_id: string
+    telegram_username: string | null
+    user_id: string
+    linked_at: string
+}
+
+export interface BotSession {
+    step: string
+    data: Record<string, string>
+}
+
